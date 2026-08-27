@@ -49,9 +49,9 @@ internal class TobiiEyeXService : Gaze.Dispatcher.DispatcherBase, ITelemetryServ
         _logger.LogInformation("[EYEX] Service was disposed");
     }
 
-    public override Task<Common.BoolReply> IsAvailable(Empty request, ServerCallContext context)
+    public override Task<Common.Bool> IsAvailable(Empty request, ServerCallContext context)
     {
-        return Task.FromResult(new Common.BoolReply { Success = IsAvailable() });
+        return Task.FromResult(new Common.Bool { Value = IsAvailable() });
     }
 
     public override Task<Empty> Start(Empty request, ServerCallContext context)

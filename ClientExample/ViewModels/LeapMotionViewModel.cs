@@ -16,6 +16,8 @@ public partial class LeapMotionViewModel : ObservableObject
     public partial string Data { get; set; } = "";
     [ObservableProperty]
     public partial bool IsStreaming { get; set; } = false;
+    [ObservableProperty]
+    public partial LeapMotionConfig Config { get; set; } = LeapMotionConfig.Default;
 
     public LeapMotionViewModel(LeapMotionClient leapMotionClient)
     {
@@ -49,6 +51,11 @@ public partial class LeapMotionViewModel : ObservableObject
             IsStreaming = true;
             Data = WAITING_HAND;
         }
+    }
+
+    partial void OnConfigChanged(LeapMotionConfig value)
+    {
+        _leapMotionClient.Configure(value);
     }
 
     #endregion

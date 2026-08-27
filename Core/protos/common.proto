@@ -2,8 +2,14 @@ syntax = "proto3";
 
 package Common;
 
-message BoolReply {
-	bool success = 1;
+message Bool {
+	bool value = 1;
+}
+
+message Vector {
+	double x = 1;
+	double y = 2;
+	double z = 3;
 }
 
 enum Status {

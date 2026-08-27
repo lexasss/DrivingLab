@@ -6,25 +6,35 @@ import "protos/common.proto";
 import "google/protobuf/empty.proto";
 
 service Dispatcher {
-	rpc IsAvailable (google.protobuf.Empty) returns (Common.BoolReply) {}
-	rpc IsConnected (google.protobuf.Empty) returns (Common.BoolReply) {}
+	rpc IsAvailable (google.protobuf.Empty) returns (Common.Bool) {}
+	rpc IsConnected (google.protobuf.Empty) returns (Common.Bool) {}
 
+	rpc Configure (Configuration) returns (google.protobuf.Empty) {}
+
+	// Enable of disable sample streaming to clients
 	rpc Start (google.protobuf.Empty) returns (google.protobuf.Empty) {}
 	rpc Stop (google.protobuf.Empty) returns (google.protobuf.Empty) {}
 
-	// Starts data streaming.
-	// Call Start() before calling this function
-	// To stop, call Stop() 
 	rpc ReadData (google.protobuf.Empty) returns (stream Sample) {}
 
 	rpc ReadEvents (google.protobuf.Empty) returns (stream Event) {}
 }
 
-// Leap sample
+message Configuration {
+	enum SetupType {
+		Default = 0;
+		Ultrahaptics = 1;
+		Custom = 2;
+	}
+	SetupType setup = 1;
+	optional Common.Vector proximityBoxCorner1 = 2;
+	optional Common.Vector proximityBoxCorner2 = 3;
+	optional Common.Vector translation = 4;
+	optional Common.Vector scale = 5;
+}
+
 message Sample {
-	double x = 1;
-	double y = 2;
-	double z = 3;
+	Common.Vector palm = 1;
 }
 
 message Event {

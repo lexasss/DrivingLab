@@ -1,7 +1,15 @@
 ﻿using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
+using ConfigType = LeapMotion.Configuration.Types.SetupType;
 
 namespace ClientExample;
+
+public enum LeapMotionConfig
+{
+    Default = ConfigType.Default,
+    Ultrahaptics = ConfigType.Ultrahaptics,
+    Custom = ConfigType.Custom,
+}
 
 public class LeapMotionClient : IDisposable
 {
@@ -25,7 +33,7 @@ public class LeapMotionClient : IDisposable
 
         if (_isAvailable)
         {
-            _isConnected = _client.IsConnected(new Empty()).Success;
+            _isConnected = _client.IsConnected(new Empty()).Value;
             _ = ReadData();
             _ = ReadEvents();
         }
@@ -50,7 +58,7 @@ public class LeapMotionClient : IDisposable
 
         try
         {
-            _isAvailable = _client.IsAvailable(new Empty()).Success;
+            _isAvailable = _client.IsAvailable(new Empty()).Value;
         }
         catch (RpcException ex)
         {
@@ -72,6 +80,13 @@ public class LeapMotionClient : IDisposable
         _ = _client.Stop(new Empty());
     }
 
+    public void Configure(LeapMotionConfig config)
+    {
+        _client.Configure(new LeapMotion.Configuration()
+        {
+            Setup = (ConfigType)config
+        });
+    }
 
     #region Internal
 
@@ -98,7 +113,7 @@ public class LeapMotionClient : IDisposable
             {
                 var data = responseStream.Current;
 
-                HandLocationChanged?.Invoke(this, new Point(data.X, data.Y, data.Z));
+                HandLocationChanged?.Invoke(this, new Point(data.Palm.X, data.Palm.Y, data.Palm.Z));
             }
         }
         catch (RpcException e)
@@ -124,16 +139,16 @@ public class LeapMotionClient : IDisposable
                     break;
 
                 var evt = responseStream.Current;
-                if (evt.Name == Common.LeapMotionEvents.IS_CONNECTED)
+                if (evt.Name == Common.LeapMotion.Events.IS_CONNECTED)
                 {
                     _isConnected = evt.Value;
                     ConnectionChanged?.Invoke(this, evt.Value);
                 }
-                else if (evt.Name == Common.LeapMotionEvents.IS_HAND_VISIBLE)
+                else if (evt.Name == Common.LeapMotion.Events.IS_HAND_VISIBLE)
                 {
                     HandVisibilityChanged?.Invoke(this, evt.Value);
                 }
-                else if (evt.Name == Common.LeapMotionEvents.IS_HAND_CLOSE)
+                else if (evt.Name == Common.LeapMotion.Events.IS_HAND_CLOSE)
                 {
                     HandProximityChanged?.Invoke(this, evt.Value);
                 }

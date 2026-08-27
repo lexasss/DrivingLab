@@ -5,16 +5,15 @@ namespace Server.LeapMotion;
 
 internal class LeapM: IDisposable
 {
-    public bool IsUHRelated { get; set; } = false;
+    public DeviceList? Devices => _controller?.Devices;
     public bool IsServiceRunning => _controller?.IsServiceConnected ?? false;
     public bool IsConnected => _controller?.IsConnected ?? false;
     public Device? Info { get; private set; }
-    public DeviceList? Devices => _controller?.Devices;
 
     public event EventHandler<string>? ServiceStatusChanged;
     public event EventHandler<bool>? ConnectionChanged;
     public event EventHandler<bool>? HandVisibilityChanged;
-    public event EventHandler<Vector>? HandLocationChanged;
+    public event EventHandler<global::LeapMotion.Sample>? HandLocationChanged;
     public event EventHandler<bool>? HandProximityChanged;
 
     public LeapM(ILogger<LeapMotionService> logger) 
@@ -44,21 +43,52 @@ internal class LeapM: IDisposable
         _controller = null;
     }
 
-    // Internal methods
+    public void ConfigureForUltrahaptics()
+    {
+        _proximityCorner1 = UH_CORNER_1;
+        _proximityCorner2 = UH_CORNER_2;
+        _translation = UH_TRANSLATION;
+        _scale = UH_SCALE;
+    }
+
+    public void SetProximityBox(Common.Vector? corner1 = null, Common.Vector? corner2 = null)
+    {
+        if (corner1 == null || corner2 == null)
+        {
+            _proximityCorner1 = CLOSE_CORNER_1;
+            _proximityCorner2 = CLOSE_CORNER_2;
+        }
+    }
+
+    public void SetTransform(Common.Vector? translation = null, Common.Vector? scale = null)
+    {
+        _translation = translation ?? Common.Vector.ZEROS;
+        _scale = scale ?? Common.Vector.ONES;
+    }
+
+    #region Internal
+
+    const int LEAP_TO_UH_X = 0;   // depends on the device: the palm center point may a bit offset from the very center
+    const int LEAP_TO_UH_Y = -121;  // negative because of -1 for Y scale
+
+    readonly static Common.Vector CLOSE_CORNER_1 = new() { X = -40, Y = 50, Z = -40 };
+    readonly static Common.Vector CLOSE_CORNER_2 = new() { X = 40, Y = 400, Z = 40 };
+    readonly static Common.Vector UH_CORNER_1 = new() { X = -40, Y = 50, Z = 80 };
+    readonly static Common.Vector UH_CORNER_2 = new() { X = 40, Y = 400, Z = 160 };
+    readonly static Common.Vector UH_TRANSLATION = new() { X = LEAP_TO_UH_X, Y = LEAP_TO_UH_Y, Z = 0 };
+    readonly static Common.Vector UH_SCALE = new() { X = 0.001, Y = -0.001, Z = 0.001 };
 
     readonly ILogger<LeapMotionService> _logger;
 
     Controller? _controller = null;
-    bool _handVisible = false;
-    bool _isHandInSetUpBox = false;
+    bool _isHandVisible = false;
+    bool _isHandClose = false;
 
-    readonly Vector SETUP_BOX_1 = new(-40, 50, -40);
-    readonly Vector SETUP_BOX_2 = new(40, 400, 40);
-    readonly Vector UH_SETUP_BOX_1 = new(-40, 50, 80);
-    readonly Vector UH_SETUP_BOX_2 = new(40, 400, 160);
+    Common.Vector _proximityCorner1 = CLOSE_CORNER_1;
+    Common.Vector _proximityCorner2 = CLOSE_CORNER_2;
+    Common.Vector _translation = Common.Vector.ZEROS;
+    Common.Vector _scale = Common.Vector.ONES;
 
-    const int LEAP_TO_UH_X = 0;   // depends on the device: the palm center point may a bit offset from the very center
-    const int LEAP_TO_UH_Y = 121;
 
     private static void PrintDeviceInfo(Device device)
     {
@@ -74,13 +104,11 @@ internal class LeapM: IDisposable
         Console.WriteLine($"[LEAP]   type = {device.Type}");
     }
 
-    private bool IsHandInSetUpBox(Vector aPos)
+    private bool IsHandClose(Vector aPos)
     {
-        var box1 = IsUHRelated ? UH_SETUP_BOX_1 : SETUP_BOX_1;
-        var box2 = IsUHRelated ? UH_SETUP_BOX_2 : SETUP_BOX_2;
-        return aPos.x > box1.x && aPos.x < box2.x
-            && aPos.y > box1.y && aPos.y < box2.y
-            && aPos.z > box1.z && aPos.z < box2.z;
+        return aPos.x > _proximityCorner1.X && aPos.x < _proximityCorner2.X
+            && aPos.y > _proximityCorner1.Y && aPos.y < _proximityCorner2.Y
+            && aPos.z > _proximityCorner1.Z && aPos.z < _proximityCorner2.Z;
     }
 
     private void OnConnect(object? sender, DeviceEventArgs args)
@@ -88,7 +116,6 @@ internal class LeapM: IDisposable
         _logger.LogInformation($"[LEAP] Connected to {args.Device.SerialNumber}");
 
         Info = args.Device;
-        //PrintDeviceInfo(Info);
 
         ConnectionChanged?.Invoke(this, true);
     }
@@ -105,38 +132,42 @@ internal class LeapM: IDisposable
 
         if (frame.Hands.Count > 0)
         {
-            if (!_handVisible)
+            if (!_isHandVisible)
             {
-                _handVisible = true;
-                HandVisibilityChanged?.Invoke(this, _handVisible);
+                _isHandVisible = true;
+                HandVisibilityChanged?.Invoke(this, _isHandVisible);
             }
 
             var palmPos = frame.Hands[0].PalmPosition;
 
-            var point = !IsUHRelated ? palmPos : new Vector(
-                    (palmPos.x + LEAP_TO_UH_X) / 1000,
-                    (-palmPos.z + LEAP_TO_UH_Y) / 1000,
-                    palmPos.y / 1000
-                );
+            var point = new Common.Vector()
+            {
+                X = (palmPos.x + _translation.X) * _scale.X,
+                Y = (palmPos.z + _translation.Y) * _scale.Y,
+                Z = (palmPos.y + _translation.Z) * _scale.Z
+            };
 
-            HandLocationChanged?.Invoke(this, point);
+            HandLocationChanged?.Invoke(this, new global::LeapMotion.Sample()
+            {
+                Palm = point
+            });
 
-            var isHandInSetUpBox = IsHandInSetUpBox(palmPos);
-            if (isHandInSetUpBox && !_isHandInSetUpBox)
+            var isHandInSetUpBox = IsHandClose(palmPos);
+            if (isHandInSetUpBox && !_isHandClose)
             {
                 HandProximityChanged?.Invoke(this, true);
             }
-            else if(!isHandInSetUpBox && _isHandInSetUpBox)
+            else if(!isHandInSetUpBox && _isHandClose)
             {
                 HandProximityChanged?.Invoke(this, false);
             }
 
-            _isHandInSetUpBox = isHandInSetUpBox;
+            _isHandClose = isHandInSetUpBox;
         }
-        else if (_handVisible)
+        else if (_isHandVisible)
         {
-            _handVisible = false;
-            HandVisibilityChanged?.Invoke(this, _handVisible);
+            _isHandVisible = false;
+            HandVisibilityChanged?.Invoke(this, _isHandVisible);
         }
     }
 
@@ -173,4 +204,6 @@ internal class LeapM: IDisposable
 
         _logger.Log(level, $"[LEAP] [{type}] {args.type}: {args.message}");
     }
+
+    #endregion
 }

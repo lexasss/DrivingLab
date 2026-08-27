@@ -1,6 +1,7 @@
 ﻿using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Microsoft.Extensions.Logging;
+using Proto = global::LeapMotion;
 
 namespace Server.LeapMotion;
 
@@ -20,17 +21,17 @@ internal class LeapMotionService : global::LeapMotion.Dispatcher.DispatcherBase,
             _leap.ConnectionChanged += (s, e) =>
             {
                 _isConnected = e;
-                _events.Enqueue(new global::LeapMotion.Event() { Name = Common.LeapMotionEvents.IS_CONNECTED, Value = _isConnected });
+                _events.Enqueue(new Proto.Event() { Name = Common.LeapMotion.Events.IS_CONNECTED, Value = _isConnected });
             };
             _leap.HandVisibilityChanged += (s, e) =>
             {
                 _isHandVisible = e;
-                _events.Enqueue(new global::LeapMotion.Event() { Name = Common.LeapMotionEvents.IS_HAND_VISIBLE, Value = _isHandVisible });
+                _events.Enqueue(new Proto.Event() { Name = Common.LeapMotion.Events.IS_HAND_VISIBLE, Value = _isHandVisible });
             };
             _leap.HandProximityChanged += (s, e) =>
             {
                 _isHandClose = e;
-                _events.Enqueue(new global::LeapMotion.Event() { Name = Common.LeapMotionEvents.IS_HAND_CLOSE, Value = _isHandClose });
+                _events.Enqueue(new Proto.Event() { Name = Common.LeapMotion.Events.IS_HAND_CLOSE, Value = _isHandClose });
             };
             _leap.HandLocationChanged += (s, e) =>
             {
@@ -57,14 +58,40 @@ internal class LeapMotionService : global::LeapMotion.Dispatcher.DispatcherBase,
         _leap?.Dispose();
     }
 
-    public override Task<Common.BoolReply> IsAvailable (Empty request, ServerCallContext context)
+    public override Task<Common.Bool> IsAvailable (Empty request, ServerCallContext context)
     {
-        return Task.FromResult(new Common.BoolReply { Success = IsAvailable() });
+        return Task.FromResult(new Common.Bool { Value = IsAvailable() });
     }
 
-    public override Task<Common.BoolReply> IsConnected(Empty request, ServerCallContext context)
+    public override Task<Common.Bool> IsConnected(Empty request, ServerCallContext context)
     {
-        return Task.FromResult(new Common.BoolReply { Success = _isConnected });
+        return Task.FromResult(new Common.Bool { Value = _isConnected });
+    }
+
+    public override Task<Empty> Configure(Proto.Configuration request, ServerCallContext context)
+    {
+        if (request.Setup == Proto.Configuration.Types.SetupType.Custom)
+        {
+            _leap?.SetProximityBox(
+                request.ProximityBoxCorner1,
+                request.ProximityBoxCorner2
+            );
+            _leap?.SetTransform(
+                request.Translation,
+                request.Scale
+            );
+        }
+        else if (request.Setup == Proto.Configuration.Types.SetupType.Ultrahaptics)
+        {
+            _leap?.ConfigureForUltrahaptics();
+        }
+        else
+        {
+            _leap?.SetProximityBox();
+            _leap?.SetTransform();
+        }
+
+        return Task.FromResult(new Empty());
     }
 
     public override Task<Empty> Start(Empty request, ServerCallContext context)
@@ -81,7 +108,7 @@ internal class LeapMotionService : global::LeapMotion.Dispatcher.DispatcherBase,
         return Task.FromResult(new Empty());
     }
 
-    public override async Task ReadData(Empty request, IServerStreamWriter<global::LeapMotion.Sample> responseStream, ServerCallContext context)
+    public override async Task ReadData(Empty request, IServerStreamWriter<Proto.Sample> responseStream, ServerCallContext context)
     {
         _logger.LogInformation("[LEAP] Reading cycle started");
 
@@ -91,12 +118,7 @@ internal class LeapMotionService : global::LeapMotion.Dispatcher.DispatcherBase,
 
             if (_isSending && _hasNewData)
             {
-                await responseStream.WriteAsync(new global::LeapMotion.Sample
-                {
-                    X = _lastSample.x,
-                    Y = _lastSample.y,
-                    Z = _lastSample.z,
-                });
+                await responseStream.WriteAsync(_lastSample);
                 _hasNewData = false;
             }
         }
@@ -104,7 +126,7 @@ internal class LeapMotionService : global::LeapMotion.Dispatcher.DispatcherBase,
         _logger.LogInformation("[LEAP] Reading cycle stopped");
     }
 
-    public override async Task ReadEvents(Empty request, IServerStreamWriter<global::LeapMotion.Event> responseStream, ServerCallContext context)
+    public override async Task ReadEvents(Empty request, IServerStreamWriter<Proto.Event> responseStream, ServerCallContext context)
     {
         while (_isActive && !context.CancellationToken.IsCancellationRequested)
         {
@@ -126,13 +148,13 @@ internal class LeapMotionService : global::LeapMotion.Dispatcher.DispatcherBase,
 
     readonly ILogger<LeapMotionService> _logger;
     readonly LeapM? _leap;
-    readonly Queue<global::LeapMotion.Event> _events = [];
+    readonly Queue<Proto.Event> _events = [];
 
     bool _isActive = false;
     bool _isSending = false;
     bool _isConnected = false;
 
-    Leap.Vector _lastSample = Leap.Vector.Zero;
+    Proto.Sample _lastSample = new() { Palm = Common.Vector.ZEROS };
 
     bool _hasNewData = false;
     bool _isHandClose = false;

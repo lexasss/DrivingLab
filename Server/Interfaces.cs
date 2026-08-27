@@ -6,7 +6,7 @@ namespace Server;
 internal interface IService : IDisposable
 {
     bool IsAvailable();
-    Task<Common.BoolReply> IsAvailable(Empty request, ServerCallContext context);
+    Task<Common.Bool> IsAvailable(Empty request, ServerCallContext context);
 }
 
 internal interface ITelemetryService : IService

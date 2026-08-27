@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:local="clr-namespace:ClientExample"
+        xmlns:lm="clr-namespace:LeapMotion;assembly=Core"
         xmlns:conv="clr-namespace:MaterialDesignThemes.Wpf.Converters;assembly=MaterialDesignThemes.Wpf"
         mc:Ignorable="d"
         Style="{StaticResource MaterialDesignWindow}"
@@ -12,6 +13,8 @@
         Height="450"
         Width="800">
     <Window.Resources>
+        <local:EnumToBooleanConverter x:Key="EnumToBoolean"/>
+        
         <Style x:Key="Device" TargetType="Label" BasedOn="{StaticResource {x:Type Label}}">
             <Setter Property="FontWeight" Value="Bold"/>
         </Style>
@@ -54,6 +57,25 @@
                                  Text="Hand visible"/>
                 <local:Indicator IsOn="{Binding LeapMotion.IsHandClose, Mode=OneWay}"
                                  Text="Hand is close"/>
+                <Separator/>
+                <StackPanel>
+                    <Label>Proximity configuration:</Label>
+                    <RadioButton Content="Default"
+                                 GroupName="LeapMotionConfig"
+                                 IsChecked="{Binding LeapMotion.Config,
+                                                     Converter={StaticResource EnumToBoolean},
+                                                     ConverterParameter={x:Static local:LeapMotionConfig.Default}}"/>
+                    <RadioButton Content="Ultrahaptics"
+                                 GroupName="LeapMotionConfig"
+                                 IsChecked="{Binding LeapMotion.Config,
+                                                     Converter={StaticResource EnumToBoolean},
+                                                     ConverterParameter={x:Static local:LeapMotionConfig.Ultrahaptics}}"/>
+                    <!--RadioButton Content="Custom"
+                                 GroupName="LeapMotionConfig"
+                                 IsChecked="{Binding LeapMotion.Config,
+                                                     Converter={StaticResource EnumToBoolean},
+                                                     ConverterParameter={x:Static local:LeapMotionConfig.Custom}}"/-->
+                </StackPanel>
                 <Separator/>
                 <TextBlock Style="{StaticResource Data}"
                            Text="{Binding LeapMotion.Data, Mode=OneWay}"/>
