@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:local="clr-namespace:ClientExample"
         xmlns:conv="clr-namespace:MaterialDesignThemes.Wpf.Converters;assembly=MaterialDesignThemes.Wpf"
         mc:Ignorable="d"
@@ -17,11 +18,19 @@
         <Style x:Key="Data" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
             <Setter Property="Margin" Value="8"/>
         </Style>
-        <Style x:Key="Mark" TargetType="Grid">
-            <Setter Property="Width" Value="12"/>
-            <Setter Property="Height" Value="12"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="Margin" Value="8,0"/>
+        <Style x:Key="Stream" TargetType="ToggleButton" BasedOn="{StaticResource MaterialDesignSwitchToggleButton}">
+            <Setter Property="Margin" Value="2"/>
+            <Setter Property="Width" Value="50"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="HorizontalAlignment" Value="Right"/>
+            <Setter Property="VerticalAlignment" Value="Top"/>
+            <Setter Property="LayoutTransform">
+                <Setter.Value>
+                    <TransformGroup>
+                        <ScaleTransform ScaleX="0.7" ScaleY="0.7"/>
+                    </TransformGroup>
+                </Setter.Value>
+            </Setter>
         </Style>
     </Window.Resources>
     <Grid>
@@ -36,57 +45,24 @@
             </Grid.RowDefinitions>
             <StackPanel>
                 <Label Style="{StaticResource Device}">Leap Motion</Label>
-                <WrapPanel>
-                    <Grid Style="{StaticResource Mark}">
-                        <Ellipse Fill="Red"
-                                 Visibility="{Binding IsLeapMotionAvailable, Mode=OneWay,
-                                    Converter={x:Static conv:BooleanToVisibilityConverter.NotCollapsedInstance}}"/>
-                        <Ellipse Fill="Green"
-                                 Visibility="{Binding IsLeapMotionAvailable, Mode=OneWay,
-                                    Converter={x:Static conv:BooleanToVisibilityConverter.CollapsedInstance}}"/>
-                    </Grid>
-                    <Label>Available</Label>
-                </WrapPanel>
-                <WrapPanel>
-                    <Grid Style="{StaticResource Mark}">
-                        <Ellipse Fill="Red"
-                                 Visibility="{Binding IsLeapMotionConnected, Mode=OneWay,
-                                    Converter={x:Static conv:BooleanToVisibilityConverter.NotCollapsedInstance}}"/>
-                        <Ellipse Fill="Green"
-                                 Visibility="{Binding IsLeapMotionConnected, Mode=OneWay,
-                                    Converter={x:Static conv:BooleanToVisibilityConverter.CollapsedInstance}}"/>
-                    </Grid>
-                    <Label>Connected</Label>
-                </WrapPanel>
-                <WrapPanel>
-                    <Grid Style="{StaticResource Mark}">
-                        <Ellipse Fill="Red"
-                                 Visibility="{Binding IsHandVisible, Mode=OneWay,
-                                    Converter={x:Static conv:BooleanToVisibilityConverter.NotCollapsedInstance}}"/>
-                        <Ellipse Fill="Green"
-                                 Visibility="{Binding IsHandVisible, Mode=OneWay,
-                                    Converter={x:Static conv:BooleanToVisibilityConverter.CollapsedInstance}}"/>
-                    </Grid>
-                    <Label>Hand visible</Label>
-                </WrapPanel>
-                <WrapPanel>
-                    <Grid Style="{StaticResource Mark}">
-                        <Ellipse Fill="Red"
-                                 Visibility="{Binding IsHandClose, Mode=OneWay,
-                                    Converter={x:Static conv:BooleanToVisibilityConverter.NotCollapsedInstance}}"/>
-                        <Ellipse Fill="Green"
-                                 Visibility="{Binding IsHandClose, Mode=OneWay,
-                                    Converter={x:Static conv:BooleanToVisibilityConverter.CollapsedInstance}}"/>
-                    </Grid>
-                    <Label>Hand is close</Label>
-                </WrapPanel>
-                <Button Margin="8"
-                        IsEnabled="{Binding IsLeapMotionConnected}"
-                        Command="{Binding ToggleLeapMotionDataReadingCommand}"
-                        Content="Toggle data streaming"/>
+                <local:Indicator IsOn="{Binding LeapMotion.IsAvailable, Mode=OneWay}"
+                                 Text="Available"/>
+                <local:Indicator IsOn="{Binding LeapMotion.IsConnected, Mode=OneWay}"
+                                 Text="Connected"/>
+                <Separator/>
+                <local:Indicator IsOn="{Binding LeapMotion.IsHandVisible, Mode=OneWay}"
+                                 Text="Hand visible"/>
+                <local:Indicator IsOn="{Binding LeapMotion.IsHandClose, Mode=OneWay}"
+                                 Text="Hand is close"/>
+                <Separator/>
                 <TextBlock Style="{StaticResource Data}"
-                           Text="{Binding LeapMotionData, Mode=OneWay}"/>
+                           Text="{Binding LeapMotion.Data, Mode=OneWay}"/>
             </StackPanel>
+            <ToggleButton Style="{StaticResource Stream}"
+                          IsEnabled="{Binding LeapMotion.IsConnected}"
+                          IsChecked="{Binding LeapMotion.IsStreaming}"
+                          Command="{Binding LeapMotion.ToggleDataReadingCommand}" RenderTransformOrigin="0.5,0.5">
+            </ToggleButton>
         </Grid>
     </Grid>
 </Window>

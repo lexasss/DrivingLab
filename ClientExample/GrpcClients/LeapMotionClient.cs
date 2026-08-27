@@ -3,7 +3,7 @@ using Grpc.Core;
 
 namespace ClientExample;
 
-public class LeapClient : IDisposable
+public class LeapMotionClient : IDisposable
 {
     public record class Point(double X, double Y, double Z = 0);
 
@@ -16,7 +16,7 @@ public class LeapClient : IDisposable
     public bool IsConnected => _isConnected;
     public bool IsReading => _isReading;
 
-    public LeapClient()
+    public LeapMotionClient()
     {
         _channel = new Channel("127.0.0.1", (int)Common.Ports.LeapMotion, ChannelCredentials.Insecure);
         _client = new LeapMotion.Dispatcher.DispatcherClient(_channel);

@@ -38,7 +38,7 @@ public partial class App : Application
 
     private static void ConfigureServices(IServiceCollection services, ConfigurationManager config)
     {
-        services.AddSingleton<LeapClient>();
+        services.AddSingleton<LeapMotionClient>();
         services.AddSingleton<MainViewModel>();
         services.AddSingleton<MainWindow>();
     }
