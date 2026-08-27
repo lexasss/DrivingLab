@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+package Gaze;
+
+import "protos/common.proto";
+import "google/protobuf/empty.proto";
+
+service Dispatcher {
+	rpc IsAvailable (google.protobuf.Empty) returns (Common.BoolReply) {}
+
+	rpc Start (google.protobuf.Empty) returns (google.protobuf.Empty) {}
+	rpc Stop (google.protobuf.Empty) returns (google.protobuf.Empty) {}
+
+	// Starts data streaming.
+	// Call Start() before calling this function
+	// To stop, call Stop() 
+	rpc ReadData (google.protobuf.Empty) returns (stream Sample) {}
+}
+
+// Gaze sample
+message Sample {
+	double timestamp = 1;
+	double eyeX = 2;
+	double eyeY = 3;
+	double eyeXL = 4;
+	double eyeYL = 5;
+	double eyeXR = 6;
+	double eyeYR = 7;
+	double camXL = 8;
+	double camYL = 9;
+	double camXR = 10;
+	double camYR = 11;
+	enum Eye
+	{
+		None = 0;
+		Left = 1;
+		Right = 2;
+		Both = 3;
+	}
+	Eye validEye = 12;
+}
+
+/*message Event {
+	enum ID {
+		Unknown = 0;		// args = []
+		Calibrated = 1;		// args = []
+	}
+
+	ID id = 1;
+
+	// General info, if any: check ID enum 
+	repeated string args = 2;
+}*/

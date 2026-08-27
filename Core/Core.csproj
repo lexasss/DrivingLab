@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <PackageReference Include="Google.Protobuf" />
+    <PackageReference Include="Grpc" />
+    <PackageReference Include="Grpc.Reflection" />
+    <PackageReference Include="Grpc.Tools" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Protobuf Include="protos\common.proto" Link="protos\common.proto" />
+    <Protobuf Include="protos\gaze.proto" Link="protos\gaze.proto" />
+    <Protobuf Include="protos\leap.proto" Link="protos\leap.proto" />
+  </ItemGroup>
+	
+</Project>

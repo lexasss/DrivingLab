@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package LeapMotion;
+
+import "protos/common.proto";
+import "google/protobuf/empty.proto";
+
+service Dispatcher {
+	rpc IsAvailable (google.protobuf.Empty) returns (Common.BoolReply) {}
+	rpc IsConnected (google.protobuf.Empty) returns (Common.BoolReply) {}
+
+	rpc Start (google.protobuf.Empty) returns (google.protobuf.Empty) {}
+	rpc Stop (google.protobuf.Empty) returns (google.protobuf.Empty) {}
+
+	// Starts data streaming.
+	// Call Start() before calling this function
+	// To stop, call Stop() 
+	rpc ReadData (google.protobuf.Empty) returns (stream Sample) {}
+
+	rpc ReadEvents (google.protobuf.Empty) returns (stream Event) {}
+}
+
+// Leap sample
+message Sample {
+	double x = 1;
+	double y = 2;
+	double z = 3;
+}
+
+message Event {
+	string name = 1;
+	bool value = 2;
+}

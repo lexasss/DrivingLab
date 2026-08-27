@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package Common;
+
+message BoolReply {
+	bool success = 1;
+}
+
+enum Status {
+	Disconnected = 0;
+	Connected = 1;
+	Calibrating = 2;
+	Calibrated = 3;
+}

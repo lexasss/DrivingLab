@@ -1,0 +1,13 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Folder Name="/Solution Items/">
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+  </Folder>
+  <Project Path="ClientExample/ClientExample.csproj" Id="42853a70-935e-4f5e-afe6-eda2122467fd" />
+  <Project Path="Core/Core.csproj" />
+  <Project Path="Server/Server.csproj" />
+</Solution>
