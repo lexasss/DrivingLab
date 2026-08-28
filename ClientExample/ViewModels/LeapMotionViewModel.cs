@@ -22,14 +22,26 @@ public partial class LeapMotionViewModel : ObservableObject
     public LeapMotionViewModel(LeapMotionClient leapMotionClient)
     {
         _leapMotionClient = leapMotionClient;
+
+
+        IsConnected = _leapMotionClient.IsConnected;
+
+        _leapMotionClient.ConnectionChanged += (s, e) => IsConnected = e;
+        _leapMotionClient.HandLocationChanged += (s, e) =>
+        {
+            if (_leapMotionClient.IsReading && IsHandVisible)
+                SetData(e);
+        };
+        _leapMotionClient.HandVisibilityChanged += (s, e) =>
+        {
+            IsHandVisible = e;
+            if (_leapMotionClient.IsReading && !IsHandVisible)
+                ResetData();
+        };
+        _leapMotionClient.HandProximityChanged += (s, e) => IsHandClose = e;
+
+        IsAvailable = _leapMotionClient.CheckAvailability();
     }
-
-    public void SetData(LeapMotionClient.Point pt) => 
-        Data = $"X = {pt.X:F1}\nY = {pt.Y:F1}\nZ = {pt.Z:F1}";
-
-    public void ResetData() => 
-        Data = WAITING_HAND;
-
     #region Internal
 
     const string WAITING_HAND = "waiting a hand to appear...";
@@ -57,6 +69,13 @@ public partial class LeapMotionViewModel : ObservableObject
     {
         _leapMotionClient.Configure(value);
     }
+
+    private void SetData(LeapMotion.Sample pt) =>
+        Data = $"X = {pt.Palm.X:F1}\nY = {pt.Palm.Y:F1}\nZ = {pt.Palm.Z:F1}";
+
+    private void ResetData() =>
+        Data = WAITING_HAND;
+
 
     #endregion
 }

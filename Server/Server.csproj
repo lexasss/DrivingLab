@@ -32,13 +32,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="..\libs\x32\LeapC.dll">
+    <None Visible="false" Include="..\libs\x32\LeapC.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="..\libs\x32\Tobii.EyeX.Client.dll">
+    <None Visible="false" Include="..\libs\x32\Tobii.EyeX.Client.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="..\libs\x32\TobiiGazeCore32.dll">
+    <None Visible="false" Include="..\libs\x32\TobiiGazeCore32.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
@@ -51,8 +51,7 @@
     <Description>DrivingLab Server</Description>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <Prefer32Bit>true</Prefer32Bit>
+  <PropertyGroup>
     <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
 

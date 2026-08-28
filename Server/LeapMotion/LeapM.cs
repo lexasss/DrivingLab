@@ -151,7 +151,7 @@ internal class LeapM: IDisposable
             };
             foreach (var finger in frame.Hands[0].Fingers)
             {
-                sample.Fingertip.Add(new Common.Vector()
+                sample.Fingertips.Add(new Common.Vector()
                 {
                     X = (finger.TipPosition.x + _translation.X) * _scale.X,
                     Y = (finger.TipPosition.z + _translation.Y) * _scale.Y,

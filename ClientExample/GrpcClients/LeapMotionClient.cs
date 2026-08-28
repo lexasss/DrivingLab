@@ -1,5 +1,6 @@
 ﻿using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
+using Microsoft.Extensions.Options;
 
 namespace ClientExample;
 
@@ -10,15 +11,15 @@ public class LeapMotionClient : IDisposable
     public event EventHandler<bool>? ConnectionChanged;
     public event EventHandler<bool>? HandVisibilityChanged;
     public event EventHandler<bool>? HandProximityChanged;
-    public event EventHandler<Point>? HandLocationChanged;
+    public event EventHandler<LeapMotion.Sample>? HandLocationChanged;
 
     public bool IsAvailable => _isAvailable;
     public bool IsConnected => _isConnected;
     public bool IsReading => _isReading;
 
-    public LeapMotionClient()
+    public LeapMotionClient(IOptions<AppSettings> appSettings)
     {
-        _channel = new Channel("127.0.0.1", (int)Common.Ports.LeapMotion, ChannelCredentials.Insecure);
+        _channel = new Channel(appSettings.Value.ServerIp, (int)Common.Ports.LeapMotion, ChannelCredentials.Insecure);
         _client = new LeapMotion.Dispatcher.DispatcherClient(_channel);
 
         CheckAvailability();
@@ -105,7 +106,7 @@ public class LeapMotionClient : IDisposable
             {
                 var data = responseStream.Current;
 
-                HandLocationChanged?.Invoke(this, new Point(data.Palm.X, data.Palm.Y, data.Palm.Z));
+                HandLocationChanged?.Invoke(this, data);
             }
         }
         catch (RpcException e)

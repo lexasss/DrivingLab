@@ -36,7 +36,7 @@ message Configuration {
 
 message Sample {
 	Common.Vector palm = 1;
-	repeated Common.Vector fingertip = 2;
+	repeated Common.Vector fingertips = 2;
 }
 
 message Event {
