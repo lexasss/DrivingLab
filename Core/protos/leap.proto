@@ -20,13 +20,14 @@ service Dispatcher {
 	rpc ReadEvents (google.protobuf.Empty) returns (stream Event) {}
 }
 
+enum ConfigType {
+	Default = 0;
+	Ultrahaptics = 1;
+	Custom = 2;
+}
+
 message Configuration {
-	enum SetupType {
-		Default = 0;
-		Ultrahaptics = 1;
-		Custom = 2;
-	}
-	SetupType setup = 1;
+	ConfigType config = 1;
 	optional Common.Vector proximityBoxCorner1 = 2;
 	optional Common.Vector proximityBoxCorner2 = 3;
 	optional Common.Vector translation = 4;
@@ -35,6 +36,7 @@ message Configuration {
 
 message Sample {
 	Common.Vector palm = 1;
+	repeated Common.Vector fingertip = 2;
 }
 
 message Event {

@@ -113,7 +113,7 @@ internal class LeapM: IDisposable
 
     private void OnConnect(object? sender, DeviceEventArgs args)
     {
-        _logger.LogInformation($"[LEAP] Connected to {args.Device.SerialNumber}");
+        _logger.LogInformation("[LEAP] Connected to {id}", args.Device.SerialNumber);
 
         Info = args.Device;
 
@@ -140,29 +140,38 @@ internal class LeapM: IDisposable
 
             var palmPos = frame.Hands[0].PalmPosition;
 
-            var point = new Common.Vector()
+            var sample = new global::LeapMotion.Sample()
             {
-                X = (palmPos.x + _translation.X) * _scale.X,
-                Y = (palmPos.z + _translation.Y) * _scale.Y,
-                Z = (palmPos.y + _translation.Z) * _scale.Z
+                Palm = new Common.Vector()
+                {
+                    X = (palmPos.x + _translation.X) * _scale.X,
+                    Y = (palmPos.z + _translation.Y) * _scale.Y,
+                    Z = (palmPos.y + _translation.Z) * _scale.Z
+                }
             };
-
-            HandLocationChanged?.Invoke(this, new global::LeapMotion.Sample()
+            foreach (var finger in frame.Hands[0].Fingers)
             {
-                Palm = point
-            });
+                sample.Fingertip.Add(new Common.Vector()
+                {
+                    X = (finger.TipPosition.x + _translation.X) * _scale.X,
+                    Y = (finger.TipPosition.z + _translation.Y) * _scale.Y,
+                    Z = (finger.TipPosition.y + _translation.Z) * _scale.Z
+                });
+            }
 
-            var isHandInSetUpBox = IsHandClose(palmPos);
-            if (isHandInSetUpBox && !_isHandClose)
+            HandLocationChanged?.Invoke(this, sample);
+
+            var isHandClose = IsHandClose(palmPos);
+            if (isHandClose && !_isHandClose)
             {
                 HandProximityChanged?.Invoke(this, true);
             }
-            else if(!isHandInSetUpBox && _isHandClose)
+            else if(!isHandClose && _isHandClose)
             {
                 HandProximityChanged?.Invoke(this, false);
             }
 
-            _isHandClose = isHandInSetUpBox;
+            _isHandClose = isHandClose;
         }
         else if (_isHandVisible)
         {
@@ -188,21 +197,21 @@ internal class LeapM: IDisposable
     private void OnDeviceFailure(object? sender, DeviceFailureEventArgs args)
     {
         _logger.LogError("[LEAP] Device Error");
-        _logger.LogError($"[LEAP]   PNP ID: {args.DeviceSerialNumber}");
-        _logger.LogError($"[LEAP]   Failure message: {args.ErrorMessage}");
+        _logger.LogError("[LEAP]   PNP ID: {sn}", args.DeviceSerialNumber);
+        _logger.LogError("[LEAP]   Failure message: {msg}", args.ErrorMessage);
     }
 
     private void OnLogMessage(object? sender, LogEventArgs args)
     {
         var (type, level) = args.severity switch
         {
-            MessageSeverity.MESSAGE_CRITICAL => ("Critical", LogLevel.Error),
+            MessageSeverity.MESSAGE_CRITICAL => ("Critical", LogLevel.Critical),
             MessageSeverity.MESSAGE_WARNING => ("Warning", LogLevel.Warning),
             MessageSeverity.MESSAGE_INFORMATION => ("Info", LogLevel.Information),
             _ => ("Unknown", LogLevel.Debug),
         };
 
-        _logger.Log(level, $"[LEAP] [{type}] {args.type}: {args.message}");
+        _logger.Log(level, "[LEAP] [{type}] {type2}: {msg}", type, args.type, args.message);
     }
 
     #endregion

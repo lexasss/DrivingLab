@@ -70,7 +70,9 @@ internal class LeapMotionService : global::LeapMotion.Dispatcher.DispatcherBase,
 
     public override Task<Empty> Configure(Proto.Configuration request, ServerCallContext context)
     {
-        if (request.Setup == Proto.Configuration.Types.SetupType.Custom)
+        _logger.LogInformation("[LEAP] [req] Configuration");
+
+        if (request.Config == Proto.ConfigType.Custom)
         {
             _leap?.SetProximityBox(
                 request.ProximityBoxCorner1,
@@ -81,7 +83,7 @@ internal class LeapMotionService : global::LeapMotion.Dispatcher.DispatcherBase,
                 request.Scale
             );
         }
-        else if (request.Setup == Proto.Configuration.Types.SetupType.Ultrahaptics)
+        else if (request.Config == Proto.ConfigType.Ultrahaptics)
         {
             _leap?.ConfigureForUltrahaptics();
         }
@@ -96,21 +98,21 @@ internal class LeapMotionService : global::LeapMotion.Dispatcher.DispatcherBase,
 
     public override Task<Empty> Start(Empty request, ServerCallContext context)
     {
+        _logger.LogInformation("[LEAP] [req] Start");
         _isSending = true;
-        _logger.LogInformation("[LEAP] Streaming started");
         return Task.FromResult(new Empty());
     }
 
     public override Task<Empty> Stop(Empty request, ServerCallContext context)
     {
+        _logger.LogInformation("[LEAP] [req] Stop");
         _isSending = false;
-        _logger.LogInformation("[LEAP] Streaming finished");
         return Task.FromResult(new Empty());
     }
 
     public override async Task ReadData(Empty request, IServerStreamWriter<Proto.Sample> responseStream, ServerCallContext context)
     {
-        _logger.LogInformation("[LEAP] Reading cycle started");
+        _logger.LogInformation("[LEAP] [req] Read data: start");
 
         while (!context.CancellationToken.IsCancellationRequested)
         {
@@ -123,7 +125,7 @@ internal class LeapMotionService : global::LeapMotion.Dispatcher.DispatcherBase,
             }
         }
 
-        _logger.LogInformation("[LEAP] Reading cycle stopped");
+        _logger.LogInformation("[LEAP] [---] Read data: stop");
     }
 
     public override async Task ReadEvents(Empty request, IServerStreamWriter<Proto.Event> responseStream, ServerCallContext context)

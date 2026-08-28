@@ -17,7 +17,7 @@ public partial class LeapMotionViewModel : ObservableObject
     [ObservableProperty]
     public partial bool IsStreaming { get; set; } = false;
     [ObservableProperty]
-    public partial LeapMotionConfig Config { get; set; } = LeapMotionConfig.Default;
+    public partial LeapMotion.ConfigType Config { get; set; } = LeapMotion.ConfigType.Default;
 
     public LeapMotionViewModel(LeapMotionClient leapMotionClient)
     {
@@ -25,7 +25,7 @@ public partial class LeapMotionViewModel : ObservableObject
     }
 
     public void SetData(LeapMotionClient.Point pt) => 
-        Data = $"X = {pt.X:F1}, Y = {pt.Y:F1}, Z = {pt.Z:F1}";
+        Data = $"X = {pt.X:F1}\nY = {pt.Y:F1}\nZ = {pt.Z:F1}";
 
     public void ResetData() => 
         Data = WAITING_HAND;
@@ -53,7 +53,7 @@ public partial class LeapMotionViewModel : ObservableObject
         }
     }
 
-    partial void OnConfigChanged(LeapMotionConfig value)
+    partial void OnConfigChanged(LeapMotion.ConfigType value)
     {
         _leapMotionClient.Configure(value);
     }

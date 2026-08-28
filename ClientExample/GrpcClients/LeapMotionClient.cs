@@ -1,15 +1,7 @@
 ﻿using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
-using ConfigType = LeapMotion.Configuration.Types.SetupType;
 
 namespace ClientExample;
-
-public enum LeapMotionConfig
-{
-    Default = ConfigType.Default,
-    Ultrahaptics = ConfigType.Ultrahaptics,
-    Custom = ConfigType.Custom,
-}
 
 public class LeapMotionClient : IDisposable
 {
@@ -80,11 +72,11 @@ public class LeapMotionClient : IDisposable
         _ = _client.Stop(new Empty());
     }
 
-    public void Configure(LeapMotionConfig config)
+    public void Configure(LeapMotion.ConfigType config)
     {
         _client.Configure(new LeapMotion.Configuration()
         {
-            Setup = (ConfigType)config
+            Config = config
         });
     }
 
@@ -143,6 +135,11 @@ public class LeapMotionClient : IDisposable
                 {
                     _isConnected = evt.Value;
                     ConnectionChanged?.Invoke(this, evt.Value);
+                    if (!_isConnected)
+                    {
+                        HandVisibilityChanged?.Invoke(this, false);
+                        HandProximityChanged?.Invoke(this, false);
+                    }
                 }
                 else if (evt.Name == Common.LeapMotion.Events.IS_HAND_VISIBLE)
                 {
