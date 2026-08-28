@@ -81,6 +81,14 @@ public class LeapMotionClient : IDisposable
         });
     }
 
+    public void SetLoggingEnabled(bool enabled)
+    {
+        if (enabled)
+            _ = _client.SetLogFilenameAsync(new Common.String() { Value = "leap.tsv" });
+        else
+            _ = _client.SetLogFilenameAsync(new Common.String() { Value = string.Empty });
+    }
+
     #region Internal
 
     readonly Channel _channel;
@@ -132,7 +140,7 @@ public class LeapMotionClient : IDisposable
                     break;
 
                 var evt = responseStream.Current;
-                if (evt.Name == Common.LeapMotion.Events.IS_CONNECTED)
+                if (evt.Name == LeapMotion.Events.IS_CONNECTED)
                 {
                     _isConnected = evt.Value;
                     ConnectionChanged?.Invoke(this, evt.Value);
@@ -142,11 +150,11 @@ public class LeapMotionClient : IDisposable
                         HandProximityChanged?.Invoke(this, false);
                     }
                 }
-                else if (evt.Name == Common.LeapMotion.Events.IS_HAND_VISIBLE)
+                else if (evt.Name == LeapMotion.Events.IS_HAND_VISIBLE)
                 {
                     HandVisibilityChanged?.Invoke(this, evt.Value);
                 }
-                else if (evt.Name == Common.LeapMotion.Events.IS_HAND_CLOSE)
+                else if (evt.Name == LeapMotion.Events.IS_HAND_CLOSE)
                 {
                     HandProximityChanged?.Invoke(this, evt.Value);
                 }

@@ -5,7 +5,7 @@ using Proto = global::LeapMotion;
 
 namespace Server.LeapMotion;
 
-internal class LeapMotionService : global::LeapMotion.Dispatcher.DispatcherBase, ITelemetryService
+internal class LeapMotionService : Proto.Dispatcher.DispatcherBase, ITelemetryService
 {
     public bool IsAvailable() => _leap != null;
 
@@ -21,17 +21,17 @@ internal class LeapMotionService : global::LeapMotion.Dispatcher.DispatcherBase,
             _leap.ConnectionChanged += (s, e) =>
             {
                 _isConnected = e;
-                _events.Enqueue(new Proto.Event() { Name = Common.LeapMotion.Events.IS_CONNECTED, Value = _isConnected });
+                _events.Enqueue(new Proto.Event() { Name = Proto.Events.IS_CONNECTED, Value = _isConnected });
             };
             _leap.HandVisibilityChanged += (s, e) =>
             {
                 _isHandVisible = e;
-                _events.Enqueue(new Proto.Event() { Name = Common.LeapMotion.Events.IS_HAND_VISIBLE, Value = _isHandVisible });
+                _events.Enqueue(new Proto.Event() { Name = Proto.Events.IS_HAND_VISIBLE, Value = _isHandVisible });
             };
             _leap.HandProximityChanged += (s, e) =>
             {
                 _isHandClose = e;
-                _events.Enqueue(new Proto.Event() { Name = Common.LeapMotion.Events.IS_HAND_CLOSE, Value = _isHandClose });
+                _events.Enqueue(new Proto.Event() { Name = Proto.Events.IS_HAND_CLOSE, Value = _isHandClose });
             };
             _leap.HandLocationChanged += (s, e) =>
             {
@@ -54,8 +54,9 @@ internal class LeapMotionService : global::LeapMotion.Dispatcher.DispatcherBase,
     public void Dispose()
     {
         _isActive = false;
-        _logger.LogInformation("[LEAP] Service was disposed");
         _leap?.Dispose();
+        _fileLogger.Dispose();
+        _logger.LogInformation("[LEAP] Service was disposed");
     }
 
     public override Task<Common.Bool> IsAvailable (Empty request, ServerCallContext context)
@@ -110,6 +111,13 @@ internal class LeapMotionService : global::LeapMotion.Dispatcher.DispatcherBase,
         return Task.FromResult(new Empty());
     }
 
+    public override Task<Common.Bool> SetLogFilename(Common.String request, ServerCallContext context)
+    {
+        _logger.LogInformation("[LEAP] [req] logfile {filename}", request.Value);
+        var result = _fileLogger.SetFilename(request.Value);
+        return Task.FromResult(new Common.Bool() { Value = result });
+    }
+
     public override async Task ReadData(Empty request, IServerStreamWriter<Proto.Sample> responseStream, ServerCallContext context)
     {
         _logger.LogInformation("[LEAP] [req] Read data: start");
@@ -121,6 +129,7 @@ internal class LeapMotionService : global::LeapMotion.Dispatcher.DispatcherBase,
             if (_isSending && _hasNewData)
             {
                 await responseStream.WriteAsync(_lastSample);
+                _fileLogger.Add(_lastSample.ToStringArray());
                 _hasNewData = false;
             }
         }
@@ -142,7 +151,7 @@ internal class LeapMotionService : global::LeapMotion.Dispatcher.DispatcherBase,
         }
     }
 
-    // Internal
+    #region Internal
 
     record class Event(string Name, bool Value);
 
@@ -151,6 +160,7 @@ internal class LeapMotionService : global::LeapMotion.Dispatcher.DispatcherBase,
     readonly ILogger<LeapMotionService> _logger;
     readonly LeapM? _leap;
     readonly Queue<Proto.Event> _events = [];
+    readonly Tools.FileLogger _fileLogger = new();
 
     bool _isActive = false;
     bool _isSending = false;
@@ -161,4 +171,6 @@ internal class LeapMotionService : global::LeapMotion.Dispatcher.DispatcherBase,
     bool _hasNewData = false;
     bool _isHandClose = false;
     bool _isHandVisible = false;
+
+    #endregion
 }

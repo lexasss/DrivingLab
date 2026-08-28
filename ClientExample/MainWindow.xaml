@@ -27,6 +27,9 @@
             <Setter Property="Background" Value="AntiqueWhite"/>
             <Setter Property="Padding" Value="8"/>
         </Style>
+        <Style x:Key="RowHeader" TargetType="Label" BasedOn="{StaticResource {x:Type Label}}">
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
         <Style x:Key="Data" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
             <Setter Property="Margin" Value="8"/>
         </Style>
@@ -50,18 +53,12 @@
             <ColumnDefinition Width="200"/>
         </Grid.ColumnDefinitions>
 
-        <Border Style="{StaticResource Card}">
-            <Grid Grid.Column="0">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition/>
-                </Grid.RowDefinitions>
+        <Border Grid.Column="0"
+                Style="{StaticResource Card}">
+            <StackPanel>
                 <Label Style="{StaticResource Device}"
-                       Grid.Row="0"
                        Content="Leap Motion"/>
-                <StackPanel Grid.Row="1"
-                            Margin="4">
+                <StackPanel Margin="4">
                     <local:Indicator IsOn="{Binding LeapMotion.IsAvailable, Mode=OneWay}"
                                      Text="Available"/>
                     <local:Indicator IsOn="{Binding LeapMotion.IsConnected, Mode=OneWay}"
@@ -91,15 +88,28 @@
                                                          ConverterParameter={x:Static local:LeapMotionConfig.Custom}}"/-->
                     </StackPanel>
                     <Separator/>
+                    <WrapPanel>
+                        <ToggleButton Style="{StaticResource Stream}"
+                              IsEnabled="{Binding LeapMotion.IsConnected}"
+                              IsChecked="{Binding LeapMotion.IsStreaming}"
+                              Command="{Binding LeapMotion.ToggleDataStreamingCommand}">
+                        </ToggleButton>
+                        <Label Style="{StaticResource RowHeader}"
+                               Content="Stream data"/>
+                    </WrapPanel>
+                    <WrapPanel>
+                        <ToggleButton Style="{StaticResource Stream}"
+                              IsEnabled="{Binding LeapMotion.IsConnected}"
+                              IsChecked="{Binding LeapMotion.IsLogging}">
+                        </ToggleButton>
+                        <Label Style="{StaticResource RowHeader}"
+                               Content="Log data"/>
+                    </WrapPanel>
+                    <Separator/>
                     <TextBlock Style="{StaticResource Data}"
                                Text="{Binding LeapMotion.Data, Mode=OneWay}"/>
                 </StackPanel>
-                <ToggleButton Style="{StaticResource Stream}"
-                              IsEnabled="{Binding LeapMotion.IsConnected}"
-                              IsChecked="{Binding LeapMotion.IsStreaming}"
-                              Command="{Binding LeapMotion.ToggleDataReadingCommand}" RenderTransformOrigin="0.5,0.5">
-                </ToggleButton>
-            </Grid>
+            </StackPanel>
         </Border>
     </Grid>
 </Window>

@@ -10,6 +10,7 @@ service Dispatcher {
 	rpc IsConnected (google.protobuf.Empty) returns (Common.Bool) {}
 
 	rpc Configure (Configuration) returns (google.protobuf.Empty) {}
+	rpc SetLogFilename (Common.String) returns (Common.Bool) {}
 
 	// Enable of disable sample streaming to clients
 	rpc Start (google.protobuf.Empty) returns (google.protobuf.Empty) {}

@@ -46,6 +46,7 @@ internal class TobiiEyeXService : Gaze.Dispatcher.DispatcherBase, ITelemetryServ
         _eyeX?.Dispose();
         _eyeX = null;
 
+        _fileLogger.Dispose();
         _logger.LogInformation("[EYEX] Service was disposed");
     }
 
@@ -66,6 +67,13 @@ internal class TobiiEyeXService : Gaze.Dispatcher.DispatcherBase, ITelemetryServ
         return Task.FromResult(new Empty());
     }
 
+    public override Task<Common.Bool> SetLogFilename(Common.String request, ServerCallContext context)
+    {
+        _logger.LogInformation("[EYEX] [req] logfile {filename}", request.Value);
+        var result = _fileLogger.SetFilename(request.Value);
+        return Task.FromResult(new Common.Bool() { Value = result });
+    }
+
     public override async Task ReadData(Empty request, IServerStreamWriter<Gaze.Sample> responseStream, ServerCallContext context)
     {
         if (_eyeX == null)
@@ -76,7 +84,10 @@ internal class TobiiEyeXService : Gaze.Dispatcher.DispatcherBase, ITelemetryServ
         await foreach (var data in _channel.Reader.ReadAllAsync(_cts.Token))
         {
             if (_isSending)
+            {
                 await responseStream.WriteAsync(data);
+                _fileLogger.Add(data.ToStringArray());
+            }
         }
 
         _eyeX.Stop();
@@ -91,12 +102,12 @@ internal class TobiiEyeXService : Gaze.Dispatcher.DispatcherBase, ITelemetryServ
     readonly ILogger<TobiiEyeXService> _logger;
     readonly Channel<Gaze.Sample> _channel = Channel.CreateUnbounded<Gaze.Sample>();
     readonly CancellationTokenSource _cts = new();
-
-    bool _isSending = false;
+    readonly Tools.FileLogger _fileLogger = new();
+    readonly Gaze.Sample _sample = new();
 
     EyeX? _eyeX;
 
-    readonly Gaze.Sample _sample = new();
+    bool _isSending = false;
 
     // Event handlers
 
@@ -181,14 +192,14 @@ internal class TobiiEyeXService : Gaze.Dispatcher.DispatcherBase, ITelemetryServ
 
     // WinAPI
 
-    [System.Runtime.InteropServices.DllImport("user32.dll")]
-    static extern int GetSystemMetrics(SystemMetric smIndex);
-
     enum SystemMetric
     {
         SM_CXSCREEN = 0,
         SM_CYSCREEN = 1,
     }
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    static extern int GetSystemMetrics(SystemMetric smIndex);
 
     #endregion
 }

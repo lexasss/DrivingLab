@@ -34,6 +34,7 @@ internal class MyGazeService : Gaze.Dispatcher.DispatcherBase, ITelemetryService
         _myGaze?.Dispose();
         _myGaze = null;
 
+        _fileLogger.Dispose();
         _logger.LogInformation("[VIMG] Service was disposed");
     }
 
@@ -54,6 +55,13 @@ internal class MyGazeService : Gaze.Dispatcher.DispatcherBase, ITelemetryService
         return Task.FromResult(new Empty());
     }
 
+    public override Task<Common.Bool> SetLogFilename(Common.String request, ServerCallContext context)
+    {
+        _logger.LogInformation("[VIMG] [req] logfile {filename}", request.Value);
+        var result = _fileLogger.SetFilename(request.Value);
+        return Task.FromResult(new Common.Bool() { Value = result });
+    }
+
     public override async Task ReadData(Empty request, IServerStreamWriter<Gaze.Sample> responseStream, ServerCallContext context)
     {
         if (_myGaze == null)
@@ -64,7 +72,10 @@ internal class MyGazeService : Gaze.Dispatcher.DispatcherBase, ITelemetryService
         await foreach (var data in _channel.Reader.ReadAllAsync(_cts.Token))
         {
             if (_isSending)
+            {
                 await responseStream.WriteAsync(data);
+                _fileLogger.Add(data.ToStringArray());
+            }
         }
 
         _myGaze.Stop();
@@ -75,6 +86,7 @@ internal class MyGazeService : Gaze.Dispatcher.DispatcherBase, ITelemetryService
     readonly ILogger<MyGazeService> _logger;
     readonly Channel<Gaze.Sample> _channel = Channel.CreateUnbounded<Gaze.Sample>();
     readonly CancellationTokenSource _cts = new();
+    readonly Tools.FileLogger _fileLogger = new();
 
     MyGaze? _myGaze;
 

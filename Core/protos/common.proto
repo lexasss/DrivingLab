@@ -6,6 +6,10 @@ message Bool {
 	bool value = 1;
 }
 
+message String {
+	optional string value = 1;
+}
+
 message Vector {
 	double x = 1;
 	double y = 2;

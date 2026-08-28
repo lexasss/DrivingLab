@@ -14,13 +14,15 @@ internal class MyGaze : IDisposable
 	{
 		_logger = logger;
 
+        Log(MyGazeAPI.SetLicense(LICENSE), nameof(MyGazeAPI.SetLicense));
         MyGazeAPI.Ret result = Log(MyGazeAPI.Connect(), nameof(MyGazeAPI.Connect));
 
+		/*
 		if (result != MyGazeAPI.Ret.SUCCESS)
 		{
-                Log(MyGazeAPI.SetLicense(LICENSE), nameof(MyGazeAPI.SetLicense));
+            Log(MyGazeAPI.SetLicense(LICENSE), nameof(MyGazeAPI.SetLicense));
 			result = Log(MyGazeAPI.Connect(), nameof(MyGazeAPI.Connect));
-		}
+		}*/
 
 		if (result == MyGazeAPI.Ret.SUCCESS)
         {
@@ -64,12 +66,11 @@ internal class MyGaze : IDisposable
         Log(MyGazeAPI.Quit(), nameof(MyGazeAPI.Quit));
 	}
 
-	// Internal
+	#region Internal
 
 	readonly StringBuilder LICENSE = new("NBBwa2iQ1Iu3eLwt");
 
 	readonly ILogger<MyGazeService> _logger;
-
 
     private void GetSampleCallbackFunction(MyGazeAPI.SampleStruct sample)
 	{
@@ -82,4 +83,6 @@ internal class MyGaze : IDisposable
         _logger.LogInformation($"[VIMG] {fnc} => {code}");
 		return code;
 	}
+
+    #endregion
 }

@@ -83,7 +83,7 @@ internal class EyeX : IDisposable
         _host?.Dispose();
     }
 
-    // Internal
+    #region Internal
 
     readonly EyeXFramework.EyeXHost _host;
     readonly EyeXCore.EyeTracker? _tracker;
@@ -98,4 +98,6 @@ internal class EyeX : IDisposable
             _logger.LogInformation($"[EYEX] status: {e.Value}");
         }
     }
+
+    #endregion
 }

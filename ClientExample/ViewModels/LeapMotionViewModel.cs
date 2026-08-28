@@ -17,6 +17,8 @@ public partial class LeapMotionViewModel : ObservableObject
     [ObservableProperty]
     public partial bool IsStreaming { get; set; } = false;
     [ObservableProperty]
+    public partial bool IsLogging { get; set; } = false;
+    [ObservableProperty]
     public partial LeapMotion.ConfigType Config { get; set; } = LeapMotion.ConfigType.Default;
 
     public LeapMotionViewModel(LeapMotionClient leapMotionClient)
@@ -42,6 +44,7 @@ public partial class LeapMotionViewModel : ObservableObject
 
         IsAvailable = _leapMotionClient.CheckAvailability();
     }
+
     #region Internal
 
     const string WAITING_HAND = "waiting a hand to appear...";
@@ -49,7 +52,24 @@ public partial class LeapMotionViewModel : ObservableObject
     readonly LeapMotionClient _leapMotionClient;
 
     [RelayCommand]
-    private void ToggleDataReading()
+    private void ToggleDataStreaming()
+    {
+        if (_leapMotionClient.IsReading)
+        {
+            _leapMotionClient.Stop();
+            IsStreaming = false;
+            Data = string.Empty;
+        }
+        else
+        {
+            _leapMotionClient.Start();
+            IsStreaming = true;
+            Data = WAITING_HAND;
+        }
+    }
+
+    [RelayCommand]
+    private void ToggleDataLogging()
     {
         if (_leapMotionClient.IsReading)
         {
@@ -70,12 +90,16 @@ public partial class LeapMotionViewModel : ObservableObject
         _leapMotionClient.Configure(value);
     }
 
+    partial void OnIsLoggingChanged(bool value)
+    {
+        _leapMotionClient. SetLoggingEnabled(value);
+    }
+
     private void SetData(LeapMotion.Sample pt) =>
         Data = $"X = {pt.Palm.X:F1}\nY = {pt.Palm.Y:F1}\nZ = {pt.Palm.Z:F1}";
 
     private void ResetData() =>
         Data = WAITING_HAND;
-
 
     #endregion
 }

@@ -13,4 +13,5 @@ internal interface ITelemetryService : IService
 {
     Task<Empty> Start(Empty request, ServerCallContext context);
     Task<Empty> Stop(Empty request, ServerCallContext context);
+    Task<Common.Bool> SetLogFilename(Common.String request, ServerCallContext context);
 }
