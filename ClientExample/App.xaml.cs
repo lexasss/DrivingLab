@@ -41,7 +41,11 @@ public partial class App : Application
         services.Configure<AppSettings>(config);
 
         services.AddSingleton<LeapMotionClient>();
+        services.AddSingleton<SmartEyeClient>();
+
         services.AddSingleton<LeapMotionViewModel>();
+        services.AddSingleton<SmartEyeViewModel>();
+
         services.AddSingleton<MainViewModel>();
         services.AddSingleton<MainWindow>();
     }

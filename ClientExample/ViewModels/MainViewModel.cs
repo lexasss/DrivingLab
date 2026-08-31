@@ -1,13 +1,9 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿namespace ClientExample;
 
-namespace ClientExample;
-
-public partial class MainViewModel : ObservableObject
+public partial class MainViewModel(
+    LeapMotionViewModel leapMotionVm,
+    SmartEyeViewModel smartEyeVm)
 {
-    public LeapMotionViewModel LeapMotion { get; }
-
-    public MainViewModel(LeapMotionViewModel leapMotionVm)
-    {
-        LeapMotion = leapMotionVm;
-    }
+    public LeapMotionViewModel LeapMotion { get; } = leapMotionVm;
+    public SmartEyeViewModel SmartEye { get; } = smartEyeVm;
 }

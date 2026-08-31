@@ -10,7 +10,7 @@ service Dispatcher {
 	rpc IsConnected (google.protobuf.Empty) returns (Common.Bool) {}
 
 	rpc SetLogFilename (Common.String) returns (Common.Bool) {}
-	rpc Configure (Configuration) returns (google.protobuf.Empty) {}
+	rpc Configure (Configuration) returns (Common.Bool) {}
 
 	rpc ReadEvents (google.protobuf.Empty) returns (stream Event) {}
 
@@ -50,7 +50,7 @@ message Intersections {
 message Event {
 	string name = 1;
 	oneof value {
-		bool success = 2;
+		bool isConnected = 2;
 		Intersection intersection = 3;
 		Intersections intersections = 4;
 	}

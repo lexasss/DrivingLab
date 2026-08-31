@@ -13,7 +13,7 @@ public partial class LeapMotionViewModel : ObservableObject
     [ObservableProperty]
     public partial bool IsHandClose { get; set; } = false;
     [ObservableProperty]
-    public partial string Data { get; set; } = "";
+    public partial string Data { get; set; } = string.Empty;
     [ObservableProperty]
     public partial bool IsStreaming { get; set; } = false;
     [ObservableProperty]

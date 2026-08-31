@@ -57,7 +57,7 @@ internal class SmartEyeService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
         return Task.FromResult(new Common.Bool { Value = _isConnected });
     }
 
-    public override Task<Empty> Configure(Proto.Configuration request, ServerCallContext context)
+    public override async Task<Common.Bool> Configure(Proto.Configuration request, ServerCallContext context)
     {
         if (!_isConnected && _seClient != null)
         {
@@ -68,9 +68,8 @@ internal class SmartEyeService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
 
             _planeMappingMode = request.PlaneMappingMode;
 
-            var task = _seClient.Connect(request.Ip, request.Port);
-            task.Wait();
-            if (task.Result == null)
+            var result = await _seClient.Connect(request.Ip, request.Port);
+            if (result == null)
             {
                 _logger.LogInformation("[SEYE] Connected");
                 _isConnected = true;
@@ -79,11 +78,11 @@ internal class SmartEyeService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
             }
             else
             {
-                _logger.LogError("[SEYE] Failed to connect: {reason}", task.Result.Message);
+                _logger.LogError("[SEYE] Failed to connect: {reason}", result.Message);
             }
         }
 
-        return Task.FromResult(new Empty());
+        return new Common.Bool() { Value = _isConnected };
     }
 
     public override Task<Empty> Start(Empty request, ServerCallContext context)
