@@ -19,7 +19,7 @@ internal class MyGazeService : Gaze.Dispatcher.DispatcherBase, ITelemetryService
             _myGaze = new MyGaze(logger);
             _myGaze.Sample += MyGaze_Sample;
 
-            _logger.LogInformation("[VIMG] Service is running");
+            _logger.LogInformation("[VIMG] Running");
         }
         catch (Exception)
         {
@@ -35,7 +35,7 @@ internal class MyGazeService : Gaze.Dispatcher.DispatcherBase, ITelemetryService
         _myGaze = null;
 
         _fileLogger.Dispose();
-        _logger.LogInformation("[VIMG] Service was disposed");
+        _logger.LogInformation("[VIMG] Disposed");
     }
 
     public override Task<Common.Bool> IsAvailable(Empty request, ServerCallContext context)
@@ -45,29 +45,45 @@ internal class MyGazeService : Gaze.Dispatcher.DispatcherBase, ITelemetryService
 
     public override Task<Empty> Start(Empty request, ServerCallContext context)
     {
-        _isSending = true;
+        if (!_isSending)
+        {
+            _logger.LogInformation("[VIMG] [req] Start");
+            _isSending = true;
+        }
         return Task.FromResult(new Empty());
     }
 
     public override Task<Empty> Stop(Empty request, ServerCallContext context)
     {
-        _isSending = false;
+        if (_isSending)
+        {
+            _logger.LogInformation("[VIMG] [req] Stop");
+            _isSending = false;
+        }
         return Task.FromResult(new Empty());
     }
 
     public override Task<Common.Bool> SetLogFilename(Common.String request, ServerCallContext context)
     {
-        _logger.LogInformation("[VIMG] [req] logfile {filename}", request.Value);
+        _logger.LogInformation("[VIMG] [req] Logging to {filename}", request.Value);
         var result = _fileLogger.SetFilename(request.Value);
         return Task.FromResult(new Common.Bool() { Value = result });
     }
 
     public override async Task ReadData(Empty request, IServerStreamWriter<Gaze.Sample> responseStream, ServerCallContext context)
     {
-        if (_myGaze == null)
+        if (_myGaze == null || _isReading)
             return;
 
         _myGaze.Start();
+        if (!_myGaze.IsTracking)
+        {
+            _logger.LogError("[VIMG] [req] Data reading: failed");
+            return;
+        }
+
+        _logger.LogInformation("[VIMG] [req] Data reading: start");
+        _isReading = true;
 
         await foreach (var data in _channel.Reader.ReadAllAsync(_cts.Token))
         {
@@ -79,6 +95,8 @@ internal class MyGazeService : Gaze.Dispatcher.DispatcherBase, ITelemetryService
         }
 
         _myGaze.Stop();
+        _logger.LogInformation("[VIMG] [---] Data reading: stop");
+        _isReading = false;
     }
 
     #region Internal
@@ -90,6 +108,7 @@ internal class MyGazeService : Gaze.Dispatcher.DispatcherBase, ITelemetryService
 
     MyGaze? _myGaze;
 
+    bool _isReading = false;
     bool _isSending = false;
 
     // Event handlers

@@ -90,18 +90,17 @@ internal class LeapM: IDisposable
     Common.Vector _scale = Common.Vector.ONES;
 
 
-    private static void PrintDeviceInfo(Device device)
+    private void PrintDeviceInfo(Device device)
     {
-        Console.WriteLine($"[LEAP] device {device.SerialNumber}:");
-        Console.WriteLine($"[LEAP]   baseline = {device.Baseline}");
-        Console.WriteLine($"[LEAP]   view angle");
-        Console.WriteLine($"[LEAP]     horizontal  = {device.HorizontalViewAngle}");
-        Console.WriteLine($"[LEAP]     vertical = {device.VerticalViewAngle}");
-        Console.WriteLine($"[LEAP]   lightning bad = {device.IsLightingBad}");
-        Console.WriteLine($"[LEAP]   smudged = {device.IsSmudged}");
-        Console.WriteLine($"[LEAP]   streaming = {device.IsStreaming}");
-        Console.WriteLine($"[LEAP]   range = {device.Range}");
-        Console.WriteLine($"[LEAP]   type = {device.Type}");
+        _logger.LogInformation("[LEAP]   baseline = {baseline}", device.Baseline);
+        _logger.LogInformation("[LEAP]   view angle");
+        _logger.LogInformation("[LEAP]     horizontal  = {viewAngle}", device.HorizontalViewAngle);
+        _logger.LogInformation("[LEAP]     vertical = {viewAngle}", device.VerticalViewAngle);
+        _logger.LogInformation("[LEAP]   is lightning bad = {isLightBad}", device.IsLightingBad);
+        _logger.LogInformation("[LEAP]   is smudged = {isSmudged}", device.IsSmudged);
+        _logger.LogInformation("[LEAP]   is streaming = {isStreaming}", device.IsStreaming);
+        _logger.LogInformation("[LEAP]   range = {range}", device.Range);
+        _logger.LogInformation("[LEAP]   type = {type}", device.Type);
     }
 
     private bool IsHandClose(Vector aPos)
@@ -203,7 +202,7 @@ internal class LeapM: IDisposable
 
     private void OnLogMessage(object? sender, LogEventArgs args)
     {
-        var (type, level) = args.severity switch
+        var (severity, level) = args.severity switch
         {
             MessageSeverity.MESSAGE_CRITICAL => ("Critical", LogLevel.Critical),
             MessageSeverity.MESSAGE_WARNING => ("Warning", LogLevel.Warning),
@@ -211,7 +210,7 @@ internal class LeapM: IDisposable
             _ => ("Unknown", LogLevel.Debug),
         };
 
-        _logger.Log(level, "[LEAP] [{type}] {type2}: {msg}", type, args.type, args.message);
+        _logger.Log(level, "[LEAP] [{severity}] {type}: {msg}", severity, args.type, args.message);
     }
 
     #endregion

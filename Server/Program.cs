@@ -43,42 +43,54 @@ class Program
 
         List<IDisposable> services = [];
         List<Grpc.Core.Server?> servers = [];
+        List<Task> creators = new List<Task>();
 
         if (leapMotionService.IsAvailable())
         {
-            var leapMotionServer = CreateServer("LeapMotion",
-                leapMotionService,
-                global::LeapMotion.Dispatcher.Descriptor,
-                global::LeapMotion.Dispatcher.BindService(leapMotionService),
-                (int)Common.Ports.LeapMotion
-            );
-            servers.Add(leapMotionServer);
-            services.Add(leapMotionService);
+            creators.Add(Task.Run(() =>
+            {
+                var leapMotionServer = CreateServer("LeapMotion",
+                    leapMotionService,
+                    global::LeapMotion.Dispatcher.Descriptor,
+                    global::LeapMotion.Dispatcher.BindService(leapMotionService),
+                    (int)Common.Ports.LeapMotion
+                );
+                servers.Add(leapMotionServer);
+                services.Add(leapMotionService);
+            }));
         }
 
         if (myGazeService.IsAvailable())
         {
-            var myGazeServer = CreateServer("MyGaze",
-                myGazeService,
-                Gaze.Dispatcher.Descriptor,
-                Gaze.Dispatcher.BindService(myGazeService),
-                (int)Common.Ports.MyGaze
-            );
-            servers.Add(myGazeServer);
-            services.Add(myGazeService);
+            creators.Add(Task.Run(() =>
+            {
+                var myGazeServer = CreateServer("MyGaze",
+                    myGazeService,
+                    Gaze.Dispatcher.Descriptor,
+                    Gaze.Dispatcher.BindService(myGazeService),
+                    (int)Common.Ports.MyGaze
+                );
+                servers.Add(myGazeServer);
+                services.Add(myGazeService);
+            }));
         }
 
         if (tobiiEyeXService.IsAvailable())
         {
-            var tobiiEyeXServer = CreateServer("Tobii EyeX",
-                tobiiEyeXService,
-                Gaze.Dispatcher.Descriptor,
-                Gaze.Dispatcher.BindService(tobiiEyeXService),
-                (int)Common.Ports.TobiiEyeX
-            );
-            servers.Add(tobiiEyeXServer);
-            services.Add(tobiiEyeXService);
+            creators.Add(Task.Run(() =>
+            {
+                var tobiiEyeXServer = CreateServer("Tobii EyeX",
+                    tobiiEyeXService,
+                    Gaze.Dispatcher.Descriptor,
+                    Gaze.Dispatcher.BindService(tobiiEyeXService),
+                    (int)Common.Ports.TobiiEyeX
+                );
+                servers.Add(tobiiEyeXServer);
+                services.Add(tobiiEyeXService);
+            }));
         }
+
+        Task.WaitAll(creators);
 
         Console.WriteLine("Press any key to stop the server...");
         Console.ReadKey();

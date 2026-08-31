@@ -25,37 +25,42 @@ internal class EyeX : IDisposable
             try
             {
                 var devices = etLib.ListUsbEyeTrackers();
-                _logger.LogInformation("[EYEX] devices:");
+                _logger.LogInformation("[EYEX] Devices:");
                 foreach (EyeXCore.DeviceInfo device in devices)
                 {
                     _logger.LogInformation("[EYEX]   - " + device.ToString());
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                _logger.LogError("[EYEX] failed to list Tobii EyeX devices: " + ex.Message);
+                _logger.LogError("[EYEX] Failed to list devices (Tobii EyeX software is not installed or not running)");
             }
 
             Uri url = etLib.GetConnectedEyeTracker();
             if (url == null)
             {
-                _logger.LogInformation("[EYEX] no devices");
+                _logger.LogInformation("[EYEX] No devices");
                 return;
             }
 
             try
             {
                 _tracker = new EyeXCore.EyeTracker(url);
-                _logger.LogInformation($"[EYEX] tracker initialized on {url}");
             }
             catch (EyeXCore.EyeTrackerException ex)
             {
-                _logger.LogError("[EYEX] failed to created an eye tracker instance: " + ex.Message);
+                _logger.LogError("[EYEX] Failed to created an eye tracker instance on {url} ({msg})", url, ex.Message);
                 return;
             }
 
-            _tracker.RunEventLoopOnInternalThread((err) => { });
-            _tracker.ConnectAsync((err) => _logger.LogInformation($"[EYEX] connection result: {err}"));
+            _tracker.RunEventLoopOnInternalThread((error) => { });
+            _tracker.ConnectAsync((error) =>
+            {
+                if (error == EyeXCore.ErrorCode.Success)
+                    _logger.LogInformation("[EYEX] Connected");
+                else
+                    _logger.LogError("[EYEX] Cannot connect to the device ({error})", error);
+            });
         }
 
         _posStream = _host.CreateEyePositionDataStream();
@@ -63,16 +68,6 @@ internal class EyeX : IDisposable
         _gazeStream = _host.CreateGazePointDataStream(EyeXFramewor.GazePointDataMode.Unfiltered);
 
         IsValid = true;
-    }
-
-    public void Start()
-    {
-        _tracker?.StartTrackingAsync((err) => _logger.LogInformation($"[EYEX] starting streaming: {err}"));
-    }
-
-    public void Stop()
-    {
-        _tracker?.StopTrackingAsync((err) => _logger.LogInformation($"[EYEX] stopping streaming: {err}"));
     }
 
     public void Dispose()
@@ -95,7 +90,7 @@ internal class EyeX : IDisposable
     {
         if (e.IsValid)
         {
-            _logger.LogInformation($"[EYEX] status: {e.Value}");
+            _logger.LogInformation($"[EYEX] Status: {e.Value}");
         }
     }
 

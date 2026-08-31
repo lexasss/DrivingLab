@@ -54,11 +54,11 @@ internal sealed class FileLogger : IDisposable
 
     public void Dispose()
     {
+        if (_disposed)
+            return;
+
         lock (_sync)
         {
-            if (_disposed)
-                return;
-
             _writer?.Dispose();
             _writer = null;
             _disposed = true;

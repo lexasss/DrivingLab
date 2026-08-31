@@ -1,6 +1,7 @@
 ﻿using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Microsoft.Extensions.Logging;
+using System.Threading.Channels;
 using Proto = global::LeapMotion;
 
 namespace Server.LeapMotion;
@@ -35,15 +36,16 @@ internal class LeapMotionService : Proto.Dispatcher.DispatcherBase, ITelemetrySe
             };
             _leap.HandLocationChanged += (s, e) =>
             {
-                _lastSample = e;
-                _hasNewData = true;
+                //_lastSample = e;
+                //_hasNewData = true;
+                _channel.Writer.TryWrite(e);
             };
 
             _leap.Run();
 
             _isActive = true;
 
-            _logger.LogInformation("[LEAP] Service is running");
+            _logger.LogInformation("[LEAP] Running");
         }
         catch (Exception)
         {
@@ -56,7 +58,7 @@ internal class LeapMotionService : Proto.Dispatcher.DispatcherBase, ITelemetrySe
         _isActive = false;
         _leap?.Dispose();
         _fileLogger.Dispose();
-        _logger.LogInformation("[LEAP] Service was disposed");
+        _logger.LogInformation("[LEAP] Disposed");
     }
 
     public override Task<Common.Bool> IsAvailable (Empty request, ServerCallContext context)
@@ -99,42 +101,50 @@ internal class LeapMotionService : Proto.Dispatcher.DispatcherBase, ITelemetrySe
 
     public override Task<Empty> Start(Empty request, ServerCallContext context)
     {
-        _logger.LogInformation("[LEAP] [req] Start");
-        _isSending = true;
+        if (!_isSending)
+        {
+            _logger.LogInformation("[LEAP] [req] Start");
+            _isSending = true;
+        }
         return Task.FromResult(new Empty());
     }
 
     public override Task<Empty> Stop(Empty request, ServerCallContext context)
     {
-        _logger.LogInformation("[LEAP] [req] Stop");
-        _isSending = false;
+        if (_isSending)
+        {
+            _logger.LogInformation("[LEAP] [req] Stop");
+            _isSending = false;
+        }
         return Task.FromResult(new Empty());
     }
 
     public override Task<Common.Bool> SetLogFilename(Common.String request, ServerCallContext context)
     {
-        _logger.LogInformation("[LEAP] [req] logfile {filename}", request.Value);
+        _logger.LogInformation("[LEAP] [req] Logging to {filename}", request.Value);
         var result = _fileLogger.SetFilename(request.Value);
         return Task.FromResult(new Common.Bool() { Value = result });
     }
 
     public override async Task ReadData(Empty request, IServerStreamWriter<Proto.Sample> responseStream, ServerCallContext context)
     {
-        _logger.LogInformation("[LEAP] [req] Read data: start");
+        if (_isReading)
+            return;
 
-        while (!context.CancellationToken.IsCancellationRequested)
+        _logger.LogInformation("[LEAP] [req] Data reading: start");
+        _isReading = true;
+
+        await foreach (var data in _channel.Reader.ReadAllAsync(context.CancellationToken))
         {
-            await Task.Delay(SAMPLING_INTERVAL);
-
-            if (_isSending && _hasNewData)
+            if (_isSending)
             {
-                await responseStream.WriteAsync(_lastSample);
-                _fileLogger.Add(_lastSample.ToStringArray());
-                _hasNewData = false;
+                await responseStream.WriteAsync(data);
+                _fileLogger.Add(data.ToStringArray());
             }
         }
 
-        _logger.LogInformation("[LEAP] [---] Read data: stop");
+        _logger.LogInformation("[LEAP] [---] Data reading: stop");
+        _isReading = false;
     }
 
     public override async Task ReadEvents(Empty request, IServerStreamWriter<Proto.Event> responseStream, ServerCallContext context)
@@ -155,20 +165,17 @@ internal class LeapMotionService : Proto.Dispatcher.DispatcherBase, ITelemetrySe
 
     record class Event(string Name, bool Value);
 
-    const int SAMPLING_INTERVAL = 33;
-
     readonly ILogger<LeapMotionService> _logger;
     readonly LeapM? _leap;
     readonly Queue<Proto.Event> _events = [];
     readonly Tools.FileLogger _fileLogger = new();
+    readonly Channel<Proto.Sample> _channel = System.Threading.Channels.Channel.CreateUnbounded<Proto.Sample>();
 
     bool _isActive = false;
+    bool _isReading = false;
     bool _isSending = false;
     bool _isConnected = false;
 
-    Proto.Sample _lastSample = new() { Palm = Common.Vector.ZEROS };
-
-    bool _hasNewData = false;
     bool _isHandClose = false;
     bool _isHandVisible = false;
 

@@ -2,6 +2,7 @@ using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Microsoft.Extensions.Logging;
 using System.Threading.Channels;
+using Tobii.EyeX.Client.Interop;
 using Channel = System.Threading.Channels.Channel;
 using EyeXCore = Tobii.Gaze.Core;
 
@@ -25,7 +26,7 @@ internal class TobiiEyeXService : Gaze.Dispatcher.DispatcherBase, ITelemetryServ
                 _eyeX.PosStream?.Next += EyeX_Pos;
                 _eyeX.GazeStream?.Next += EyeX_Gaze;
 
-                _logger.LogInformation("[EYEX] Service is running");
+                _logger.LogInformation("[EYEX] Running");
             }
             else
             {
@@ -47,7 +48,7 @@ internal class TobiiEyeXService : Gaze.Dispatcher.DispatcherBase, ITelemetryServ
         _eyeX = null;
 
         _fileLogger.Dispose();
-        _logger.LogInformation("[EYEX] Service was disposed");
+        _logger.LogInformation("[EYEX] Disposed");
     }
 
     public override Task<Common.Bool> IsAvailable(Empty request, ServerCallContext context)
@@ -57,29 +58,39 @@ internal class TobiiEyeXService : Gaze.Dispatcher.DispatcherBase, ITelemetryServ
 
     public override Task<Empty> Start(Empty request, ServerCallContext context)
     {
-        _isSending = true;
+        if (!_isSending)
+        {
+            _logger.LogInformation("[EYEX] [req] Start");
+            _isSending = true;
+        }
         return Task.FromResult(new Empty());
     }
 
     public override Task<Empty> Stop(Empty request, ServerCallContext context)
     {
-        _isSending = false;
+        if (_isSending)
+        {
+            _logger.LogInformation("[EYEX] [req] Stop");
+            _isSending = false;
+        }
         return Task.FromResult(new Empty());
     }
 
     public override Task<Common.Bool> SetLogFilename(Common.String request, ServerCallContext context)
     {
-        _logger.LogInformation("[EYEX] [req] logfile {filename}", request.Value);
+        _logger.LogInformation("[EYEX] [req] Logging to {filename}", request.Value);
         var result = _fileLogger.SetFilename(request.Value);
         return Task.FromResult(new Common.Bool() { Value = result });
     }
 
     public override async Task ReadData(Empty request, IServerStreamWriter<Gaze.Sample> responseStream, ServerCallContext context)
     {
-        if (_eyeX == null)
+        if (_eyeX == null || _isReading)
             return;
 
-        _eyeX.Start();
+        _eyeX.Tracker?.StartTracking();
+        _logger.LogInformation("[EYEX] [req] Data reading: start");
+        _isReading = true;
 
         await foreach (var data in _channel.Reader.ReadAllAsync(_cts.Token))
         {
@@ -90,7 +101,9 @@ internal class TobiiEyeXService : Gaze.Dispatcher.DispatcherBase, ITelemetryServ
             }
         }
 
-        _eyeX.Stop();
+        _eyeX.Tracker?.StopTracking();
+        _logger.LogInformation("[EYEX] [---] Data reading: stop");
+        _isReading = false;
     }
 
 
@@ -107,6 +120,7 @@ internal class TobiiEyeXService : Gaze.Dispatcher.DispatcherBase, ITelemetryServ
 
     EyeX? _eyeX;
 
+    bool _isReading = false;
     bool _isSending = false;
 
     // Event handlers

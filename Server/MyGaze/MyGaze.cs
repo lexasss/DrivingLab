@@ -17,14 +17,7 @@ internal class MyGaze : IDisposable
         Log(MyGazeAPI.SetLicense(LICENSE), nameof(MyGazeAPI.SetLicense));
         MyGazeAPI.Ret result = Log(MyGazeAPI.Connect(), nameof(MyGazeAPI.Connect));
 
-		/*
-		if (result != MyGazeAPI.Ret.SUCCESS)
-		{
-            Log(MyGazeAPI.SetLicense(LICENSE), nameof(MyGazeAPI.SetLicense));
-			result = Log(MyGazeAPI.Connect(), nameof(MyGazeAPI.Connect));
-		}*/
-
-		if (result == MyGazeAPI.Ret.SUCCESS)
+        if (result == MyGazeAPI.Ret.SUCCESS)
         {
 			var info = new MyGazeAPI.SystemInfoStruct();
             _ = MyGazeAPI.GetSystemInfo(ref info);
@@ -47,18 +40,16 @@ internal class MyGaze : IDisposable
 			MyGazeAPI.SetSampleCallback(new MyGazeAPI.GetSampleCallback(GetSampleCallbackFunction));
 			IsTracking = true;
 		}
-
-        _logger.LogInformation($"[VIMG] starting streaming: {IsTracking}");
 	}
+
 	public void Stop()
 	{
 		if (IsTracking)
 		{
 			MyGazeAPI.SetSampleCallback(null);
 			IsTracking = false;
-		}
-        _logger.LogInformation($"[VIMG] streaming stopped");
-	}
+        }
+    }
 
 	public void Dispose()
 	{
@@ -80,7 +71,7 @@ internal class MyGaze : IDisposable
 	private MyGazeAPI.Ret Log(int result, string fnc)
     {
 		MyGazeAPI.Ret code = (MyGazeAPI.Ret)result;
-        _logger.LogInformation($"[VIMG] {fnc} => {code}");
+        _logger.LogInformation("[VIMG] {fnc} => {code}", fnc, code);
 		return code;
 	}
 
