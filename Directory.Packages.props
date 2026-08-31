@@ -17,6 +17,7 @@
     <PackageVersion Include="Serilog.Extensions.Logging" Version="10.0.0" />
     <PackageVersion Include="Serilog.Sinks.Console" Version="6.1.1" />
     <PackageVersion Include="Serilog.Sinks.File" Version="7.0.0" />
+    <PackageVersion Include="Tuni.SmartEyeTools" Version="1.0.2" />
     <PackageVersion Include="ValueConverters" Version="3.1.22" />
   </ItemGroup>
 </Project>

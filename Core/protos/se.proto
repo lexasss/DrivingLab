@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+package SmartEye;
+
+import "protos/common.proto";
+import "google/protobuf/empty.proto";
+
+service Dispatcher {
+	rpc IsAvailable (google.protobuf.Empty) returns (Common.Bool) {}
+	rpc IsConnected (google.protobuf.Empty) returns (Common.Bool) {}
+
+	rpc SetLogFilename (Common.String) returns (Common.Bool) {}
+	rpc Configure (Configuration) returns (google.protobuf.Empty) {}
+
+	rpc ReadEvents (google.protobuf.Empty) returns (stream Event) {}
+
+	// Enable of disable data streaming to a log file
+	// (has no effect if SetLogFilename was not called yet)
+	rpc Start (google.protobuf.Empty) returns (google.protobuf.Empty) {}
+	rpc Stop (google.protobuf.Empty) returns (google.protobuf.Empty) {}
+}
+
+enum IntersectionSource {
+	Gaze = 0;
+	AI = 1;
+}
+
+enum PlaneMappingMode {
+	Closest = 0;
+	All = 1;
+}
+
+message Configuration {
+	string ip = 1;
+	int32 port = 2;
+	IntersectionSource intersectionSource = 3;
+	bool useFilteredData = 4;
+	PlaneMappingMode planeMappingMode = 5;
+}
+
+message Intersection {
+	string name = 1;
+	Common.Vector gazePoint = 2;
+}
+
+message Intersections {
+	repeated Intersection Items = 1;
+}
+
+message Event {
+	string name = 1;
+	oneof value {
+		bool success = 2;
+		Intersection intersection = 3;
+		Intersections intersections = 4;
+	}
+}

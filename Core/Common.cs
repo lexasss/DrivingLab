@@ -5,6 +5,7 @@ public enum Ports
     LeapMotion = 30050,
     MyGaze = 30051,
     TobiiEyeX = 30052,
+    SmartEye = 30053,
 }
 
 public partial class Vector
@@ -17,4 +18,3 @@ public partial class Vector
         Z.ToString()
     ];
 }
-

@@ -11,6 +11,7 @@
     <Protobuf Include="protos\common.proto" Link="protos\common.proto" />
     <Protobuf Include="protos\gaze.proto" Link="protos\gaze.proto" />
     <Protobuf Include="protos\leap.proto" Link="protos\leap.proto" />
+    <Protobuf Include="protos\se.proto" Link="protos\se.proto" />
   </ItemGroup>
 	
 </Project>

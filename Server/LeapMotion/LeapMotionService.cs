@@ -36,8 +36,6 @@ internal class LeapMotionService : Proto.Dispatcher.DispatcherBase, ITelemetrySe
             };
             _leap.HandLocationChanged += (s, e) =>
             {
-                //_lastSample = e;
-                //_hasNewData = true;
                 _channel.Writer.TryWrite(e);
             };
 
