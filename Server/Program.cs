@@ -1,11 +1,9 @@
 using Grpc.Core;
 using Grpc.Reflection;
 using Grpc.Reflection.V1Alpha;
-using Leap;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Serilog;
-using Server;
 
 namespace Server;
 

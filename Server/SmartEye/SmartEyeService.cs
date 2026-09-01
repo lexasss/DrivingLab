@@ -280,5 +280,6 @@ internal class SmartEyeService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
         _currentIntersectionNames.ExceptWith(activePlanes);
         _currentIntersectionNames = activePlanes;
     }
+
     #endregion
 }

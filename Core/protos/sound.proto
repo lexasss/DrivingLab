@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+package SoundPlayer;
+
+import "protos/common.proto";
+import "google/protobuf/empty.proto";
+
+service Dispatcher {
+	rpc IsAvailable (google.protobuf.Empty) returns (Common.Bool) {}
+
+	rpc GetDevices (google.protobuf.Empty) returns (Devices) {}
+
+	rpc ReadEvents (google.protobuf.Empty) returns (stream Event) {}
+
+	rpc Play (SoundDescription) returns (Common.Bool) {}
+	rpc Stop (google.protobuf.Empty) returns (google.protobuf.Empty) {}
+}
+
+message Device {
+	string id = 1;
+	string name = 2;
+}
+
+message Devices {
+	repeated Device items = 1;
+}
+
+message Event {
+	string name = 1;
+}
+
+enum ToneType {
+    Sine = 0;
+    Triangle = 1;
+    Harmonics = 2;
+}
+
+message ToneDescription {
+	ToneType toneType = 3;
+	double frequency = 4;
+	double gain = 5;
+	int32 pulseDuration = 6;
+}
+
+message SoundDescription {
+	string deviceId = 1;
+	oneof sound {
+		string filename = 2;
+		ToneDescription tone = 3;
+	}
+}
