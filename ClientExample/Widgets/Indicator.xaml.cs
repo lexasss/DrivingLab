@@ -1,7 +1,7 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
 
-namespace ClientExample;
+namespace ClientExample.Widgets;
 
 public partial class Indicator : UserControl
 {

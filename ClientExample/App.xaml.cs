@@ -43,10 +43,10 @@ public partial class App : Application
         services.AddSingleton<LeapMotionClient>();
         services.AddSingleton<SmartEyeClient>();
 
-        services.AddSingleton<LeapMotionViewModel>();
-        services.AddSingleton<SmartEyeViewModel>();
+        services.AddTransient<LeapMotionViewModel>();
+        services.AddTransient<SmartEyeViewModel>();
 
-        services.AddSingleton<MainViewModel>();
-        services.AddSingleton<MainWindow>();
+        services.AddTransient<MainViewModel>();
+        services.AddTransient<MainWindow>();
     }
 }

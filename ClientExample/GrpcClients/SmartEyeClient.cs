@@ -6,8 +6,6 @@ namespace ClientExample;
 
 public class SmartEyeClient : IDisposable
 {
-    public record class Point(double X, double Y, double Z = 0);
-
     public event EventHandler<bool>? ConnectionChanged;
     public event EventHandler<SmartEye.Intersection>? IntersectionChanged;
 

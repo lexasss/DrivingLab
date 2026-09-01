@@ -1,0 +1,71 @@
+﻿<UserControl x:Class="ClientExample.Widgets.LeapMotion"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:ClientExample"
+             xmlns:widgets="clr-namespace:ClientExample.Widgets"
+             xmlns:lm="clr-namespace:LeapMotion;assembly=Core"
+             mc:Ignorable="d" 
+             d:DesignHeight="450"
+             d:DesignWidth="200">
+    
+    <UserControl.Resources>
+        <local:EnumToBooleanConverter x:Key="EnumToBoolean"/>
+    </UserControl.Resources>
+    
+    <Border Style="{StaticResource Card}">
+        <StackPanel>
+            <Label Style="{StaticResource Device}"
+                   Content="Leap Motion"/>
+            <StackPanel Margin="4">
+                <widgets:Indicator IsOn="{Binding IsAvailable, Mode=OneWay}"
+                                   Text="Available"/>
+                <widgets:Indicator IsOn="{Binding IsConnected, Mode=OneWay}"
+                                   Text="Connected"/>
+                <Separator/>
+                <widgets:Indicator IsOn="{Binding IsHandVisible, Mode=OneWay}"
+                                   Text="Hand is visible"/>
+                <widgets:Indicator IsOn="{Binding IsHandClose, Mode=OneWay}"
+                                   Text="Hand is close"/>
+                <Separator/>
+                <StackPanel>
+                    <Label>Proximity configuration:</Label>
+                    <RadioButton Content="Default"
+                                 GroupName="LeapMotionConfig"
+                                 IsChecked="{Binding Config,
+                                                     Converter={StaticResource EnumToBoolean},
+                                                     ConverterParameter={x:Static lm:ConfigType.Default}}"/>
+                    <RadioButton Content="Ultrahaptics"
+                                 GroupName="LeapMotionConfig"
+                                 IsChecked="{Binding Config,
+                                                     Converter={StaticResource EnumToBoolean},
+                                                     ConverterParameter={x:Static lm:ConfigType.Ultrahaptics}}"/>
+                    <!--RadioButton Content="Custom"
+                                     GroupName="LeapMotionConfig"
+                                     IsChecked="{Binding Config,
+                                                         Converter={StaticResource EnumToBoolean},
+                                                         ConverterParameter={x:Static local:LeapMotionConfig.Custom}}"/-->
+                </StackPanel>
+                <Separator/>
+                <WrapPanel>
+                    <ToggleButton Style="{StaticResource Switch}"
+                                  IsEnabled="{Binding IsConnected}"
+                                  IsChecked="{Binding IsStreaming}"/>
+                    <Label Style="{StaticResource RowHeader}"
+                           Content="Stream data"/>
+                </WrapPanel>
+                <WrapPanel>
+                    <ToggleButton Style="{StaticResource Switch}"
+                                  IsEnabled="{Binding IsConnected}"
+                                  IsChecked="{Binding IsLogging}"/>
+                    <Label Style="{StaticResource RowHeader}"
+                           Content="Log data"/>
+                </WrapPanel>
+                <Separator/>
+                <TextBlock Style="{StaticResource Data}"
+                           Text="{Binding Data, Mode=OneWay}"/>
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</UserControl>

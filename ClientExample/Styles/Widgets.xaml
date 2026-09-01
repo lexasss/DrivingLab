@@ -1,0 +1,33 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Style x:Key="Card" TargetType="Border">
+        <Setter Property="BorderBrush" Value="Teal"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Margin" Value="8"/>
+    </Style>
+    <Style x:Key="Device" TargetType="Label" BasedOn="{StaticResource {x:Type Label}}">
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="Background" Value="AntiqueWhite"/>
+        <Setter Property="Padding" Value="8"/>
+    </Style>
+    <Style x:Key="RowHeader" TargetType="Label" BasedOn="{StaticResource {x:Type Label}}">
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+    <Style x:Key="Data" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+        <Setter Property="Margin" Value="8"/>
+    </Style>
+    <Style x:Key="Switch" TargetType="ToggleButton" BasedOn="{StaticResource MaterialDesignSwitchToggleButton}">
+        <Setter Property="Margin" Value="5"/>
+        <Setter Property="Width" Value="50"/>
+        <Setter Property="FontSize" Value="16"/>
+        <Setter Property="HorizontalAlignment" Value="Right"/>
+        <Setter Property="VerticalAlignment" Value="Top"/>
+        <Setter Property="LayoutTransform">
+            <Setter.Value>
+                <TransformGroup>
+                    <ScaleTransform ScaleX="0.7" ScaleY="0.7"/>
+                </TransformGroup>
+            </Setter.Value>
+        </Setter>
+    </Style>
+</ResourceDictionary>

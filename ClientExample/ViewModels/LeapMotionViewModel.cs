@@ -1,5 +1,4 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
 
 namespace ClientExample;
 
@@ -25,8 +24,8 @@ public partial class LeapMotionViewModel : ObservableObject
     {
         _leapMotionClient = leapMotionClient;
 
-
         IsConnected = _leapMotionClient.IsConnected;
+        IsStreaming = _leapMotionClient.IsReading;
 
         _leapMotionClient.ConnectionChanged += (s, e) => IsConnected = e;
         _leapMotionClient.HandLocationChanged += (s, e) =>
@@ -51,48 +50,28 @@ public partial class LeapMotionViewModel : ObservableObject
 
     readonly LeapMotionClient _leapMotionClient;
 
-    [RelayCommand]
-    private void ToggleDataStreaming()
+    partial void OnIsStreamingChanged(bool value)
     {
         if (_leapMotionClient.IsReading)
         {
             _leapMotionClient.Stop();
-            IsStreaming = false;
             Data = string.Empty;
         }
         else
         {
             _leapMotionClient.Start();
-            IsStreaming = true;
             Data = WAITING_HAND;
         }
     }
 
-    [RelayCommand]
-    private void ToggleDataLogging()
+    partial void OnIsLoggingChanged(bool value)
     {
-        if (_leapMotionClient.IsReading)
-        {
-            _leapMotionClient.Stop();
-            IsStreaming = false;
-            Data = string.Empty;
-        }
-        else
-        {
-            _leapMotionClient.Start();
-            IsStreaming = true;
-            Data = WAITING_HAND;
-        }
+        _leapMotionClient.SetLoggingEnabled(value);
     }
 
     partial void OnConfigChanged(LeapMotion.ConfigType value)
     {
         _leapMotionClient.Configure(value);
-    }
-
-    partial void OnIsLoggingChanged(bool value)
-    {
-        _leapMotionClient. SetLoggingEnabled(value);
     }
 
     private void SetData(LeapMotion.Sample pt) =>

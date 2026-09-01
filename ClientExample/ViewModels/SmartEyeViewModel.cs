@@ -38,7 +38,7 @@ public partial class SmartEyeViewModel : ObservableObject
     readonly SmartEyeClient _smartEyeClient;
 
     [RelayCommand]
-    private async void Configure()
+    private async Task Configure()
     {
         IsConnecting = true;
         ConnectionButtonText = "Wait...";

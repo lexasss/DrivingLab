@@ -4,9 +4,8 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
-        xmlns:lm="clr-namespace:LeapMotion;assembly=Core"
         xmlns:conv="clr-namespace:MaterialDesignThemes.Wpf.Converters;assembly=MaterialDesignThemes.Wpf"
-        xmlns:local="clr-namespace:ClientExample"
+        xmlns:widgets="clr-namespace:ClientExample.Widgets"
         mc:Ignorable="d"
         Style="{StaticResource MaterialDesignWindow}"
         Title="Driving Lab Client Example"
@@ -14,162 +13,15 @@
         Width="800"
         MinHeight="380"
         MinWidth="320">
-    <Window.Resources>
-        <local:EnumToBooleanConverter x:Key="EnumToBoolean"/>
-
-        <Style x:Key="Card" TargetType="Border">
-            <Setter Property="BorderBrush" Value="Teal"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Margin" Value="8"/>
-        </Style>
-        <Style x:Key="Device" TargetType="Label" BasedOn="{StaticResource {x:Type Label}}">
-            <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="Background" Value="AntiqueWhite"/>
-            <Setter Property="Padding" Value="8"/>
-        </Style>
-        <Style x:Key="RowHeader" TargetType="Label" BasedOn="{StaticResource {x:Type Label}}">
-            <Setter Property="VerticalAlignment" Value="Center"/>
-        </Style>
-        <Style x:Key="Data" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
-            <Setter Property="Margin" Value="8"/>
-        </Style>
-        <Style x:Key="Stream" TargetType="ToggleButton" BasedOn="{StaticResource MaterialDesignSwitchToggleButton}">
-            <Setter Property="Margin" Value="5"/>
-            <Setter Property="Width" Value="50"/>
-            <Setter Property="FontSize" Value="16"/>
-            <Setter Property="HorizontalAlignment" Value="Right"/>
-            <Setter Property="VerticalAlignment" Value="Top"/>
-            <Setter Property="LayoutTransform">
-                <Setter.Value>
-                    <TransformGroup>
-                        <ScaleTransform ScaleX="0.7" ScaleY="0.7"/>
-                    </TransformGroup>
-                </Setter.Value>
-            </Setter>
-        </Style>
-    </Window.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="200"/>
             <ColumnDefinition Width="200"/>
         </Grid.ColumnDefinitions>
 
-        <Border Grid.Column="0"
-                Style="{StaticResource Card}">
-            <StackPanel>
-                <Label Style="{StaticResource Device}"
-                       Content="Leap Motion"/>
-                <StackPanel Margin="4">
-                    <local:Indicator IsOn="{Binding LeapMotion.IsAvailable, Mode=OneWay}"
-                                     Text="Available"/>
-                    <local:Indicator IsOn="{Binding LeapMotion.IsConnected, Mode=OneWay}"
-                                     Text="Connected"/>
-                    <Separator/>
-                    <local:Indicator IsOn="{Binding LeapMotion.IsHandVisible, Mode=OneWay}"
-                                     Text="Hand is visible"/>
-                    <local:Indicator IsOn="{Binding LeapMotion.IsHandClose, Mode=OneWay}"
-                                     Text="Hand is close"/>
-                    <Separator/>
-                    <StackPanel>
-                        <Label>Proximity configuration:</Label>
-                        <RadioButton Content="Default"
-                                     GroupName="LeapMotionConfig"
-                                     IsChecked="{Binding LeapMotion.Config,
-                                                         Converter={StaticResource EnumToBoolean},
-                                                         ConverterParameter={x:Static lm:ConfigType.Default }}"/>
-                        <RadioButton Content="Ultrahaptics"
-                                     GroupName="LeapMotionConfig"
-                                     IsChecked="{Binding LeapMotion.Config,
-                                                         Converter={StaticResource EnumToBoolean},
-                                                         ConverterParameter={x:Static lm:ConfigType.Ultrahaptics}}"/>
-                        <!--RadioButton Content="Custom"
-                                     GroupName="LeapMotionConfig"
-                                     IsChecked="{Binding LeapMotion.Config,
-                                                         Converter={StaticResource EnumToBoolean},
-                                                         ConverterParameter={x:Static local:LeapMotionConfig.Custom}}"/-->
-                    </StackPanel>
-                    <Separator/>
-                    <WrapPanel>
-                        <ToggleButton Style="{StaticResource Stream}"
-                              IsEnabled="{Binding LeapMotion.IsConnected}"
-                              IsChecked="{Binding LeapMotion.IsStreaming}"
-                              Command="{Binding LeapMotion.ToggleDataStreamingCommand}">
-                        </ToggleButton>
-                        <Label Style="{StaticResource RowHeader}"
-                               Content="Stream data"/>
-                    </WrapPanel>
-                    <WrapPanel>
-                        <ToggleButton Style="{StaticResource Stream}"
-                              IsEnabled="{Binding LeapMotion.IsConnected}"
-                              IsChecked="{Binding LeapMotion.IsLogging}">
-                        </ToggleButton>
-                        <Label Style="{StaticResource RowHeader}"
-                               Content="Log data"/>
-                    </WrapPanel>
-                    <Separator/>
-                    <TextBlock Style="{StaticResource Data}"
-                               Text="{Binding LeapMotion.Data, Mode=OneWay}"/>
-                </StackPanel>
-            </StackPanel>
-        </Border>
-
-        <Border Grid.Column="1"
-                Style="{StaticResource Card}">
-            <StackPanel>
-                <Label Style="{StaticResource Device}"
-                       Content="Smart Eye"/>
-                <StackPanel Margin="4">
-                    <local:Indicator IsOn="{Binding SmartEye.IsAvailable, Mode=OneWay}"
-                                     Text="Available"/>
-                    <local:Indicator IsOn="{Binding SmartEye.IsConnected, Mode=OneWay}"
-                                     Text="Connected"/>
-                    <Separator/>
-                    <Grid Height="28"
-                          Margin="4">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition/>
-                        </Grid.ColumnDefinitions>
-                        <Label Grid.Column="0"
-                               VerticalAlignment="Center"
-                               Margin="2,2,8,2"
-                               Content="IP"/>
-                        <TextBox Grid.Column="1"
-                                 Text="{Binding SmartEye.Ip}"/>
-                    </Grid>
-                    <Button Margin="4"
-                            Content="{Binding SmartEye.ConnectionButtonText}"
-                            Command="{Binding SmartEye.ConfigureCommand}">
-                        <Button.Style>
-                            <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-                                <Setter Property="IsEnabled" Value="False"/>
-                                <Style.Triggers>
-                                    <MultiDataTrigger>
-                                        <MultiDataTrigger.Conditions>
-                                            <Condition Binding="{Binding SmartEye.IsAvailable}" Value="True"/>
-                                            <Condition Binding="{Binding SmartEye.IsConnecting}" Value="False"/>
-                                            <Condition Binding="{Binding SmartEye.IsConnected}" Value="False"/>
-                                        </MultiDataTrigger.Conditions>
-                                        <Setter Property="IsEnabled" Value="True"/>
-                                    </MultiDataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Button.Style>
-                    </Button>
-                    <Separator/>
-                    <WrapPanel>
-                        <ToggleButton Style="{StaticResource Stream}"
-                              IsEnabled="{Binding SmartEye.IsConnected}"
-                              IsChecked="{Binding SmartEye.IsLogging}">
-                        </ToggleButton>
-                        <Label Style="{StaticResource RowHeader}"
-                               Content="Log data"/>
-                    </WrapPanel>
-                    <Separator/>
-                    <TextBlock Style="{StaticResource Data}"
-                               Text="{Binding SmartEye.Data, Mode=OneWay}"/>
-                </StackPanel>
-            </StackPanel>
-        </Border>
+        <widgets:LeapMotion Grid.Column="0"
+                            DataContext="{Binding LeapMotion}"/>
+        <widgets:SmartEye Grid.Column="1"
+                          DataContext="{Binding SmartEye}"/>
     </Grid>
 </Window>
