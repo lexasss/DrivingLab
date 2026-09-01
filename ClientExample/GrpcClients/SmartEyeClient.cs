@@ -63,14 +63,17 @@ public class SmartEyeClient : IDisposable
         _ = _client.Stop(new Empty());
     }
 
-    public async Task<bool> ConfigureAsync(string ip)
+    public async Task<bool> ConfigureAsync(
+        string ip,
+        SmartEye.IntersectionSource intersectionSource,
+        bool useFilteredData)
     {
         var result = await _client.ConfigureAsync(new SmartEye.Configuration()
         {
             Ip = ip,
             Port = SmartEye.Consts.DefaultPort,
-            IntersectionSource = SmartEye.IntersectionSource.Gaze,
-            UseFilteredData = true,
+            IntersectionSource = intersectionSource,
+            UseFilteredData = useFilteredData,
             PlaneMappingMode = SmartEye.PlaneMappingMode.Closest
         });
         return result.Value;

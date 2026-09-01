@@ -3,11 +3,32 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
              xmlns:local="clr-namespace:ClientExample"
              xmlns:widgets="clr-namespace:ClientExample.Widgets"
+             xmlns:se="clr-namespace:SmartEye;assembly=Core"
+             xmlns:md="clr-namespace:MaterialDesignThemes.Wpf.Converters;assembly=MaterialDesignThemes.Wpf"
              mc:Ignorable="d" 
              d:DesignHeight="450"
              d:DesignWidth="200">
+    
+    <UserControl.Resources>
+        <md:InvertBooleanConverter x:Key="InvertBoolean"/>
+
+        <ObjectDataProvider x:Key="IntersectionSource"
+                        MethodName="GetValues"
+                        ObjectType="{x:Type sys:Enum}">
+            <ObjectDataProvider.MethodParameters>
+                <x:Type TypeName="se:IntersectionSource" />
+            </ObjectDataProvider.MethodParameters>
+        </ObjectDataProvider>
+        
+        <Style x:Key="OptionName" TargetType="Label">
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="2,2,8,2"/>
+        </Style>
+    </UserControl.Resources>
+    
     <Border Style="{StaticResource Card}">
         <StackPanel>
             <Label Style="{StaticResource Device}"
@@ -18,18 +39,34 @@
                 <widgets:Indicator IsOn="{Binding IsConnected, Mode=OneWay}"
                                    Text="Connected"/>
                 <Separator/>
-                <Grid Height="28"
-                      Margin="4">
+                <Grid Margin="4"
+                      IsEnabled="{Binding IsConnected, Converter={StaticResource InvertBoolean}}">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition/>
                     </Grid.ColumnDefinitions>
-                    <Label Grid.Column="0"
-                           VerticalAlignment="Center"
-                           Margin="2,2,8,2"
+                    <Grid.RowDefinitions>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
+                    <Label Grid.Row="0" Grid.Column="0"
+                           Style="{StaticResource OptionName}"
                            Content="IP"/>
-                    <TextBox Grid.Column="1"
-                           Text="{Binding Ip}"/>
+                    <TextBox Grid.Row="0" Grid.Column="1"
+                             Text="{Binding Ip}"/>
+                    <Label Grid.Row="1" Grid.Column="0"
+                           Style="{StaticResource OptionName}"
+                           Content="Source"/>
+                    <ComboBox Grid.Row="1" Grid.Column="1"
+                          ItemsSource="{Binding Source={StaticResource IntersectionSource}}"
+                          SelectedItem="{Binding IntersectionSource, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                    <Label Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
+                           Style="{StaticResource OptionName}"
+                           Content="Use filtered data"/>
+                    <ToggleButton Grid.Row="2" Grid.Column="1"
+                                  Style="{StaticResource Switch}"
+                                  IsChecked="{Binding UseFilteredData, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                 </Grid>
                 <Button Margin="4"
                         Content="{Binding ConnectionButtonText}"

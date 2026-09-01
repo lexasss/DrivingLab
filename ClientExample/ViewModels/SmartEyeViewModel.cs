@@ -17,6 +17,10 @@ public partial class SmartEyeViewModel : ObservableObject
     [ObservableProperty]
     public partial string Ip { get; set; } = "127.0.0.1";
     [ObservableProperty]
+    public partial SmartEye.IntersectionSource IntersectionSource { get; set; } = SmartEye.IntersectionSource.Gaze;
+    [ObservableProperty]
+    public partial bool UseFilteredData { get; set; } = false;
+    [ObservableProperty]
     public partial string ConnectionButtonText { get; set; } = "Connect";
 
     public SmartEyeViewModel(SmartEyeClient smartEyeClient)
@@ -43,7 +47,7 @@ public partial class SmartEyeViewModel : ObservableObject
         IsConnecting = true;
         ConnectionButtonText = "Wait...";
 
-        var isConnected = await _smartEyeClient.ConfigureAsync(Ip);
+        var isConnected = await _smartEyeClient.ConfigureAsync(Ip, IntersectionSource, UseFilteredData);
         IsConnecting = false;
 
         ConnectionButtonText = isConnected ? "Connected" : "Connect";
