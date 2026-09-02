@@ -6,8 +6,22 @@ message Bool {
 	bool value = 1;
 }
 
+message Int {
+	int32 value = 1;
+}
+
 message String {
 	optional string value = 1;
+}
+
+message Point {
+	double x = 1;
+	double y = 2;
+}
+
+message Size {
+	double width = 1;
+	double height = 2;
 }
 
 message Vector {

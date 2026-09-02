@@ -25,21 +25,20 @@ internal class EyeX : IDisposable
             try
             {
                 var devices = etLib.ListUsbEyeTrackers();
-                _logger.LogInformation("[EYEX] Devices:");
                 foreach (EyeXCore.DeviceInfo device in devices)
                 {
-                    _logger.LogInformation("[EYEX]   - " + device.ToString());
+                    _logger.LogInformation("[EYEX] Found Tobii EyeX device: {device}", device);
                 }
             }
             catch (Exception)
             {
-                _logger.LogError("[EYEX] Failed to list devices (Tobii EyeX software is not installed or not running)");
+                _logger.LogWarning("[EYEX] Failed to list devices (Tobii EyeX software is not installed or not running)");
             }
 
             Uri url = etLib.GetConnectedEyeTracker();
             if (url == null)
             {
-                _logger.LogInformation("[EYEX] No devices");
+                _logger.LogWarning("[EYEX] No devices");
                 return;
             }
 

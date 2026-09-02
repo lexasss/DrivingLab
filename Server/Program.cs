@@ -34,6 +34,7 @@ class Program
         serviceCollection.AddTransient<TobiiEyeX.TobiiEyeXService>();
         serviceCollection.AddTransient<SmartEye.SmartEyeService>();
         serviceCollection.AddTransient<SoundPlayer.SoundPlayerService>();
+        serviceCollection.AddTransient<Screen.ScreenService>();
 
         var serviceProvider = serviceCollection.BuildServiceProvider();
 
@@ -65,6 +66,11 @@ class Program
                 "Sound Player", (int)Common.Ports.SoundPlayer,
                 global::SoundPlayer.Dispatcher.Descriptor,
                 service => global::SoundPlayer.Dispatcher.BindService((global::SoundPlayer.Dispatcher.DispatcherBase)service)
+            ),
+            Create<Screen.ScreenService>(serviceProvider,
+                "Screen", (int)Common.Ports.Screen,
+                global::Screen.Dispatcher.Descriptor,
+                service => global::Screen.Dispatcher.BindService((global::Screen.Dispatcher.DispatcherBase)service)
             )
         };
 

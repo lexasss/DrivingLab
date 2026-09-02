@@ -23,7 +23,7 @@ internal class MyGazeService : Gaze.Dispatcher.DispatcherBase, ITelemetryService
         }
         catch (Exception)
         {
-            _logger.LogCritical("[VIMG] Cannot start the service");
+            _logger.LogError("[VIMG] Cannot start the service");
         }
     }
 

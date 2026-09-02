@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package Screen;
+
+import "protos/common.proto";
+import "google/protobuf/empty.proto";
+
+service Dispatcher {
+	rpc IsAvailable (google.protobuf.Empty) returns (Common.Bool) {}
+
+	rpc GetScreens (google.protobuf.Empty) returns (Screens) {}
+
+	rpc ReadEvents (google.protobuf.Empty) returns (stream Event) {}
+
+	rpc Show (Image) returns (Common.String) {}
+	rpc Close (Common.String) returns (google.protobuf.Empty) {}
+}
+
+message Screen {
+	int32 id = 1;
+	string name = 2;
+	Common.Point origin = 3;
+	Common.Size size = 4;
+}
+
+message Screens {
+	repeated Screen items = 1;
+}
+
+message Event {
+	string name = 1;
+}
+
+message Image {
+	int32 screenId = 1;
+	string fileName = 2;
+	Common.Point location = 3;
+	optional Common.Size size = 4;
+	optional int32 duration = 5;
+}

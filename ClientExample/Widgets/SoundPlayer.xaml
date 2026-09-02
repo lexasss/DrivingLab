@@ -107,9 +107,9 @@
                                  md:HintAssist.Hint="0..1">
                             <TextBox.Text>
                                 <Binding Path="ToneGain"
-                                         UpdateSourceTrigger="PropertyChanged"
+                                         UpdateSourceTrigger="LostFocus"
                                          ValidatesOnExceptions="True"
-                                         StringFormat="{}{0:0.0###}">
+                                         StringFormat="{}{0:0.####}">
                                     <Binding.ValidationRules>
                                         <local:DoubleRangeValidationRule
                                             Minimum="0"

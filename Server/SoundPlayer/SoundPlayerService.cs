@@ -3,6 +3,7 @@ using Grpc.Core;
 using Microsoft.Extensions.Logging;
 using NAudio.CoreAudioApi;
 using NAudio.Wave;
+using System.IO;
 using Proto = global::SoundPlayer;
 
 namespace Server.SoundPlayer;
@@ -15,6 +16,23 @@ public class SoundPlayerService : Proto.Dispatcher.DispatcherBase, IService
     public SoundPlayerService(ILogger<SoundPlayerService> logger) : base()
     {
         _logger = logger;
+
+        foreach (var device in GetSoundDevices().Result)
+        {
+            _logger.LogInformation("[SNDP] Found sound device {name}", device.Name);
+        }
+
+        try
+        {
+            foreach (var file in Directory.EnumerateFiles(SOUND_FOLDER, "*.wav"))
+            {
+                _logger.LogInformation("[SNDP] Found sound file {file}", Path.GetFileNameWithoutExtension(file));
+            }
+        }
+        catch
+        {
+            _logger.LogWarning("[SNDP] Sound folder does not exist");
+        }
 
         _logger.LogInformation("[SNDP] Running");
     }
@@ -114,6 +132,8 @@ public class SoundPlayerService : Proto.Dispatcher.DispatcherBase, IService
         public override string ToString() => name;
     }
 
+    const string SOUND_FOLDER = "sounds";
+
     readonly ILogger<SoundPlayerService> _logger;
     readonly Queue<Proto.Event> _events = [];
 
@@ -197,9 +217,9 @@ public class SoundPlayerService : Proto.Dispatcher.DispatcherBase, IService
         AudioFileReader? audioFile = null;
 
         var filePath = filename;
-        if (!Path.IsPathRooted(filename))
+        if (!Path.IsPathRooted(filePath))
         {
-            filePath = Path.Combine(AppContext.BaseDirectory, "sounds", filename);
+            filePath = Path.Combine(AppContext.BaseDirectory, SOUND_FOLDER, filename);
         }
 
         if (File.Exists(filePath))

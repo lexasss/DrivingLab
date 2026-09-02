@@ -47,7 +47,7 @@ internal class LeapMotionService : Proto.Dispatcher.DispatcherBase, ITelemetrySe
         }
         catch (Exception)
         {
-            _logger.LogCritical("[LEAP] Cannot start the service");
+            _logger.LogError("[LEAP] Cannot start the service");
         }
     }
 

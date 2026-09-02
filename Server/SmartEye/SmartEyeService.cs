@@ -35,7 +35,7 @@ internal class SmartEyeService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
         }
         catch (Exception)
         {
-            _logger.LogCritical("[SEYE] Cannot start the service");
+            _logger.LogError("[SEYE] Cannot start the service");
         }
     }
 

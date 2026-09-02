@@ -2,7 +2,6 @@ using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Microsoft.Extensions.Logging;
 using System.Threading.Channels;
-using Tobii.EyeX.Client.Interop;
 using Channel = System.Threading.Channels.Channel;
 using EyeXCore = Tobii.Gaze.Core;
 
@@ -31,12 +30,11 @@ internal class TobiiEyeXService : Gaze.Dispatcher.DispatcherBase, ITelemetryServ
             else
             {
                 _eyeX = null;
-                throw new Exception();
             }
         }
         catch (Exception)
         {
-            _logger.LogCritical("[EYEX] Cannot start the service");
+            _logger.LogError("[EYEX] Cannot start the service");
         }
     }
 

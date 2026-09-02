@@ -6,7 +6,8 @@ public enum Ports
     MyGaze = 30051,
     TobiiEyeX = 30052,
     SmartEye = 30053,
-    SoundPlayer = 30054
+    SoundPlayer = 30054,
+    Screen = 30055
 }
 
 public partial class Vector
@@ -18,4 +19,23 @@ public partial class Vector
         Y.ToString(),
         Z.ToString()
     ];
+}
+
+public partial class Point
+{
+    public void Deconstruct(out double x, out double y)
+    {
+        x = X;
+        y = Y;
+    }
+}
+
+
+public partial class Size
+{
+    public void Deconstruct(out double width, out double height)
+    {
+        width = Width;
+        height = Height;
+    }
 }
