@@ -33,6 +33,7 @@ class Program
         serviceCollection.AddTransient<MyGaze.MyGazeService>();
         serviceCollection.AddTransient<TobiiEyeX.TobiiEyeXService>();
         serviceCollection.AddTransient<SmartEye.SmartEyeService>();
+        serviceCollection.AddTransient<SoundPlayer.SoundPlayerService>();
 
         var serviceProvider = serviceCollection.BuildServiceProvider();
 
@@ -59,6 +60,11 @@ class Program
                 "Smart Eye", (int)Common.Ports.SmartEye,
                 global::SmartEye.Dispatcher.Descriptor,
                 service => global::SmartEye.Dispatcher.BindService((global::SmartEye.Dispatcher.DispatcherBase)service)
+            ),
+            Create<SoundPlayer.SoundPlayerService>(serviceProvider,
+                "Sound Player", (int)Common.Ports.SoundPlayer,
+                global::SoundPlayer.Dispatcher.Descriptor,
+                service => global::SoundPlayer.Dispatcher.BindService((global::SoundPlayer.Dispatcher.DispatcherBase)service)
             )
         };
 
@@ -115,25 +121,5 @@ class Program
         }
 
         return null;
-    }
-
-    private static Grpc.Core.Server CreateServer(
-        string name,
-        IService service,
-        Google.Protobuf.Reflection.ServiceDescriptor descriptor,
-        ServerServiceDefinition serviceDefinition,
-        int port)
-    {
-        var reflectionServiceImpl = new ReflectionServiceImpl(descriptor, ServerReflection.Descriptor);
-        var server = new Grpc.Core.Server
-        {
-            Services = { serviceDefinition, ServerReflection.BindService(reflectionServiceImpl) },
-            Ports = { new ServerPort("0.0.0.0", port, ServerCredentials.Insecure) }
-        };
-        server.Start();
-
-        _logger?.LogInformation("[APP] {name} server is listening on port {port}", name, port);
-
-        return server;
     }
 }

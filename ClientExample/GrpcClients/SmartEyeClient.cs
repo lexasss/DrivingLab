@@ -47,7 +47,7 @@ public class SmartEyeClient : IDisposable
         }
         catch (RpcException ex)
         {
-            Log(ex.Message);
+            LogException(ex);
         }
 
         return _isAvailable;
@@ -141,9 +141,9 @@ public class SmartEyeClient : IDisposable
                 }
             }
         }
-        catch (RpcException e)
+        catch (RpcException ex)
         {
-            Log(e.Message);
+            LogException(ex);
         }
         finally
         {
@@ -151,9 +151,9 @@ public class SmartEyeClient : IDisposable
         }
     }
 
-    private static void Log(string msg)
+    private static void LogException(Exception ex)
     {
-        System.Diagnostics.Debug.WriteLine(msg);
+        System.Diagnostics.Debug.WriteLine(ex.Message);
     }
 
     #endregion

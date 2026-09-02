@@ -42,9 +42,11 @@ public partial class App : Application
 
         services.AddSingleton<LeapMotionClient>();
         services.AddSingleton<SmartEyeClient>();
+        services.AddSingleton<SoundPlayerClient>();
 
         services.AddTransient<LeapMotionViewModel>();
         services.AddTransient<SmartEyeViewModel>();
+        services.AddTransient<SoundPlayerViewModel>();
 
         services.AddTransient<MainViewModel>();
         services.AddTransient<MainWindow>();

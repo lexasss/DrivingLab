@@ -49,6 +49,8 @@ internal class TobiiEyeXService : Gaze.Dispatcher.DispatcherBase, ITelemetryServ
 
         _fileLogger.Dispose();
         _logger.LogInformation("[EYEX] Disposed");
+
+        GC.SuppressFinalize(this);
     }
 
     public override Task<Common.Bool> IsAvailable(Empty request, ServerCallContext context)
@@ -92,18 +94,24 @@ internal class TobiiEyeXService : Gaze.Dispatcher.DispatcherBase, ITelemetryServ
         _logger.LogInformation("[EYEX] [req] Data reading: start");
         _isReading = true;
 
-        await foreach (var data in _channel.Reader.ReadAllAsync(_cts.Token))
+        try
         {
-            if (_isSending)
+            await foreach (var data in _channel.Reader.ReadAllAsync(_cts.Token))
             {
-                await responseStream.WriteAsync(data);
-                _fileLogger.Add(data.ToStringArray());
+                if (_isSending)
+                {
+                    await responseStream.WriteAsync(data);
+                    _fileLogger.Add(data.ToStringArray());
+                }
             }
         }
-
-        _eyeX.Tracker?.StopTracking();
-        _logger.LogInformation("[EYEX] [---] Data reading: stop");
-        _isReading = false;
+        catch (Exception) { }
+        finally
+        {
+            _eyeX.Tracker?.StopTracking();
+            _logger.LogInformation("[EYEX] [---] Data reading: stop");
+            _isReading = false;
+        }
     }
 
 

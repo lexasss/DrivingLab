@@ -54,9 +54,13 @@ internal class LeapMotionService : Proto.Dispatcher.DispatcherBase, ITelemetrySe
     public void Dispose()
     {
         _isActive = false;
+
         _leap?.Dispose();
         _fileLogger.Dispose();
+
         _logger.LogInformation("[LEAP] Disposed");
+
+        GC.SuppressFinalize(this);
     }
 
     public override Task<Common.Bool> IsAvailable (Empty request, ServerCallContext context)
@@ -132,17 +136,23 @@ internal class LeapMotionService : Proto.Dispatcher.DispatcherBase, ITelemetrySe
         _logger.LogInformation("[LEAP] [req] Data reading: start");
         _isReading = true;
 
-        await foreach (var data in _channel.Reader.ReadAllAsync(context.CancellationToken))
+        try
         {
-            if (_isSending)
+            await foreach (var data in _channel.Reader.ReadAllAsync(context.CancellationToken))
             {
-                await responseStream.WriteAsync(data);
-                _fileLogger.Add(data.ToStringArray());
+                if (_isSending)
+                {
+                    await responseStream.WriteAsync(data);
+                    _fileLogger.Add(data.ToStringArray());
+                }
             }
         }
-
-        _logger.LogInformation("[LEAP] [---] Data reading: stop");
-        _isReading = false;
+        catch (Exception) { }
+        finally
+        {
+            _logger.LogInformation("[LEAP] [--] Data reading: stop");
+            _isReading = false;
+        }
     }
 
     public override async Task ReadEvents(Empty request, IServerStreamWriter<Proto.Event> responseStream, ServerCallContext context)

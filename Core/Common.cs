@@ -6,6 +6,7 @@ public enum Ports
     MyGaze = 30051,
     TobiiEyeX = 30052,
     SmartEye = 30053,
+    SoundPlayer = 30054
 }
 
 public partial class Vector

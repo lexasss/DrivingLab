@@ -1,14 +1,8 @@
 ﻿using NAudio.Wave;
+using NAudio.Wave.SampleProviders;
 using Proto = global::SoundPlayer;
 
 namespace Server.SoundPlayer;
-
-public class SoundDevice(string id, string name)
-{
-    public string Id => id;
-    public string Name => name;
-    public override string ToString() => name;
-}
 
 [System.Diagnostics.CodeAnalysis.SuppressMessage("Interoperability", "CA1416:Validate platform compatibility")]
 public class TonePlayer : IDisposable
@@ -20,24 +14,34 @@ public class TonePlayer : IDisposable
         Proto.ToneType toneType,
         double frequency,
         double gain,
-        int pulseDuration)
+        int duration)
     {
-        _toneGenerator = new ToneGenerator() {
-            Frequency = frequency,
+        _signalGenerator = new SignalGenerator()
+        {
             Gain = gain,
-            ToneType = toneType,
-            PulseDuration = pulseDuration
+            Frequency = frequency,
+            Type = toneType switch
+            {
+                Proto.ToneType.Sine => SignalGeneratorType.Sin,
+                Proto.ToneType.Triangle => SignalGeneratorType.Triangle,
+                Proto.ToneType.Square => SignalGeneratorType.Square,
+                Proto.ToneType.SawTooth => SignalGeneratorType.SawTooth,
+                Proto.ToneType.Sweep => SignalGeneratorType.Sweep,
+                Proto.ToneType.Pink => SignalGeneratorType.Pink,
+                Proto.ToneType.White => SignalGeneratorType.White,
+                _ => SignalGeneratorType.Sin
+            }
         };
+
+        if (duration > 0)
+            _signalGenerator = _signalGenerator.Take(TimeSpan.FromMilliseconds(duration));
 
         _player = player;
     }
 
     public void Start()
     {
-        _toneGenerator.Frequency = 0;
-        _toneGenerator.Reset();
-
-        _player.Init(_toneGenerator);
+        _player.Init(_signalGenerator);
         _player.Play();
     }
 
@@ -55,22 +59,10 @@ public class TonePlayer : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    /// <summary>
-    /// Sets the sine frequence from 0 Hz to <see cref="MaxFrequency"/> Hz,
-    /// or affects the pulse interval if <see cref="TonePulseDuration"/> is >0.
-    /// </summary>
-    /// <param name="factor">-1..1: negative parameter values affect the left channel,
-    /// and positive values affect the right channel</param>
-    public void SetPitchFactor(double factor)
-    {
-        _toneGenerator.Frequency = factor * MaxFrequency;
-        //_toneGenerator.Frequency = Math.Sign(factor) * Math.Exp(Math.Abs(factor) * 3.5 - 2.5) * MaxFrequency / Math.E;
-    }
-
     #region Internal
 
     readonly WasapiPlayer _player;
-    readonly ToneGenerator _toneGenerator;
+    readonly ISampleProvider _signalGenerator;
 
     #endregion
 }

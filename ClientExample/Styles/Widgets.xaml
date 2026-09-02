@@ -3,19 +3,23 @@
     <Style x:Key="Card" TargetType="Border">
         <Setter Property="BorderBrush" Value="Teal"/>
         <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="Margin" Value="8"/>
+        <Setter Property="Margin" Value="0"/>
     </Style>
-    <Style x:Key="Device" TargetType="Label" BasedOn="{StaticResource {x:Type Label}}">
+
+    <Style x:Key="Device" TargetType="Label" BasedOn="{StaticResource MaterialDesignLabel}">
         <Setter Property="FontWeight" Value="Bold"/>
         <Setter Property="Background" Value="AntiqueWhite"/>
         <Setter Property="Padding" Value="8"/>
     </Style>
-    <Style x:Key="RowHeader" TargetType="Label" BasedOn="{StaticResource {x:Type Label}}">
+
+    <Style x:Key="RowHeader" TargetType="Label" BasedOn="{StaticResource MaterialDesignLabel}">
         <Setter Property="VerticalAlignment" Value="Center"/>
     </Style>
-    <Style x:Key="Data" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+    
+    <Style x:Key="Data" TargetType="TextBlock" BasedOn="{StaticResource MaterialDesignTextBlock}">
         <Setter Property="Margin" Value="8"/>
     </Style>
+    
     <Style x:Key="Switch" TargetType="ToggleButton" BasedOn="{StaticResource MaterialDesignSwitchToggleButton}">
         <Setter Property="Margin" Value="5"/>
         <Setter Property="Width" Value="50"/>
@@ -30,4 +34,10 @@
             </Setter.Value>
         </Setter>
     </Style>
+
+    <Style x:Key="OptionName" TargetType="Label" BasedOn="{StaticResource MaterialDesignLabel}">
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="Margin" Value="2,2,8,2"/>
+    </Style>
+
 </ResourceDictionary>

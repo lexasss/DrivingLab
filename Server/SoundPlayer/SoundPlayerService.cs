@@ -19,23 +19,17 @@ public class SoundPlayerService : Proto.Dispatcher.DispatcherBase, IService
         _logger.LogInformation("[SNDP] Running");
     }
 
-    public static async Task<SoundDevice[]> GetSoundDevices()
+    public void Dispose()
     {
-        var devices = await Task.Run(() => {
-            var enumerator = new MMDeviceEnumerator();
-            return enumerator.EnumerateAudioEndPoints(DataFlow.Render, DeviceState.Active);
-        });
+        _isActive = false;
 
-        return devices.Select(device => new SoundDevice(device.ID, device.FriendlyName)).ToArray();
-    }
+        _tonePlayer?.Dispose();
+        _audioFile?.Dispose();
+        _soundPlayer?.Dispose();
 
-    public static MMDevice? GetDevice(string id)
-    {
-        var enumerator = new MMDeviceEnumerator();
-        var devices = enumerator.EnumerateAudioEndPoints(
-            DataFlow.Render,
-            DeviceState.Active);
-        return devices.FirstOrDefault(d => d.ID == id);
+        _logger.LogInformation("[SNDP] Disposed");
+
+        GC.SuppressFinalize(this);
     }
 
     public override Task<Common.Bool> IsAvailable(Empty request, ServerCallContext context)
@@ -72,64 +66,24 @@ public class SoundPlayerService : Proto.Dispatcher.DispatcherBase, IService
     {
         bool result = false;
 
-        if (_soundPlayer?.DeviceId != request.DeviceId)
-        {
-            _soundPlayer?.Dispose();
-
-            var device = GetDevice(request.DeviceId);
-            _soundPlayer = new WasapiPlayerBuilder()
-               .WithDevice(device)          // default: system default render device
-               .WithEventSync()             // default: event sync (vs WithPollingSync)
-               .WithLatency(50)             // default: 200ms
-               .WithLowLatency()            // try IAudioClient3 shared-mode low latency
-               .WithCategory(AudioStreamCategory.Media)
-               .WithRawMode()               // bypass system audio enhancements
-               .Build();
-
-            _soundPlayer.PlaybackStopped += (sender, e) =>
-            {
-                _logger.LogInformation("[SNDP] Playback finished");
-                _events.Enqueue(new Proto.Event { Name = Proto.Events.PLAYBACK_FINISHED });
-            };
-        }
+        _soundPlayer?.Dispose();
+        _soundPlayer = CreatePlayer(request.DeviceId);
 
         if (request.SoundCase == Proto.SoundDescription.SoundOneofCase.Tone)
         {
-            var tone = request.Tone;
-
             _tonePlayer?.Dispose();
-            _tonePlayer = new TonePlayer(
-                _soundPlayer,
-                tone.ToneType,
-                tone.Frequency,
-                tone.Gain,
-                tone.PulseDuration
-            );
-
-            _logger.LogInformation("[SNDP] Playing {tone}", tone.ToneType);
+            _tonePlayer = PlayTone(_soundPlayer, request.Tone);
             result = true;
         }
         else if (request.SoundCase == Proto.SoundDescription.SoundOneofCase.Filename)
         {
-            var filename = request.Filename;
-            if (!Path.IsPathRooted(filename))
-            {
-                filename = Path.Combine(AppContext.BaseDirectory, "sounds", filename);
-            }
-            if (File.Exists(request.Filename))
-            {
-                using var audioFile = new AudioFileReader(request.Filename);
-
-                _soundPlayer.Init(audioFile);
-                _soundPlayer.Play();
-
-                _logger.LogInformation("[SNDP] Playing {filename}", request.Filename);
-                result = true;
-            }
-            else
-            {
-                _logger.LogWarning("[SNDP] File not found: {filename}", filename);
-            }
+            _audioFile?.Dispose();
+            _audioFile = PlayFile(_soundPlayer, request.Filename);
+            result = _audioFile != null;
+        }
+        else
+        {
+            _logger.LogWarning("[SNDP] Unsupported sound type");
         }
 
         return Task.FromResult(new Common.Bool { Value = result });
@@ -137,6 +91,12 @@ public class SoundPlayerService : Proto.Dispatcher.DispatcherBase, IService
 
     public override Task<Empty> Stop(Empty request, ServerCallContext context)
     {
+        _tonePlayer?.Stop();
+        _tonePlayer?.Dispose();
+        _tonePlayer = null;
+        _audioFile?.Dispose();
+        _audioFile = null;
+
         _soundPlayer?.Stop();
         _soundPlayer?.Dispose();
         _soundPlayer = null;
@@ -145,16 +105,14 @@ public class SoundPlayerService : Proto.Dispatcher.DispatcherBase, IService
         return Task.FromResult(new Empty());
     }
 
-    public void Dispose()
-    {
-        _isActive = false;
-        _soundPlayer?.Dispose();
-        _tonePlayer?.Dispose();
-
-        GC.SuppressFinalize(this);
-    }
-
     #region Internal
+
+    class SoundDevice(string id, string name)
+    {
+        public string Id => id;
+        public string Name => name;
+        public override string ToString() => name;
+    }
 
     readonly ILogger<SoundPlayerService> _logger;
     readonly Queue<Proto.Event> _events = [];
@@ -163,7 +121,110 @@ public class SoundPlayerService : Proto.Dispatcher.DispatcherBase, IService
 
     WasapiPlayer? _soundPlayer;
     TonePlayer? _tonePlayer;
+    AudioFileReader? _audioFile;
+
+    private static async Task<SoundDevice[]> GetSoundDevices()
+    {
+        var devices = await Task.Run(() => {
+            var enumerator = new MMDeviceEnumerator();
+            return enumerator.EnumerateAudioEndPoints(DataFlow.Render, DeviceState.Active);
+        });
+
+        return devices.Select(device => new SoundDevice(device.ID, device.FriendlyName)).ToArray();
+    }
+
+    private static MMDevice? GetDevice(string id)
+    {
+        var enumerator = new MMDeviceEnumerator();
+        var devices = enumerator.EnumerateAudioEndPoints(
+            DataFlow.Render,
+            DeviceState.Active);
+        return devices.FirstOrDefault(d => d.ID == id);
+    }
+
+    private WasapiPlayer CreatePlayer(string deviceId)
+    {
+        var device = GetDevice(deviceId);
+        var soundPlayer = new WasapiPlayerBuilder()
+            .WithDevice(device)          // default: system default render device
+            .WithEventSync()             // default: event sync (vs WithPollingSync)
+            .WithLatency(50)             // default: 200ms
+            .WithLowLatency()            // try IAudioClient3 shared-mode low latency
+            .WithCategory(AudioStreamCategory.Media)
+            .WithRawMode()               // bypass system audio enhancements
+            .Build();
+
+        soundPlayer.PlaybackStopped += (sender, e) =>
+        {
+            _logger.LogInformation("[SNDP] Playback finished");
+            _events.Enqueue(new Proto.Event { Name = Proto.Events.PLAYBACK_FINISHED });
+        };
+
+        return soundPlayer;
+    }
+
+    private TonePlayer PlayTone(WasapiPlayer soundPlayer, Proto.ToneDescription tone)
+    {
+        var tonePlayer = new TonePlayer(
+            soundPlayer,
+            tone.ToneType,
+            tone.Frequency,
+            tone.Gain,
+            tone.PulseDuration
+        );
+
+        tonePlayer.Start();
+        
+        if (tone.TotalDuration > 0)
+        {
+            Task.Run(async () =>
+            {
+                await Task.Delay(tone.TotalDuration);
+
+                tonePlayer.Stop();
+
+                _logger.LogInformation("[SNDP] Tone finished");
+                _events.Enqueue(new Proto.Event { Name = Proto.Events.PLAYBACK_FINISHED });
+            });
+        }
+
+        _logger.LogInformation("[SNDP] Playing {tone}", tone.ToneType);
+        return tonePlayer;
+    }
+
+    private AudioFileReader? PlayFile(WasapiPlayer soundPlayer, string filename)
+    {
+        AudioFileReader? audioFile = null;
+
+        var filePath = filename;
+        if (!Path.IsPathRooted(filename))
+        {
+            filePath = Path.Combine(AppContext.BaseDirectory, "sounds", filename);
+        }
+
+        if (File.Exists(filePath))
+        {
+            try
+            {
+                audioFile = new AudioFileReader(filePath);
+
+                soundPlayer.Init(audioFile);
+                soundPlayer.Play();
+
+                _logger.LogInformation("[SNDP] Playing {filename}", filename);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[SNDP] Error playing {filename}: {reason}", filename, ex.Message);
+            }
+        }
+        else
+        {
+            _logger.LogWarning("[SNDP] File not found: {filename}", filePath);
+        }
+
+        return audioFile;
+    }
 
     #endregion
-
 }

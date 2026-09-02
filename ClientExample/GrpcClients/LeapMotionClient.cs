@@ -55,7 +55,7 @@ public class LeapMotionClient : IDisposable
         }
         catch (RpcException ex)
         {
-            Log(ex.Message);
+            LogException(ex);
         }
 
         return _isAvailable;
@@ -117,9 +117,9 @@ public class LeapMotionClient : IDisposable
                 HandLocationChanged?.Invoke(this, data);
             }
         }
-        catch (RpcException e)
+        catch (RpcException ex)
         {
-            Log(e.Message);
+            LogException(ex);
         }
         finally
         {
@@ -164,9 +164,9 @@ public class LeapMotionClient : IDisposable
                 }
             }
         }
-        catch (RpcException e)
+        catch (RpcException ex)
         {
-            Log(e.Message);
+            LogException(ex);
         }
         finally
         {
@@ -174,9 +174,9 @@ public class LeapMotionClient : IDisposable
         }
     }
 
-    private static void Log(string msg)
+    private static void LogException(Exception ex)
     {
-        System.Diagnostics.Debug.WriteLine(msg);
+        System.Diagnostics.Debug.WriteLine(ex.Message);
     }
 
     #endregion

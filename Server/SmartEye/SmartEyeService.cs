@@ -45,6 +45,8 @@ internal class SmartEyeService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
         _seClient?.Dispose();
         _fileLogger.Dispose();
         _logger.LogInformation("[SEYE] Disposed");
+
+        GC.SuppressFinalize(this);
     }
 
     public override Task<Common.Bool> IsAvailable (Empty request, ServerCallContext context)

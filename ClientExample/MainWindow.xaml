@@ -17,11 +17,15 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="200"/>
             <ColumnDefinition Width="200"/>
+            <ColumnDefinition Width="200"/>
+            <ColumnDefinition Width="200"/>
         </Grid.ColumnDefinitions>
 
         <widgets:LeapMotion Grid.Column="0"
                             DataContext="{Binding LeapMotion}"/>
         <widgets:SmartEye Grid.Column="1"
                           DataContext="{Binding SmartEye}"/>
+        <widgets:SoundPlayer Grid.Column="2"
+                          DataContext="{Binding SoundPlayer}"/>
     </Grid>
 </Window>

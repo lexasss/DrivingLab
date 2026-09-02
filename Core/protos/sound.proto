@@ -32,7 +32,11 @@ message Event {
 enum ToneType {
     Sine = 0;
     Triangle = 1;
-    Harmonics = 2;
+    Square = 2;
+	SawTooth = 3;
+	Sweep = 4;
+	Pink = 5;
+	White = 6;
 }
 
 message ToneDescription {
@@ -40,6 +44,7 @@ message ToneDescription {
 	double frequency = 4;
 	double gain = 5;
 	int32 pulseDuration = 6;
+	int32 totalDuration = 7;
 }
 
 message SoundDescription {

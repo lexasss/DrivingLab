@@ -22,11 +22,6 @@
                 <x:Type TypeName="se:IntersectionSource" />
             </ObjectDataProvider.MethodParameters>
         </ObjectDataProvider>
-        
-        <Style x:Key="OptionName" TargetType="Label">
-            <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="Margin" Value="2,2,8,2"/>
-        </Style>
     </UserControl.Resources>
     
     <Border Style="{StaticResource Card}">
