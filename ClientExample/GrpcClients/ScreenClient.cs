@@ -4,29 +4,21 @@ using Microsoft.Extensions.Options;
 
 namespace ClientExample;
 
-public class ScreenClient : IDisposable
+public class ScreenClient : Client
 {
-    public bool IsAvailable => _isAvailable;
-
-    public event EventHandler<bool>? AvailabilityChanged;
     public event EventHandler<string>? MediaHidden;
 
     public ScreenClient(IOptions<AppSettings> appSettings)
+        : base(appSettings, (int)Common.Ports.Screen)
     {
-        _channel = new Channel(appSettings.Value.ServerIp, (int)Common.Ports.Screen, ChannelCredentials.Insecure);
         _client = new Screen.Dispatcher.DispatcherClient(_channel);
-
-        Task.Run(Initialize);
     }
 
-    public void Dispose()
+    public override void Dispose()
     {
-        _eventsCts.Cancel();
         _eventsCall?.Dispose();
 
-        _channel.ShutdownAsync().Wait();
-
-        GC.SuppressFinalize(this);
+        base.Dispose();
     }
 
     public Screen.Screens GetScreens()
@@ -65,31 +57,16 @@ public class ScreenClient : IDisposable
 
     #region Internal
 
-    readonly Channel _channel;
     readonly Screen.Dispatcher.DispatcherClient _client;
-    readonly CancellationTokenSource _eventsCts = new();
     
-    bool _isAvailable = false;
-
     AsyncServerStreamingCall<Screen.Event>? _eventsCall;
 
-    private async Task Initialize()
+    protected override void Initialize()
     {
-        try
+        _isAvailable = _client.IsAvailable(new Empty()).Value;
+        if (_isAvailable)
         {
-            _isAvailable = _client.IsAvailable(new Empty()).Value;
-            if (_isAvailable)
-            {
-                _ = ReadEvents();
-            }
-        }
-        catch (RpcException ex)
-        {
-            LogException(ex);
-        }
-        finally
-        {
-            AvailabilityChanged?.Invoke(this, _isAvailable);
+            _ = ReadEvents();
         }
     }
 
@@ -120,11 +97,6 @@ public class ScreenClient : IDisposable
         {
             _eventsCall = null;
         }
-    }
-
-    private static void LogException(Exception ex)
-    {
-        System.Diagnostics.Debug.WriteLine(ex.Message);
     }
 
     #endregion

@@ -8,7 +8,7 @@ import "google/protobuf/empty.proto";
 service Dispatcher {
 	rpc IsAvailable (google.protobuf.Empty) returns (Common.Bool) {}
 
-	rpc SetLogFilename (Common.String) returns (Common.Bool) {}
+	rpc SetLogFileName (Common.String) returns (Common.Bool) {}
 
 	// Initializes data reading stream, but the data is not polling to clients
 	// until Start is called

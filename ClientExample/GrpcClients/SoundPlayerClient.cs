@@ -4,30 +4,23 @@ using Microsoft.Extensions.Options;
 
 namespace ClientExample;
 
-public class SoundPlayerClient : IDisposable
+public class SoundPlayerClient : Client
 {
-    public bool IsAvailable => _isAvailable;
     public string DeviceId { get; set; } = string.Empty;
 
-    public event EventHandler<bool>? AvailabilityChanged;
     public event EventHandler? PlaybackFinished;
 
     public SoundPlayerClient(IOptions<AppSettings> appSettings)
+        : base(appSettings, (int)Common.Ports.SoundPlayer)
     {
-        _channel = new Channel(appSettings.Value.ServerIp, (int)Common.Ports.SoundPlayer, ChannelCredentials.Insecure);
         _client = new SoundPlayer.Dispatcher.DispatcherClient(_channel);
-
-        Task.Run(Initialize);
     }
 
-    public void Dispose()
+    public override void Dispose()
     {
-        _eventsCts.Cancel();
         _eventsCall?.Dispose();
 
-        _channel.ShutdownAsync().Wait();
-
-        GC.SuppressFinalize(this);
+        base.Dispose();
     }
 
     public SoundPlayer.Devices GetDevices()
@@ -70,31 +63,16 @@ public class SoundPlayerClient : IDisposable
 
     #region Internal
 
-    readonly Channel _channel;
     readonly SoundPlayer.Dispatcher.DispatcherClient _client;
-    readonly CancellationTokenSource _eventsCts = new();
-
-    bool _isAvailable = false;
 
     AsyncServerStreamingCall<SoundPlayer.Event>? _eventsCall;
 
-    private async Task Initialize()
+    protected override void Initialize()
     {
-        try
+        _isAvailable = _client.IsAvailable(new Empty()).Value;
+        if (_isAvailable)
         {
-            _isAvailable = _client.IsAvailable(new Empty()).Value;
-            if (_isAvailable)
-            {
-                _ = ReadEvents();
-            }
-        }
-        catch (RpcException ex)
-        {
-            LogException(ex);
-        }
-        finally
-        {
-            AvailabilityChanged?.Invoke(this, _isAvailable);
+            _ = ReadEvents();
         }
     }
 
@@ -125,11 +103,6 @@ public class SoundPlayerClient : IDisposable
         {
             _eventsCall = null;
         }
-    }
-
-    private static void LogException(Exception ex)
-    {
-        System.Diagnostics.Debug.WriteLine(ex.Message);
     }
 
     #endregion

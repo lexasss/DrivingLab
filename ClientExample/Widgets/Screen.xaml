@@ -48,7 +48,7 @@
                              md:HintAssist.Hint="Filename">
                         <TextBox.ToolTip>
                             <TextBlock>
-                                <Run Text="Enter the path to a media file to play."/>
+                                <Run Text="Enter the path to a media file to show / play."/>
                                 <LineBreak/>
                                 <Run Text="Supported types are PNG, JPG, MP4, AVI and WMV."/>
                                 <LineBreak/>

@@ -9,13 +9,13 @@ service Dispatcher {
 	rpc IsAvailable (google.protobuf.Empty) returns (Common.Bool) {}
 	rpc IsConnected (google.protobuf.Empty) returns (Common.Bool) {}
 
-	rpc SetLogFilename (Common.String) returns (Common.Bool) {}
+	rpc SetLogFileName (Common.String) returns (Common.Bool) {}
 	rpc Configure (Configuration) returns (Common.Bool) {}
 
 	rpc ReadEvents (google.protobuf.Empty) returns (stream Event) {}
 
 	// Enable of disable data streaming to a log file
-	// (has no effect if SetLogFilename was not called yet)
+	// (has no effect if SetLogFileName was not called yet)
 	rpc Start (google.protobuf.Empty) returns (google.protobuf.Empty) {}
 	rpc Stop (google.protobuf.Empty) returns (google.protobuf.Empty) {}
 }

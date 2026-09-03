@@ -10,7 +10,7 @@ service Dispatcher {
 	rpc IsConnected (google.protobuf.Empty) returns (Common.Bool) {}
 
 	rpc Configure (Configuration) returns (google.protobuf.Empty) {}
-	rpc SetLogFilename (Common.String) returns (Common.Bool) {}
+	rpc SetLogFileName (Common.String) returns (Common.Bool) {}
 
 	// Initializes data reading stream, but the data is not polling to clients
 	// until Start is called

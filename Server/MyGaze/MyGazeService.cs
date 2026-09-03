@@ -49,7 +49,7 @@ internal class MyGazeService : Gaze.Dispatcher.DispatcherBase, ITelemetryService
     {
         if (!_isSending)
         {
-            _logger.LogInformation("[VIMG] [req] Start");
+            _logger.LogInformation("[VIMG] Data streaming: started");
             _isSending = true;
         }
         return Task.FromResult(new Empty());
@@ -59,17 +59,32 @@ internal class MyGazeService : Gaze.Dispatcher.DispatcherBase, ITelemetryService
     {
         if (_isSending)
         {
-            _logger.LogInformation("[VIMG] [req] Stop");
+            _logger.LogInformation("[VIMG] Data streaming: stopped");
             _isSending = false;
         }
         return Task.FromResult(new Empty());
     }
 
-    public override Task<Common.Bool> SetLogFilename(Common.String request, ServerCallContext context)
+    public override Task<Common.Bool> SetLogFileName(Common.String request, ServerCallContext context)
     {
-        _logger.LogInformation("[VIMG] [req] Logging to {filename}", request.Value);
-        var result = _fileLogger.SetFilename(request.Value);
-        return Task.FromResult(new Common.Bool() { Value = result });
+        if (string.IsNullOrEmpty(request.Value))
+        {
+            if (_fileLogger.IsLogging)
+            {
+                _logger.LogInformation("[VIMG] Logging disabled");
+                _fileLogger.SetFilename(string.Empty);
+            }
+            return Task.FromResult(new Common.Bool() { Value = false });
+        }
+        else
+        {
+            var result = _fileLogger.SetFilename(request.Value);
+            if (result)
+                _logger.LogInformation("[VIMG] Logging to {filename}", request.Value);
+            else
+                _logger.LogWarning("[VIMG] Cannot log to {filename}", request.Value);
+            return Task.FromResult(new Common.Bool() { Value = result });
+        }
     }
 
     public override async Task ReadData(Empty request, IServerStreamWriter<Gaze.Sample> responseStream, ServerCallContext context)
@@ -80,11 +95,11 @@ internal class MyGazeService : Gaze.Dispatcher.DispatcherBase, ITelemetryService
         _myGaze.Start();
         if (!_myGaze.IsTracking)
         {
-            _logger.LogError("[VIMG] [req] Data reading: failed");
+            _logger.LogError("[VIMG] Data reading: failed");
             return;
         }
 
-        _logger.LogInformation("[VIMG] [req] Data reading: start");
+        _logger.LogInformation("[VIMG] Data reading: started");
         _isReading = true;
 
         try
@@ -98,11 +113,12 @@ internal class MyGazeService : Gaze.Dispatcher.DispatcherBase, ITelemetryService
                 }
             }
         }
-        catch (Exception) { }
+        catch (Exception)
+        { }
         finally
         {
             _myGaze?.Stop();
-            _logger.LogInformation("[VIMG] [---] Data reading: stop");
+            _logger.LogInformation("[VIMG] Data reading: stopped");
             _isReading = false;
         }
     }

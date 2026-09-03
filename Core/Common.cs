@@ -19,6 +19,11 @@ public partial class Vector
         Y.ToString(),
         Z.ToString()
     ];
+    public string[] ToStringArray(int decimals) => [
+        X.ToString($"F{decimals}"),
+        Y.ToString($"F{decimals}"),
+        Z.ToString($"F{decimals}")
+    ];
 }
 
 public partial class Point

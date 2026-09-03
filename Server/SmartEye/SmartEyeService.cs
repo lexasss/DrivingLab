@@ -63,12 +63,12 @@ internal class SmartEyeService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
     {
         if (!_isConnected && _seClient != null)
         {
-            _logger.LogInformation("[SEYE] [req] Configuration");
-
             SmartEyeTools.Options.Instance.IntersectionSource = (SmartEyeTools.IntersectionSource)request.IntersectionSource;
             SmartEyeTools.Options.Instance.IntersectionSourceFiltered = request.UseFilteredData;
 
             _planeMappingMode = request.PlaneMappingMode;
+
+            _logger.LogInformation("[SEYE] Configured");
 
             var result = await _seClient.Connect(request.Ip, request.Port);
             if (result == null)
@@ -91,7 +91,7 @@ internal class SmartEyeService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
     {
         if (!_isSending)
         {
-            _logger.LogInformation("[SEYE] [req] Start");
+            _logger.LogInformation("[SEYE] Data streaming: started");
             _isSending = true;
         }
         return Task.FromResult(new Empty());
@@ -101,17 +101,32 @@ internal class SmartEyeService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
     {
         if (_isSending)
         {
-            _logger.LogInformation("[SEYE] [req] Stop");
+            _logger.LogInformation("[SEYE] Data streaming: stopped");
             _isSending = false;
         }
         return Task.FromResult(new Empty());
     }
 
-    public override Task<Common.Bool> SetLogFilename(Common.String request, ServerCallContext context)
+    public override Task<Common.Bool> SetLogFileName(Common.String request, ServerCallContext context)
     {
-        _logger.LogInformation("[SEYE] [req] Logging to {filename}", request.Value);
-        var result = _fileLogger.SetFilename(request.Value);
-        return Task.FromResult(new Common.Bool() { Value = result });
+        if (string.IsNullOrEmpty(request.Value))
+        {
+            if (_fileLogger.IsLogging)
+            {
+                _logger.LogInformation("[SEYE] Logging disabled");
+                _fileLogger.SetFilename(string.Empty);
+            }
+            return Task.FromResult(new Common.Bool() { Value = false });
+        }
+        else
+        {
+            var result = _fileLogger.SetFilename(request.Value);
+            if (result)
+                _logger.LogInformation("[SEYE] Logging to {filename}", request.Value);
+            else
+                _logger.LogWarning("[SEYE] Cannot log to {filename}", request.Value);
+            return Task.FromResult(new Common.Bool() { Value = result });
+        }
     }
 
     /*

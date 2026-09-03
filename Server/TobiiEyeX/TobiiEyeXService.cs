@@ -60,7 +60,7 @@ internal class TobiiEyeXService : Gaze.Dispatcher.DispatcherBase, ITelemetryServ
     {
         if (!_isSending)
         {
-            _logger.LogInformation("[EYEX] [req] Start");
+            _logger.LogInformation("[EYEX] Data streaming: started");
             _isSending = true;
         }
         return Task.FromResult(new Empty());
@@ -70,17 +70,32 @@ internal class TobiiEyeXService : Gaze.Dispatcher.DispatcherBase, ITelemetryServ
     {
         if (_isSending)
         {
-            _logger.LogInformation("[EYEX] [req] Stop");
+            _logger.LogInformation("[EYEX] Data streaming: stopped");
             _isSending = false;
         }
         return Task.FromResult(new Empty());
     }
 
-    public override Task<Common.Bool> SetLogFilename(Common.String request, ServerCallContext context)
+    public override Task<Common.Bool> SetLogFileName(Common.String request, ServerCallContext context)
     {
-        _logger.LogInformation("[EYEX] [req] Logging to {filename}", request.Value);
-        var result = _fileLogger.SetFilename(request.Value);
-        return Task.FromResult(new Common.Bool() { Value = result });
+        if (string.IsNullOrEmpty(request.Value))
+        {
+            if (_fileLogger.IsLogging)
+            {
+                _logger.LogInformation("[EYEX] Logging disabled");
+                _fileLogger.SetFilename(string.Empty);
+            }
+            return Task.FromResult(new Common.Bool() { Value = false });
+        }
+        else
+        {
+            var result = _fileLogger.SetFilename(request.Value);
+            if (result)
+                _logger.LogInformation("[EYEX] Logging to {filename}", request.Value);
+            else
+                _logger.LogWarning("[EYEX] Cannot log to {filename}", request.Value);
+            return Task.FromResult(new Common.Bool() { Value = result });
+        }
     }
 
     public override async Task ReadData(Empty request, IServerStreamWriter<Gaze.Sample> responseStream, ServerCallContext context)
@@ -89,7 +104,7 @@ internal class TobiiEyeXService : Gaze.Dispatcher.DispatcherBase, ITelemetryServ
             return;
 
         _eyeX.Tracker?.StartTracking();
-        _logger.LogInformation("[EYEX] [req] Data reading: start");
+        _logger.LogInformation("[EYEX] Data reading: start");
         _isReading = true;
 
         try
@@ -107,7 +122,7 @@ internal class TobiiEyeXService : Gaze.Dispatcher.DispatcherBase, ITelemetryServ
         finally
         {
             _eyeX.Tracker?.StopTracking();
-            _logger.LogInformation("[EYEX] [---] Data reading: stop");
+            _logger.LogInformation("[EYEX] Data reading: stop");
             _isReading = false;
         }
     }

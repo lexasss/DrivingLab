@@ -75,8 +75,6 @@ internal class LeapMotionService : Proto.Dispatcher.DispatcherBase, ITelemetrySe
 
     public override Task<Empty> Configure(Proto.Configuration request, ServerCallContext context)
     {
-        _logger.LogInformation("[LEAP] [req] Configuration");
-
         if (request.Config == Proto.ConfigType.Custom)
         {
             _leap?.SetProximityBox(
@@ -98,6 +96,7 @@ internal class LeapMotionService : Proto.Dispatcher.DispatcherBase, ITelemetrySe
             _leap?.SetTransform();
         }
 
+        _logger.LogInformation("[LEAP] Configured as '{type}'", request.Config);
         return Task.FromResult(new Empty());
     }
 
@@ -105,7 +104,7 @@ internal class LeapMotionService : Proto.Dispatcher.DispatcherBase, ITelemetrySe
     {
         if (!_isSending)
         {
-            _logger.LogInformation("[LEAP] [req] Start");
+            _logger.LogInformation("[LEAP] Data streaming: started");
             _isSending = true;
         }
         return Task.FromResult(new Empty());
@@ -115,17 +114,32 @@ internal class LeapMotionService : Proto.Dispatcher.DispatcherBase, ITelemetrySe
     {
         if (_isSending)
         {
-            _logger.LogInformation("[LEAP] [req] Stop");
+            _logger.LogInformation("[LEAP] Data streaming: stopped");
             _isSending = false;
         }
         return Task.FromResult(new Empty());
     }
 
-    public override Task<Common.Bool> SetLogFilename(Common.String request, ServerCallContext context)
+    public override Task<Common.Bool> SetLogFileName(Common.String request, ServerCallContext context)
     {
-        _logger.LogInformation("[LEAP] [req] Logging to {filename}", request.Value);
-        var result = _fileLogger.SetFilename(request.Value);
-        return Task.FromResult(new Common.Bool() { Value = result });
+        if (string.IsNullOrEmpty(request.Value))
+        {
+            if (_fileLogger.IsLogging)
+            {
+                _logger.LogInformation("[LEAP] Logging disabled");
+                _fileLogger.SetFilename(string.Empty);
+            }
+            return Task.FromResult(new Common.Bool() { Value = false });
+        }
+        else
+        {
+            var result = _fileLogger.SetFilename(request.Value);
+            if (result)
+                _logger.LogInformation("[LEAP] Logging to {filename}", request.Value);
+            else
+                _logger.LogWarning("[LEAP] Cannot log to {filename}", request.Value);
+            return Task.FromResult(new Common.Bool() { Value = result });
+        }
     }
 
     public override async Task ReadData(Empty request, IServerStreamWriter<Proto.Sample> responseStream, ServerCallContext context)
@@ -133,7 +147,7 @@ internal class LeapMotionService : Proto.Dispatcher.DispatcherBase, ITelemetrySe
         if (_isReading)
             return;
 
-        _logger.LogInformation("[LEAP] [req] Data reading: start");
+        _logger.LogInformation("[LEAP] Data reading: start");
         _isReading = true;
 
         try
@@ -143,14 +157,14 @@ internal class LeapMotionService : Proto.Dispatcher.DispatcherBase, ITelemetrySe
                 if (_isSending)
                 {
                     await responseStream.WriteAsync(data);
-                    _fileLogger.Add(data.ToStringArray());
+                    _fileLogger.Add(data.ToStringArray(1));
                 }
             }
         }
         catch (Exception) { }
         finally
         {
-            _logger.LogInformation("[LEAP] [--] Data reading: stop");
+            _logger.LogInformation("[LEAP] Data reading: stop");
             _isReading = false;
         }
     }

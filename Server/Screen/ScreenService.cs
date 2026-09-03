@@ -173,7 +173,7 @@ public class ScreenService : Proto.Dispatcher.DispatcherBase, IService
             _screens.Add(new Proto.Screen
             {
                 Id = screen.Id,
-                Name = screen.DeviceName,
+                Name = screen.Name,
                 Origin = new Common.Point { X = screen.X, Y = screen.Y },
                 Size = new Common.Size { Width = screen.Width, Height = screen.Height }
             });

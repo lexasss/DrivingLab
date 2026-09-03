@@ -1,24 +1,43 @@
-﻿using System.IO;
+﻿using NAudio.Wave;
+using System.IO;
+using System.Media;
 using System.Text;
 
 namespace Server.Tools;
 
 internal sealed class FileLogger : IDisposable
 {
+    public bool IsLogging => _writer != null;
+
     public bool SetFilename(string filename)
     {
         lock (_sync)
         {
-            if (_disposed || string.IsNullOrEmpty(filename))
+            if (_disposed)
                 return false;
 
             _writer?.Dispose();
             _writer = null;
 
+            if (string.IsNullOrEmpty(filename))
+                return false;
+
+            var filePath = filename;
+            if (!Path.IsPathRooted(filePath))
+            {
+                filePath = Path.Combine(AppContext.BaseDirectory, DATA_FOLDER, filename);
+            }
+
+            var folder = Path.GetDirectoryName(filePath);
+            if (!Directory.Exists(folder))
+            {
+                Directory.CreateDirectory(folder!);
+            }
+
             try
             {
                 var stream = new FileStream(
-                    filename,
+                    filePath,
                     FileMode.Create,
                     FileAccess.Write,
                     FileShare.Read);
@@ -67,6 +86,8 @@ internal sealed class FileLogger : IDisposable
     }
 
     #region Internal
+
+    const string DATA_FOLDER = "data";
 
     private readonly Lock _sync = new();
     private StreamWriter? _writer;

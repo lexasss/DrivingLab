@@ -4,39 +4,29 @@ using Microsoft.Extensions.Options;
 
 namespace ClientExample;
 
-public class LeapMotionClient : IDisposable
+public class LeapMotionClient : Client
 {
-    public record class Point(double X, double Y, double Z = 0);
-
-    public event EventHandler<bool>? AvailabilityChanged;
     public event EventHandler<bool>? ConnectionChanged;
     public event EventHandler<bool>? HandVisibilityChanged;
     public event EventHandler<bool>? HandProximityChanged;
     public event EventHandler<LeapMotion.Sample>? HandLocationChanged;
 
-    public bool IsAvailable => _isAvailable;
     public bool IsConnected => _isConnected;
     public bool IsReading => _isReading;
+    public bool IsLogging => _isLogging;
 
     public LeapMotionClient(IOptions<AppSettings> appSettings)
+        : base(appSettings, (int)Common.Ports.LeapMotion)
     {
-        _channel = new Channel(appSettings.Value.ServerIp, (int)Common.Ports.LeapMotion, ChannelCredentials.Insecure);
         _client = new LeapMotion.Dispatcher.DispatcherClient(_channel);
-
-        Task.Run(Initialize);
     }
 
-    public void Dispose()
+    public override void Dispose()
     {
-        _eventsCts.Cancel();
         _eventsCall?.Dispose();
-
-        _dataCts.Cancel();
         _dataCall?.Dispose();
 
-        _channel.ShutdownAsync().Wait();
-
-        GC.SuppressFinalize(this);
+        base.Dispose();
     }
 
     public void Start()
@@ -73,45 +63,28 @@ public class LeapMotionClient : IDisposable
         if (!_isAvailable)
             return;
 
-        if (enabled)
-            _ = _client.SetLogFilenameAsync(new Common.String() { Value = "leap.tsv" });
-        else
-            _ = _client.SetLogFilenameAsync(new Common.String() { Value = string.Empty });
+        _isLogging = _client.SetLogFileName(new Common.String() { Value = enabled ? "leap.tsv" : string.Empty }).Value;
     }
 
     #region Internal
 
-    readonly Channel _channel;
     readonly LeapMotion.Dispatcher.DispatcherClient _client;
-    readonly CancellationTokenSource _dataCts = new();
-    readonly CancellationTokenSource _eventsCts = new();
 
-    bool _isAvailable = false;
     bool _isConnected = false;
     bool _isReading = false;
+    bool _isLogging = false;
 
     AsyncServerStreamingCall<LeapMotion.Sample>? _dataCall;
     AsyncServerStreamingCall<LeapMotion.Event>? _eventsCall;
 
-    private void Initialize()
+    protected override void Initialize()
     {
-        try
+        _isAvailable = _client.IsAvailable(new Empty()).Value;
+        if (_isAvailable)
         {
-            _isAvailable = _client.IsAvailable(new Empty()).Value;
-            if (_isAvailable)
-            {
-                _isConnected = _client.IsConnected(new Empty()).Value;
-                _ = ReadData();
-                _ = ReadEvents();
-            }
-        }
-        catch (RpcException ex)
-        {
-            LogException(ex);
-        }
-        finally
-        {
-            AvailabilityChanged?.Invoke(this, _isAvailable);
+            _isConnected = _client.IsConnected(new Empty()).Value;
+            _ = ReadData();
+            _ = ReadEvents();
         }
     }
 
@@ -184,11 +157,6 @@ public class LeapMotionClient : IDisposable
         {
             _eventsCall = null;
         }
-    }
-
-    private static void LogException(Exception ex)
-    {
-        System.Diagnostics.Debug.WriteLine(ex.Message);
     }
 
     #endregion

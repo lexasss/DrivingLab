@@ -4,32 +4,25 @@ using Microsoft.Extensions.Options;
 
 namespace ClientExample;
 
-public class SmartEyeClient : IDisposable
+public class SmartEyeClient : Client
 {
-    public event EventHandler<bool>? AvailabilityChanged;
     public event EventHandler<bool>? ConnectionChanged;
     public event EventHandler<SmartEye.Intersection>? IntersectionChanged;
 
-    public bool IsAvailable => _isAvailable;
     public bool IsConnected => _isConnected;
     public bool IsLogging => _isLogging;
 
     public SmartEyeClient(IOptions<AppSettings> appSettings)
+        : base(appSettings, (int)Common.Ports.SmartEye)
     {
-        _channel = new Channel(appSettings.Value.ServerIp, (int)Common.Ports.SmartEye, ChannelCredentials.Insecure);
         _client = new SmartEye.Dispatcher.DispatcherClient(_channel);
-
-        Task.Run(Initialize);
     }
 
-    public void Dispose()
+    public override void Dispose()
     {
-        _eventsCts.Cancel();
         _eventsCall?.Dispose();
 
-        _channel.ShutdownAsync().Wait();
-
-        GC.SuppressFinalize(this);
+        base.Dispose();
     }
 
     public void Start()
@@ -72,49 +65,25 @@ public class SmartEyeClient : IDisposable
         if (!_isAvailable)
             return;
 
-        if (enabled)
-        {
-            var task = _client.SetLogFilenameAsync(new Common.String() { Value = "se.tsv" });
-            var awaiter = task.GetAwaiter();
-            awaiter.OnCompleted(() => _isLogging = awaiter.GetResult().Value);
-        }
-        else
-        {
-            _ = _client.SetLogFilenameAsync(new Common.String() { Value = string.Empty });
-            _isLogging = false;
-        }
+        _isLogging = _client.SetLogFileName(new Common.String() { Value = enabled ? "se.tsv" : string.Empty }).Value;
     }
 
     #region Internal
 
-    readonly Channel _channel;
     readonly SmartEye.Dispatcher.DispatcherClient _client;
-    readonly CancellationTokenSource _eventsCts = new();
 
-    bool _isAvailable = false;
     bool _isConnected = false;
     bool _isLogging = false;
 
     AsyncServerStreamingCall<SmartEye.Event>? _eventsCall;
 
-    private void Initialize()
+    protected override void Initialize()
     {
-        try
+        _isAvailable = _client.IsAvailable(new Empty()).Value;
+        if (_isAvailable)
         {
-            _isAvailable = _client.IsAvailable(new Empty()).Value;
-            if (_isAvailable)
-            {
-                _isConnected = _client.IsConnected(new Empty()).Value;
-                _ = ReadEvents();
-            }
-        }
-        catch (RpcException ex)
-        {
-            LogException(ex);
-        }
-        finally
-        {
-            AvailabilityChanged?.Invoke(this, _isAvailable);
+            _isConnected = _client.IsConnected(new Empty()).Value;
+            _ = ReadEvents();
         }
     }
 
@@ -161,11 +130,6 @@ public class SmartEyeClient : IDisposable
         {
             _eventsCall = null;
         }
-    }
-
-    private static void LogException(Exception ex)
-    {
-        System.Diagnostics.Debug.WriteLine(ex.Message);
     }
 
     #endregion
