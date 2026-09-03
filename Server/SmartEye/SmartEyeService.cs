@@ -1,6 +1,7 @@
 ﻿using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Microsoft.Extensions.Logging;
+using Server.Tools;
 using Proto = global::SmartEye;
 
 namespace Server.SmartEye;
@@ -109,24 +110,7 @@ internal class SmartEyeService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
 
     public override Task<Common.Bool> SetLogFileName(Common.String request, ServerCallContext context)
     {
-        if (string.IsNullOrEmpty(request.Value))
-        {
-            if (_fileLogger.IsLogging)
-            {
-                _logger.LogInformation("[SEYE] Logging disabled");
-                _fileLogger.SetFilename(string.Empty);
-            }
-            return Task.FromResult(new Common.Bool() { Value = false });
-        }
-        else
-        {
-            var result = _fileLogger.SetFilename(request.Value);
-            if (result)
-                _logger.LogInformation("[SEYE] Logging to {filename}", request.Value);
-            else
-                _logger.LogWarning("[SEYE] Cannot log to {filename}", request.Value);
-            return Task.FromResult(new Common.Bool() { Value = result });
-        }
+        return FileLogger.SetFileName(request.Value, "SEYE", _fileLogger, _logger);
     }
 
     /*

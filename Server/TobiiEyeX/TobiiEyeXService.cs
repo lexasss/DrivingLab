@@ -1,6 +1,7 @@
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Microsoft.Extensions.Logging;
+using Server.Tools;
 using System.Threading.Channels;
 using Channel = System.Threading.Channels.Channel;
 using EyeXCore = Tobii.Gaze.Core;
@@ -78,24 +79,7 @@ internal class TobiiEyeXService : Gaze.Dispatcher.DispatcherBase, ITelemetryServ
 
     public override Task<Common.Bool> SetLogFileName(Common.String request, ServerCallContext context)
     {
-        if (string.IsNullOrEmpty(request.Value))
-        {
-            if (_fileLogger.IsLogging)
-            {
-                _logger.LogInformation("[EYEX] Logging disabled");
-                _fileLogger.SetFilename(string.Empty);
-            }
-            return Task.FromResult(new Common.Bool() { Value = false });
-        }
-        else
-        {
-            var result = _fileLogger.SetFilename(request.Value);
-            if (result)
-                _logger.LogInformation("[EYEX] Logging to {filename}", request.Value);
-            else
-                _logger.LogWarning("[EYEX] Cannot log to {filename}", request.Value);
-            return Task.FromResult(new Common.Bool() { Value = result });
-        }
+        return FileLogger.SetFileName(request.Value, "EYEX", _fileLogger, _logger);
     }
 
     public override async Task ReadData(Empty request, IServerStreamWriter<Gaze.Sample> responseStream, ServerCallContext context)
