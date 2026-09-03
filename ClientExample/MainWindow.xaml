@@ -10,7 +10,7 @@
         Style="{StaticResource MaterialDesignWindow}"
         Title="Driving Lab Client Example"
         Height="450"
-        Width="800"
+        Width="814"
         MinHeight="380"
         MinWidth="320">
     <Grid>
@@ -27,5 +27,7 @@
                           DataContext="{Binding SmartEye}"/>
         <widgets:SoundPlayer Grid.Column="2"
                           DataContext="{Binding SoundPlayer}"/>
+        <widgets:Screen Grid.Column="3"
+                        DataContext="{Binding Screen}"/>
     </Grid>
 </Window>

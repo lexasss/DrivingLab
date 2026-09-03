@@ -5,7 +5,7 @@ namespace ClientExample;
 
 public partial class SmartEyeViewModel : ObservableObject
 {
-    public bool IsAvailable { get; set; }
+    public bool IsAvailable => _smartEyeClient.IsAvailable;
     [ObservableProperty]
     public partial bool IsConnected { get; set; } = false;
     [ObservableProperty]
@@ -26,13 +26,14 @@ public partial class SmartEyeViewModel : ObservableObject
     public SmartEyeViewModel(SmartEyeClient smartEyeClient)
     {
         _smartEyeClient = smartEyeClient;
-
-        IsConnected = _smartEyeClient.IsConnected;
+        _smartEyeClient.AvailabilityChanged += (s, e) =>
+        {
+            IsConnected = _smartEyeClient.IsConnected;
+            OnPropertyChanged(nameof(IsAvailable));
+        };
 
         _smartEyeClient.ConnectionChanged += (s, e) => IsConnected = e;
         _smartEyeClient.IntersectionChanged += (s, e) => SetIntersection(e);
-
-        IsAvailable = _smartEyeClient.CheckAvailability();
     }
 
     #region Internal

@@ -31,6 +31,11 @@ public class ScreenService : Proto.Dispatcher.DispatcherBase, IService
     {
         _isActive = false;
 
+        foreach (var media in _media.Values)
+        {
+            media.Close();
+        }
+
         _logger.LogInformation("[SCRN] Disposed");
 
         GC.SuppressFinalize(this);
@@ -72,9 +77,9 @@ public class ScreenService : Proto.Dispatcher.DispatcherBase, IService
         }
     }
 
-    public override Task<Common.String> Show(Proto.Image request, ServerCallContext context)
+    public override Task<Common.String> Show(Proto.Media request, ServerCallContext context)
     {
-        string? id = null;
+        string id = string.Empty;
 
         var filePath = request.FileName;
         if (!Path.IsPathRooted(filePath))
@@ -112,10 +117,15 @@ public class ScreenService : Proto.Dispatcher.DispatcherBase, IService
                 };
                 mediaWindow.Hidden += (sender, mediaId) =>
                 {
-                    if (_media.ContainsKey(mediaId))
+                    if (_media.TryGetValue(mediaId, out MediaWindow? value))
                     {
-                        _logger.LogInformation("[SNDP] Image {name} was hidden", _media[mediaId].Name);
+                        _logger.LogInformation("[SNDP] Image {name} was hidden", value.Name);
                         _media.Remove(mediaId);
+                        _events.Enqueue(new Proto.Event
+                        {
+                            Name = Proto.Events.MEDIA_HIDDEN,
+                            Value = mediaId
+                        });
                     }
                 };
             }
@@ -188,7 +198,7 @@ public class ScreenService : Proto.Dispatcher.DispatcherBase, IService
             {
                 if (++i == MAX_MEDIA_FILES_TO_LIST)
                 {
-                    _logger.LogWarning("[SCRN]   ...   [skipping other {count} media files]", mediaFiles.Count - MAX_MEDIA_FILES_TO_LIST);
+                    _logger.LogInformation("[SCRN]   ...   [skipping other {count} media files]", mediaFiles.Count - MAX_MEDIA_FILES_TO_LIST);
                     break;
                 }
                 _logger.LogInformation("[SCRN] Found media file {file}", file);

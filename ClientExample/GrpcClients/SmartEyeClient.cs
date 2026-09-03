@@ -6,6 +6,7 @@ namespace ClientExample;
 
 public class SmartEyeClient : IDisposable
 {
+    public event EventHandler<bool>? AvailabilityChanged;
     public event EventHandler<bool>? ConnectionChanged;
     public event EventHandler<SmartEye.Intersection>? IntersectionChanged;
 
@@ -18,13 +19,7 @@ public class SmartEyeClient : IDisposable
         _channel = new Channel(appSettings.Value.ServerIp, (int)Common.Ports.SmartEye, ChannelCredentials.Insecure);
         _client = new SmartEye.Dispatcher.DispatcherClient(_channel);
 
-        CheckAvailability();
-
-        if (_isAvailable)
-        {
-            _isConnected = _client.IsConnected(new Empty()).Value;
-            _ = ReadEvents();
-        }
+        Task.Run(Initialize);
     }
 
     public void Dispose()
@@ -37,29 +32,19 @@ public class SmartEyeClient : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    public bool CheckAvailability()
-    {
-        _isAvailable = false;
-
-        try
-        {
-            _isAvailable = _client.IsAvailable(new Empty()).Value;
-        }
-        catch (RpcException ex)
-        {
-            LogException(ex);
-        }
-
-        return _isAvailable;
-    }
-
     public void Start()
     {
+        if (!_isAvailable)
+            return;
+
         _ = _client.Start(new Empty());
     }
 
     public void Stop()
     {
+        if (!_isAvailable)
+            return;
+
         _ = _client.Stop(new Empty());
     }
 
@@ -68,6 +53,9 @@ public class SmartEyeClient : IDisposable
         SmartEye.IntersectionSource intersectionSource,
         bool useFilteredData)
     {
+        if (!_isAvailable)
+            return false;
+
         var result = await _client.ConfigureAsync(new SmartEye.Configuration()
         {
             Ip = ip,
@@ -81,6 +69,9 @@ public class SmartEyeClient : IDisposable
 
     public void SetLoggingEnabled(bool enabled)
     {
+        if (!_isAvailable)
+            return;
+
         if (enabled)
         {
             var task = _client.SetLogFilenameAsync(new Common.String() { Value = "se.tsv" });
@@ -105,6 +96,27 @@ public class SmartEyeClient : IDisposable
     bool _isLogging = false;
 
     AsyncServerStreamingCall<SmartEye.Event>? _eventsCall;
+
+    private void Initialize()
+    {
+        try
+        {
+            _isAvailable = _client.IsAvailable(new Empty()).Value;
+            if (_isAvailable)
+            {
+                _isConnected = _client.IsConnected(new Empty()).Value;
+                _ = ReadEvents();
+            }
+        }
+        catch (RpcException ex)
+        {
+            LogException(ex);
+        }
+        finally
+        {
+            AvailabilityChanged?.Invoke(this, _isAvailable);
+        }
+    }
 
     private async Task ReadEvents()
     {

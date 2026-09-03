@@ -12,12 +12,15 @@ public enum PlaybackType
 public partial class SoundPlayerViewModel : ObservableObject
 {
     public bool IsAvailable => _soundPlayerClient.IsAvailable;
-    public SoundPlayer.Device[] Devices { get; }
+    [ObservableProperty]
+    public partial SoundPlayer.Device[] Devices { get; set; } = [];
     [ObservableProperty]
     public partial SoundPlayer.Device? Device { get; set; }
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanTogglePlayback))]
     public partial PlaybackType PlaybackType { get; set; }
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanTogglePlayback))]
     public partial string Filename { get; set; } = string.Empty;
     [ObservableProperty]
     public partial SoundPlayer.ToneType ToneType { get; set; } = SoundPlayer.ToneType.Sine;
@@ -28,7 +31,10 @@ public partial class SoundPlayerViewModel : ObservableObject
     [ObservableProperty]
     public partial double ToneGain { get; set; } = 1;
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanTogglePlayback))]
     public partial bool IsPlaying { get; set; } = false;
+    public bool CanTogglePlayback => IsAvailable && 
+        (IsPlaying || PlaybackType == PlaybackType.Tone || Filename.Length > 0);
     [ObservableProperty]
     public partial string PlayerButtonText { get; set; } = "Play";
     [ObservableProperty]
@@ -37,10 +43,14 @@ public partial class SoundPlayerViewModel : ObservableObject
     public SoundPlayerViewModel(SoundPlayerClient soundPlayerClient)
     {
         _soundPlayerClient = soundPlayerClient;
+        _soundPlayerClient.AvailabilityChanged += (s, e) =>
+        {
+            Devices = _soundPlayerClient.GetDevices().Items.ToArray();
+            Device = Devices.FirstOrDefault();
+            OnPropertyChanged(nameof(IsAvailable));
+            OnPropertyChanged(nameof(CanTogglePlayback));
+        };
         _soundPlayerClient.PlaybackFinished += SoundPlayerClient_PlaybackFinished;
-
-        Devices = _soundPlayerClient.GetDevices().Items.ToArray();
-        Device = Devices.FirstOrDefault();
     }
 
     #region Internal

@@ -4,18 +4,17 @@ using Microsoft.Extensions.Options;
 
 namespace ClientExample;
 
-public class SoundPlayerClient : IDisposable
+public class ScreenClient : IDisposable
 {
     public bool IsAvailable => _isAvailable;
-    public string DeviceId { get; set; } = string.Empty;
 
     public event EventHandler<bool>? AvailabilityChanged;
-    public event EventHandler? PlaybackFinished;
+    public event EventHandler<string>? MediaHidden;
 
-    public SoundPlayerClient(IOptions<AppSettings> appSettings)
+    public ScreenClient(IOptions<AppSettings> appSettings)
     {
-        _channel = new Channel(appSettings.Value.ServerIp, (int)Common.Ports.SoundPlayer, ChannelCredentials.Insecure);
-        _client = new SoundPlayer.Dispatcher.DispatcherClient(_channel);
+        _channel = new Channel(appSettings.Value.ServerIp, (int)Common.Ports.Screen, ChannelCredentials.Insecure);
+        _client = new Screen.Dispatcher.DispatcherClient(_channel);
 
         Task.Run(Initialize);
     }
@@ -30,53 +29,49 @@ public class SoundPlayerClient : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    public SoundPlayer.Devices GetDevices()
+    public Screen.Screens GetScreens()
     {
-        return _isAvailable ? _client.GetDevices(new Empty()) : new SoundPlayer.Devices();
+        return _isAvailable ? _client.GetScreens(new Empty()) : new Screen.Screens();
     }
 
-    public async Task<bool> PlayFile(string filename)
+    public async Task<string?> Show(
+        string filename,
+        int screenId,
+        Common.Point location,
+        Common.Size? size,
+        int? duration)
     {
         if (!_isAvailable)
-            return false;
+            return null;
 
-        var response = await _client.PlayAsync(new SoundPlayer.SoundDescription()
+        var response = await _client.ShowAsync(new Screen.Media()
         {
-            DeviceId = DeviceId,
             FileName = filename,
+            ScreenId = screenId,
+            Location = location,
+            Size = size,
+            Duration = duration ?? 0
         });
-        return response.Value;
+        return string.IsNullOrEmpty(response?.Value) ? null : response.Value;
     }
 
-    public async Task PlayTone(SoundPlayer.ToneDescription tone)
+    public void Hide(string id)
     {
         if (!_isAvailable)
             return;
 
-        await _client.PlayAsync(new SoundPlayer.SoundDescription()
-        {
-            DeviceId = DeviceId,
-            Tone = tone,
-        });
-    }
-
-    public void Stop()
-    {
-        if (!_isAvailable)
-            return;
-
-        _ = _client.Stop(new Empty());
+        _ = _client.Close(new Common.String { Value = id });
     }
 
     #region Internal
 
     readonly Channel _channel;
-    readonly SoundPlayer.Dispatcher.DispatcherClient _client;
+    readonly Screen.Dispatcher.DispatcherClient _client;
     readonly CancellationTokenSource _eventsCts = new();
-
+    
     bool _isAvailable = false;
 
-    AsyncServerStreamingCall<SoundPlayer.Event>? _eventsCall;
+    AsyncServerStreamingCall<Screen.Event>? _eventsCall;
 
     private async Task Initialize()
     {
@@ -111,9 +106,9 @@ public class SoundPlayerClient : IDisposable
                     break;
 
                 var evt = responseStream.Current;
-                if (evt.Name == SoundPlayer.Events.PLAYBACK_FINISHED)
+                if (evt.Name == Screen.Events.MEDIA_HIDDEN)
                 {
-                    PlaybackFinished?.Invoke(this, EventArgs.Empty);
+                    MediaHidden?.Invoke(this, evt.Value);
                 }
             }
         }

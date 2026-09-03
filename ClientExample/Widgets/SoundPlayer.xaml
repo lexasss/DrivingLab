@@ -35,9 +35,20 @@
                 <widgets:Indicator IsOn="{Binding IsAvailable, Mode=OneWay}"
                                    Text="Available"/>
                 <Separator/>
-                <ComboBox ItemsSource="{Binding Devices}"
-                          DisplayMemberPath="Name"
-                          SelectedItem="{Binding Device, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <Label Grid.Column="0"
+                           Style="{StaticResource OptionName}"
+                           Content="Device"/>
+
+                    <ComboBox Grid.Column="1"
+                              ItemsSource="{Binding Devices}"
+                              DisplayMemberPath="Name"
+                              SelectedItem="{Binding Device, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                </Grid>
                 <Separator/>
                 <StackPanel>
                     <RadioButton x:Name="rdbPlayFile"
@@ -49,7 +60,7 @@
                                  Checked="rdbPlayFile_Checked"/>
                     <TextBox x:Name="txtFilename"
                              IsEnabled="{Binding ElementName=rdbPlayFile, Path=IsChecked}"
-                             Text="{Binding Filename}">
+                             Text="{Binding Filename, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
                         <TextBox.ToolTip>
                             <TextBlock>
                                 <Run Text="Enter the path to a WAV file to play."/>
@@ -121,6 +132,7 @@
                     </Grid>
                 </StackPanel>
                 <Button Margin="4"
+                        IsEnabled="{Binding CanTogglePlayback}"
                         Content="{Binding PlayerButtonText}"
                         Command="{Binding PlayCommand}"/>
                 <Separator/>

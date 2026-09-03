@@ -5,8 +5,8 @@ namespace ClientExample;
 
 internal class DoubleRangeValidationRule : ValidationRule
 {
-    public double Minimum { get; set; }
-    public double Maximum { get; set; }
+    public double Minimum { get; set; } = double.MinValue;
+    public double Maximum { get; set; } = double.MaxValue;
 
     public override ValidationResult Validate(
         object value,

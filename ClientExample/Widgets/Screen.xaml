@@ -1,0 +1,134 @@
+﻿<UserControl x:Class="ClientExample.Widgets.Screen"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
+             xmlns:local="clr-namespace:ClientExample"
+             xmlns:widgets="clr-namespace:ClientExample.Widgets"
+             xmlns:sp="clr-namespace:SoundPlayer;assembly=Core"
+             xmlns:md="clr-namespace:MaterialDesignThemes.Wpf;assembly=MaterialDesignThemes.Wpf"
+             xmlns:conv="clr-namespace:MaterialDesignThemes.Wpf.Converters;assembly=MaterialDesignThemes.Wpf"
+             mc:Ignorable="d" 
+             d:DesignHeight="450"
+             d:DesignWidth="200">
+    
+    <UserControl.Resources>
+        <conv:InvertBooleanConverter x:Key="InvertBoolean"/>
+        <local:EnumToBooleanConverter x:Key="EnumToBoolean"/>
+    </UserControl.Resources>
+    
+    <Border Style="{StaticResource Card}">
+        <StackPanel>
+            <Label Style="{StaticResource Device}"
+                   Content="Screen"/>
+            <StackPanel Margin="4">
+                <widgets:Indicator IsOn="{Binding IsAvailable, Mode=OneWay}"
+                                   Text="Available"/>
+                <Separator/>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <Label Grid.Column="0"
+                           Style="{StaticResource OptionName}"
+                           Content="Screen"/>
+                    <ComboBox Grid.Column="1" ItemsSource="{Binding Screens}"
+                              DisplayMemberPath="Name"
+                              SelectedItem="{Binding Screen, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                </Grid>
+                <StackPanel>
+                    <StackPanel.Resources>
+                        <Style TargetType="TextBox" BasedOn="{StaticResource MaterialDesignTextBox}">
+                            <Setter Property="Margin" Value="4,0"/>
+                        </Style>
+                    </StackPanel.Resources>
+                    <TextBox Text="{Binding Filename, UpdateSourceTrigger=PropertyChanged}"
+                             md:HintAssist.Hint="Filename">
+                        <TextBox.ToolTip>
+                            <TextBlock>
+                                <Run Text="Enter the path to a media file to play."/>
+                                <LineBreak/>
+                                <Run Text="Supported types are PNG, JPG, MP4, AVI and WMV."/>
+                                <LineBreak/>
+                                <Run Text="Use either the absolute path,"/>
+                                <LineBreak/>
+                                <Run Text="or the path relative to the 'Media' folder"/>
+                                <LineBreak/>
+                                <Run Text="in the server application root folder"/>
+                            </TextBlock>
+                        </TextBox.ToolTip> 
+                    </TextBox>
+                    <Grid Margin="4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                        </Grid.RowDefinitions>
+                        <Label Grid.Row="0" Grid.Column="0"
+                               Style="{StaticResource OptionName}"
+                               Content="Location"/>
+                        <UniformGrid Grid.Row="0" Grid.Column="1"
+                                     Columns="2">
+                            <TextBox Text="{Binding X, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     md:HintAssist.Hint="X"/>
+                            <TextBox Text="{Binding Y, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     md:HintAssist.Hint="Y"/>
+                        </UniformGrid>
+                        <Label Grid.Row="1" Grid.Column="0"
+                               Style="{StaticResource OptionName}"
+                               Content="Size"/>
+                        <UniformGrid Grid.Row="1" Grid.Column="1"
+                                     Columns="2">
+                            <TextBox md:HintAssist.Hint="Width">
+                                <TextBox.Text>
+                                    <Binding Path="Width" Mode="TwoWay" UpdateSourceTrigger="PropertyChanged">
+                                        <Binding.ValidationRules>
+                                            <local:DoubleRangeValidationRule
+                                                   Minimum="0"/>
+                                        </Binding.ValidationRules>
+                                    </Binding>
+                                </TextBox.Text>
+                            </TextBox>
+                            <TextBox md:HintAssist.Hint="Height">
+                                <TextBox.Text>
+                                    <Binding Path="Height" Mode="TwoWay" UpdateSourceTrigger="PropertyChanged">
+                                        <Binding.ValidationRules>
+                                            <local:DoubleRangeValidationRule
+                                                   Minimum="0"/>
+                                        </Binding.ValidationRules>
+                                    </Binding>
+                                </TextBox.Text>
+                            </TextBox>
+                        </UniformGrid>
+                        <Label Grid.Row="2" Grid.Column="0"
+                               Style="{StaticResource OptionName}"
+                               Content="Duration"/>
+                        <TextBox Grid.Row="2" Grid.Column="1">
+                            <TextBox.Text>
+                                <Binding Path="Duration" Mode="TwoWay" UpdateSourceTrigger="PropertyChanged">
+                                    <Binding.ValidationRules>
+                                        <local:DoubleRangeValidationRule
+                                               Minimum="0"/>
+                                    </Binding.ValidationRules>
+                                </Binding>
+                            </TextBox.Text>
+                        </TextBox>
+                    </Grid>
+                </StackPanel>
+                <Button Margin="4"
+                        IsEnabled="{Binding CanToggleMedia}"
+                        Content="{Binding ShowButtonText}"
+                        Command="{Binding ShowCommand}"/>
+                <Separator/>
+                <TextBlock Style="{StaticResource Data}"
+                           Text="{Binding Data, Mode=OneWay}"/>
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</UserControl>

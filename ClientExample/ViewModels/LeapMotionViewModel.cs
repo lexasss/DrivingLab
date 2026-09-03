@@ -4,7 +4,7 @@ namespace ClientExample;
 
 public partial class LeapMotionViewModel : ObservableObject
 {
-    public bool IsAvailable { get; set; }
+    public bool IsAvailable => _leapMotionClient.IsAvailable;
     [ObservableProperty]
     public partial bool IsConnected { get; set; } = false;
     [ObservableProperty]
@@ -23,9 +23,12 @@ public partial class LeapMotionViewModel : ObservableObject
     public LeapMotionViewModel(LeapMotionClient leapMotionClient)
     {
         _leapMotionClient = leapMotionClient;
-
-        IsConnected = _leapMotionClient.IsConnected;
-        IsStreaming = _leapMotionClient.IsReading;
+        _leapMotionClient.AvailabilityChanged += (s, e) =>
+        {
+            IsConnected = _leapMotionClient.IsConnected;
+            IsStreaming = _leapMotionClient.IsReading;
+            OnPropertyChanged(nameof(IsAvailable));
+        };
 
         _leapMotionClient.ConnectionChanged += (s, e) => IsConnected = e;
         _leapMotionClient.HandLocationChanged += (s, e) =>
@@ -40,8 +43,6 @@ public partial class LeapMotionViewModel : ObservableObject
                 ResetData();
         };
         _leapMotionClient.HandProximityChanged += (s, e) => IsHandClose = e;
-
-        IsAvailable = _leapMotionClient.CheckAvailability();
     }
 
     #region Internal

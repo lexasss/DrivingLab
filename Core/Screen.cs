@@ -2,5 +2,5 @@
 
 public static class Events
 {
-    public const string IMAGE_HIDDEN = "imageHidden";
+    public const string MEDIA_HIDDEN = "mediaHidden";
 }

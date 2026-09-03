@@ -12,7 +12,7 @@ service Dispatcher {
 
 	rpc ReadEvents (google.protobuf.Empty) returns (stream Event) {}
 
-	rpc Show (Image) returns (Common.String) {}
+	rpc Show (Media) returns (Common.String) {}
 	rpc Close (Common.String) returns (google.protobuf.Empty) {}
 }
 
@@ -29,9 +29,10 @@ message Screens {
 
 message Event {
 	string name = 1;
+	string value = 2;
 }
 
-message Image {
+message Media {
 	int32 screenId = 1;
 	string fileName = 2;
 	Common.Point location = 3;

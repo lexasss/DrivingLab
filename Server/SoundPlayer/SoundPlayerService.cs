@@ -3,7 +3,6 @@ using Grpc.Core;
 using Microsoft.Extensions.Logging;
 using NAudio.CoreAudioApi;
 using NAudio.Wave;
-using Server.Screen;
 using System.IO;
 using Proto = global::SoundPlayer;
 
@@ -84,10 +83,10 @@ public class SoundPlayerService : Proto.Dispatcher.DispatcherBase, IService
             _tonePlayer = PlayTone(_soundPlayer, request.Tone);
             result = true;
         }
-        else if (request.SoundCase == Proto.SoundDescription.SoundOneofCase.Filename)
+        else if (request.SoundCase == Proto.SoundDescription.SoundOneofCase.FileName)
         {
             _audioFile?.Dispose();
-            _audioFile = PlayFile(_soundPlayer, request.Filename);
+            _audioFile = PlayFile(_soundPlayer, request.FileName);
             result = _audioFile != null;
         }
         else
@@ -174,7 +173,7 @@ public class SoundPlayerService : Proto.Dispatcher.DispatcherBase, IService
             {
                 if (++i == MAX_AUDIO_FILES_TO_LIST)
                 {
-                    _logger.LogWarning("[SCRN]   ...   [skipping other {count} audio files]", audioFiles.Count - MAX_AUDIO_FILES_TO_LIST);
+                    _logger.LogInformation("[SCRN]   ...   [skipping other {count} audio files]", audioFiles.Count - MAX_AUDIO_FILES_TO_LIST);
                     break;
                 }
                 _logger.LogInformation("[SCRN] Found audio file {file}", file);

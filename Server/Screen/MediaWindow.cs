@@ -34,13 +34,6 @@ internal sealed class MediaWindow
         {
             double width = size?.Width ?? 0;
             double height = size?.Height ?? 0;
-            SizeToContent sizeToContent = size switch
-            {
-                null or (0, 0) => SizeToContent.WidthAndHeight,
-                (0, _) => SizeToContent.Width,
-                (_, 0) => SizeToContent.Height,
-                _ => SizeToContent.Manual
-            };
             
             var content = CreateMedia(filename, ref width, ref height);
             if (content == null)
@@ -49,7 +42,7 @@ internal sealed class MediaWindow
                 return;
             }
 
-            _window = CreateWindow(content, location, width, height, sizeToContent);
+            _window = CreateWindow(content, location, width, height);
             if (duration > 0)
             {
                 _cancellationTokenSource = new CancellationTokenSource();
@@ -113,13 +106,17 @@ internal sealed class MediaWindow
     {
         object? result = null;
 
+        Stretch stretch = width > 0 && height > 0 ? Stretch.Fill : Stretch.Uniform;
+
         var ext = System.IO.Path.GetExtension(filename)?.ToLower() ?? string.Empty;
         if (SupportedImageFormats.Contains(ext))
         {
             var image = new Image
             {
                 Source = new BitmapImage(new Uri(filename, UriKind.Absolute)),
-                Stretch = Stretch.Fill,
+                Stretch = stretch,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                VerticalAlignment = VerticalAlignment.Top,
             };
 
             result = image;
@@ -142,7 +139,9 @@ internal sealed class MediaWindow
                 Source = new Uri(filename, UriKind.Absolute),
                 LoadedBehavior = MediaState.Play,
                 UnloadedBehavior = MediaState.Stop,
-                Stretch = Stretch.Fill,
+                Stretch = stretch,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                VerticalAlignment = VerticalAlignment.Top,
             };
             media.MediaEnded += (_, _) =>
             {
@@ -171,8 +170,16 @@ internal sealed class MediaWindow
         return result;
     }
 
-    private static Window CreateWindow(object content, Common.Point location, double width, double height, SizeToContent sizeToContent)
+    private static Window CreateWindow(object content, Common.Point location, double width, double height)
     {
+        SizeToContent sizeToContent = (width, height) switch
+        {
+            (0, 0) => SizeToContent.WidthAndHeight,
+            (0, _) => SizeToContent.Width,
+            (_, 0) => SizeToContent.Height,
+            _ => SizeToContent.Manual
+        };
+
         var window = new Window
         {
             WindowStyle = WindowStyle.None,

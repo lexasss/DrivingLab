@@ -50,7 +50,7 @@ message ToneDescription {
 message SoundDescription {
 	string deviceId = 1;
 	oneof sound {
-		string filename = 2;
+		string fileName = 2;
 		ToneDescription tone = 3;
 	}
 }
