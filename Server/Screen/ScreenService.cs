@@ -2,6 +2,7 @@
 using Grpc.Core;
 using Microsoft.Extensions.Logging;
 using System.IO;
+using Tobii.EyeX.Client;
 using Proto = global::Screen;
 
 namespace Server.Screen;
@@ -100,9 +101,10 @@ public class ScreenService : Proto.Dispatcher.DispatcherBase, IService
         {
             try
             {
-                var screen = _screens.First(s => s.Id == request.ScreenId);
+                var screen = _screens.FirstOrDefault(s => s.Id == request.ScreenId) ?? _screens.First();
 
                 var mediaWindow = new MediaWindow();
+                id = mediaWindow.Id;
                 mediaWindow.Show(filePath,
                     new Common.Point {
                         X = screen.Origin.X + request.Location.X,
@@ -111,10 +113,18 @@ public class ScreenService : Proto.Dispatcher.DispatcherBase, IService
                     request.Size,
                     request.Duration);
 
-
-                id = mediaWindow.Id;
-                _media[id] = mediaWindow;
-
+                mediaWindow.Shown += (sender, success) =>
+                {
+                    if (success)
+                    {
+                        _logger.LogInformation("[SNDP] Showing {filename}", Path.GetFileNameWithoutExtension(request.FileName));
+                        _media[id] = mediaWindow;
+                    }
+                    else
+                    {
+                        _logger.LogError("[SNDP] Media type of {filename} is not supported", Path.GetFileName(request.FileName));
+                    }
+                };
                 mediaWindow.Hidden += (sender, mediaId) =>
                 {
                     if (_media.ContainsKey(mediaId))
@@ -123,8 +133,6 @@ public class ScreenService : Proto.Dispatcher.DispatcherBase, IService
                         _media.Remove(mediaId);
                     }
                 };
-
-                _logger.LogInformation("[SNDP] Showing {filename}", Path.GetFileNameWithoutExtension(request.FileName));
             }
             catch (Exception ex)
             {
