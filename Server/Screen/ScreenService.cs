@@ -2,7 +2,6 @@
 using Grpc.Core;
 using Microsoft.Extensions.Logging;
 using System.IO;
-using Tobii.EyeX.Client;
 using Proto = global::Screen;
 
 namespace Server.Screen;
@@ -23,21 +22,7 @@ public class ScreenService : Proto.Dispatcher.DispatcherBase, IService
                 screen.Id, screen.Name, screen.Origin.X, screen.Origin.Y, screen.Size.Width, screen.Size.Height);
         }
 
-        try
-        {
-            foreach (var file in Directory.EnumerateFiles(MEDIA_FOLDER, "*.png"))
-            {
-                _logger.LogInformation("[SCRN] Found image file {file}", Path.GetFileNameWithoutExtension(file));
-            }
-            foreach (var file in Directory.EnumerateFiles(MEDIA_FOLDER, "*.mp4"))
-            {
-                _logger.LogInformation("[SCRN] Found video file {file}", Path.GetFileNameWithoutExtension(file));
-            }
-        }
-        catch
-        {
-            _logger.LogWarning("[SCRN] Media folder does not exist");
-        }
+        ListMediaFiles();
 
         _logger.LogInformation("[SCRN] Running");
     }
@@ -161,6 +146,7 @@ public class ScreenService : Proto.Dispatcher.DispatcherBase, IService
 
     #region Internal
 
+    const int MAX_MEDIA_FILES_TO_LIST = 7;
     const string MEDIA_FOLDER = "media";
 
     readonly ILogger<ScreenService> _logger;
@@ -181,6 +167,37 @@ public class ScreenService : Proto.Dispatcher.DispatcherBase, IService
                 Origin = new Common.Point { X = screen.X, Y = screen.Y },
                 Size = new Common.Size { Width = screen.Width, Height = screen.Height }
             });
+    }
+
+    private void ListMediaFiles()
+    {
+        try
+        {
+            string[] supportedFormats = [.. MediaWindow.SupportedImageFormats, .. MediaWindow.SupportedVideoFormats];
+            List<string> mediaFiles = [];
+            foreach (var mediaFormat in supportedFormats)
+            {
+                foreach (var file in Directory.EnumerateFiles(MEDIA_FOLDER, $"*{mediaFormat}"))
+                {
+                    mediaFiles.Add(Path.GetFileNameWithoutExtension(file));
+                }
+            }
+
+            int i = 0;
+            foreach (var file in mediaFiles)
+            {
+                if (++i == MAX_MEDIA_FILES_TO_LIST)
+                {
+                    _logger.LogWarning("[SCRN]   ...   [skipping other {count} media files]", mediaFiles.Count - MAX_MEDIA_FILES_TO_LIST);
+                    break;
+                }
+                _logger.LogInformation("[SCRN] Found media file {file}", file);
+            }
+        }
+        catch
+        {
+            _logger.LogWarning("[SCRN] Media folder does not exist");
+        }
     }
 
     #endregion

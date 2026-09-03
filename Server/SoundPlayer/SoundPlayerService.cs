@@ -3,6 +3,7 @@ using Grpc.Core;
 using Microsoft.Extensions.Logging;
 using NAudio.CoreAudioApi;
 using NAudio.Wave;
+using Server.Screen;
 using System.IO;
 using Proto = global::SoundPlayer;
 
@@ -22,17 +23,7 @@ public class SoundPlayerService : Proto.Dispatcher.DispatcherBase, IService
             _logger.LogInformation("[SNDP] Found sound device {name}", device.Name);
         }
 
-        try
-        {
-            foreach (var file in Directory.EnumerateFiles(SOUND_FOLDER, "*.wav"))
-            {
-                _logger.LogInformation("[SNDP] Found sound file {file}", Path.GetFileNameWithoutExtension(file));
-            }
-        }
-        catch
-        {
-            _logger.LogWarning("[SNDP] Sound folder does not exist");
-        }
+        ListAudioFiles();
 
         _logger.LogInformation("[SNDP] Running");
     }
@@ -132,7 +123,10 @@ public class SoundPlayerService : Proto.Dispatcher.DispatcherBase, IService
         public override string ToString() => name;
     }
 
+    const int MAX_AUDIO_FILES_TO_LIST = 7;
     const string SOUND_FOLDER = "sounds";
+
+    static string[] _supportedAudioFormats = [".wav"];
 
     readonly ILogger<SoundPlayerService> _logger;
     readonly Queue<Proto.Event> _events = [];
@@ -160,6 +154,36 @@ public class SoundPlayerService : Proto.Dispatcher.DispatcherBase, IService
             DataFlow.Render,
             DeviceState.Active);
         return devices.FirstOrDefault(d => d.ID == id);
+    }
+
+    private void ListAudioFiles()
+    {
+        try
+        {
+            List<string> audioFiles = [];
+            foreach (var audioFormat in _supportedAudioFormats)
+            {
+                foreach (var file in Directory.EnumerateFiles(SOUND_FOLDER, $"*{audioFormat}"))
+                {
+                    audioFiles.Add(Path.GetFileNameWithoutExtension(file));
+                }
+            }
+
+            int i = 0;
+            foreach (var file in audioFiles)
+            {
+                if (++i == MAX_AUDIO_FILES_TO_LIST)
+                {
+                    _logger.LogWarning("[SCRN]   ...   [skipping other {count} audio files]", audioFiles.Count - MAX_AUDIO_FILES_TO_LIST);
+                    break;
+                }
+                _logger.LogInformation("[SCRN] Found audio file {file}", file);
+            }
+        }
+        catch
+        {
+            _logger.LogWarning("[SCRN] Audio folder does not exist");
+        }
     }
 
     private WasapiPlayer CreatePlayer(string deviceId)

@@ -9,8 +9,11 @@ namespace Server.Screen;
 
 internal sealed class MediaWindow
 {
-    public string Id { get; }
+    public static string[] SupportedImageFormats { get; } = [".png", ".jpg", ".jpeg"];
+    public static string[] SupportedVideoFormats { get; } = [".mp4", ".avi", ".wmv"];
+
     public string Name { get; private set; } = string.Empty;
+    public string Id { get; }
 
     public event EventHandler<bool>? Shown;
     public event EventHandler<string>? Hidden;
@@ -111,7 +114,7 @@ internal sealed class MediaWindow
         object? result = null;
 
         var ext = System.IO.Path.GetExtension(filename)?.ToLower() ?? string.Empty;
-        if (ext.Equals(".png") || ext.Equals(".jpg") || ext.Equals(".jpeg"))
+        if (SupportedImageFormats.Contains(ext))
         {
             var image = new Image
             {
@@ -132,7 +135,7 @@ internal sealed class MediaWindow
                 image.Height = height;
             }
         }
-        else if (ext.Equals(".mp4") || ext.Equals(".avi") || ext.Equals(".wmv"))
+        else if (SupportedVideoFormats.Contains(ext))
         {
             var media = new MediaElement
             {
