@@ -79,7 +79,7 @@ internal class TobiiEyeXService : Gaze.Dispatcher.DispatcherBase, ITelemetryServ
 
     public override Task<Common.Bool> SetLogFileName(Common.String request, ServerCallContext context)
     {
-        return FileLogger.SetFileName(request.Value, "EYEX", _fileLogger, _logger);
+        return Helpers.SetLogFileName(request.Value, "EYEX", _fileLogger, _logger);
     }
 
     public override async Task ReadData(Empty request, IServerStreamWriter<Gaze.Sample> responseStream, ServerCallContext context)

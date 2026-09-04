@@ -58,23 +58,39 @@
                                                      Converter={StaticResource EnumToBoolean},
                                                      ConverterParameter={x:Static local:PlaybackType.File}}"
                                  Checked="rdbPlayFile_Checked"/>
-                    <TextBox x:Name="txtFilename"
-                             IsEnabled="{Binding ElementName=rdbPlayFile, Path=IsChecked}"
-                             Text="{Binding Filename, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
-                        <TextBox.ToolTip>
-                            <TextBlock>
-                                <Run Text="Enter the path to a WAV file to play."/>
-                                <LineBreak/>
-                                <Run Text="MP4 and other formats are not supported."/>
-                                <LineBreak/>
-                                <Run Text="Use either the absolute path,"/>
-                                <LineBreak/>
-                                <Run Text="or the path relative to the 'Sounds' folder"/>
-                                <LineBreak/>
-                                <Run Text="in the server application root folder"/>
-                            </TextBlock>
-                        </TextBox.ToolTip> 
-                    </TextBox>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBox x:Name="txtFilename"
+                                 Margin="4,0"
+                                 IsEnabled="{Binding ElementName=rdbPlayFile, Path=IsChecked}"
+                                 Text="{Binding Filename, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                 md:HintAssist.Hint="filename">
+                            <TextBox.ToolTip>
+                                <TextBlock>
+                                    <Run Text="A WAV file to play."/>
+                                    <LineBreak/>
+                                    <Run Text="MP3 and other formats are not supported."/>
+                                    <LineBreak/>
+                                    <Run Text="Use either the absolute path,"/>
+                                    <LineBreak/>
+                                    <Run Text="or the path relative to the 'Sounds' folder"/>
+                                    <LineBreak/>
+                                    <Run Text="in the server application root folder"/>
+                                </TextBlock>
+                            </TextBox.ToolTip>
+                        </TextBox>
+                        <Button Grid.Column="1"
+                                Style="{StaticResource MaterialDesignPaperDarkButton}"
+                                Content="↑"
+                                Padding="12,0"
+                                FontSize="20"
+                                IsEnabled="{Binding CanUploadFile}"
+                                Command="{Binding UploadFileCommand}"/>
+                    </Grid>
                 </StackPanel>
                 <StackPanel>
                     <RadioButton x:Name="rdbPlayTone"

@@ -6,7 +6,7 @@ using Proto = global::Screen;
 
 namespace Server.Screen;
 
-public class ScreenService : Proto.Dispatcher.DispatcherBase, IService
+public class ScreenService : Proto.Dispatcher.DispatcherBase, IFileService
 {
     public bool IsAvailable() => true;
 
@@ -154,6 +154,13 @@ public class ScreenService : Proto.Dispatcher.DispatcherBase, IService
         return Task.FromResult(new Empty());
     }
 
+    public override async Task<Common.UploadResult> UploadFile(
+        IAsyncStreamReader<Common.UploadRequest> requestStream,
+        ServerCallContext context)
+    {
+        return await Helpers.UploadFile(requestStream, context, MEDIA_FOLDER);
+    }
+    
     #region Internal
 
     const int MAX_MEDIA_FILES_TO_LIST = 7;

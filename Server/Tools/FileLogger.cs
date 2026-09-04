@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
-using System.IO;
+﻿using System.IO;
 using System.Text;
 
 namespace Server.Tools;
@@ -7,32 +6,6 @@ namespace Server.Tools;
 internal sealed class FileLogger : IDisposable
 {
     public bool IsLogging => _writer != null;
-
-    public static Task<Common.Bool> SetFileName<T>(
-        string filename,
-        string serviceName,
-        FileLogger fileLogger,
-        ILogger<T> serviceLogger)
-    {
-        if (string.IsNullOrEmpty(filename))
-        {
-            if (fileLogger.IsLogging)
-            {
-                serviceLogger.LogInformation($"[{serviceName}] Logging disabled");
-                fileLogger.SetFileName(string.Empty);
-            }
-            return Task.FromResult(new Common.Bool() { Value = false });
-        }
-        else
-        {
-            var result = fileLogger.SetFileName(filename);
-            if (result)
-                serviceLogger.LogInformation($"[{serviceName}] Logging to {{filename}}", filename);
-            else
-                serviceLogger.LogWarning($"[{serviceName}] Cannot log to {{filename}}", filename);
-            return Task.FromResult(new Common.Bool() { Value = result });
-        }
-    }
 
     public bool SetFileName(string filename)
     {

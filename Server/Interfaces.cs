@@ -15,3 +15,10 @@ internal interface ITelemetryService : IService
     Task<Empty> Stop(Empty request, ServerCallContext context);
     Task<Common.Bool> SetLogFileName(Common.String request, ServerCallContext context);
 }
+
+internal interface IFileService : IService
+{
+    Task<Common.UploadResult> UploadFile(
+        IAsyncStreamReader<Common.UploadRequest> requestStream,
+        ServerCallContext context);
+}

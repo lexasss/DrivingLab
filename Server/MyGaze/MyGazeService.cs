@@ -68,7 +68,7 @@ internal class MyGazeService : Gaze.Dispatcher.DispatcherBase, ITelemetryService
 
     public override Task<Common.Bool> SetLogFileName(Common.String request, ServerCallContext context)
     {
-        return FileLogger.SetFileName(request.Value, "VIMG", _fileLogger, _logger);
+        return Helpers.SetLogFileName(request.Value, "VIMG", _fileLogger, _logger);
     }
 
     public override async Task ReadData(Empty request, IServerStreamWriter<Gaze.Sample> responseStream, ServerCallContext context)

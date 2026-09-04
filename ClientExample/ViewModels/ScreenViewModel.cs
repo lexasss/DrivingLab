@@ -12,6 +12,7 @@ public partial class ScreenViewModel : ObservableObject
     public partial Screen.Screen? Screen { get; set; }
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CanToggleMedia))]
+    [NotifyPropertyChangedFor(nameof(CanUploadFile))]
     public partial string Filename { get; set; } = string.Empty;
     [ObservableProperty]
     public partial int X { get; set; } = 0;
@@ -24,6 +25,7 @@ public partial class ScreenViewModel : ObservableObject
     [ObservableProperty]
     public partial int Duration { get; set; } = 0;
     public bool CanToggleMedia => IsAvailable && (_mediaId != null || Filename.Length > 0);
+    public bool CanUploadFile => IsAvailable && Filename.Length > 0;
     [ObservableProperty]
     public partial string ShowButtonText { get; set; } = "Show";
     [ObservableProperty]
@@ -38,6 +40,7 @@ public partial class ScreenViewModel : ObservableObject
             Screen = Screens.FirstOrDefault();
             OnPropertyChanged(nameof(IsAvailable));
             OnPropertyChanged(nameof(CanToggleMedia));
+            OnPropertyChanged(nameof(CanUploadFile));
         };
         _screenClient.MediaHidden += ScreenClient_MediaHidden;
     }
@@ -72,6 +75,29 @@ public partial class ScreenViewModel : ObservableObject
         }
 
         UpdateUI(message);
+    }
+
+    [RelayCommand]
+    private async Task UploadFile()
+    {
+        if (!System.IO.File.Exists(Filename))
+        {
+            return;
+        }
+
+        Data = "Uploading file ...";
+        try
+        {
+            var result = await _screenClient.UploadFile(Filename);
+            if (result.Size > 0)
+            {
+                Data = "File uploaded successfully.";
+            }
+        }
+        catch
+        {
+            Data = "Failed to upload the file.";
+        }
     }
 
     private void ScreenClient_MediaHidden(object? sender, string id)

@@ -61,6 +61,12 @@ public class SoundPlayerClient : Client
         _ = _client.Stop(new Empty());
     }
 
+    public async Task<Common.UploadResult> UploadFile(string filename)
+    {
+        using var call = _client.UploadFile();
+        return await FileService.UploadFile(call, filename, "audio");
+    }
+
     #region Internal
 
     readonly SoundPlayer.Dispatcher.DispatcherClient _client;

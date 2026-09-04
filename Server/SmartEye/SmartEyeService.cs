@@ -110,7 +110,7 @@ internal class SmartEyeService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
 
     public override Task<Common.Bool> SetLogFileName(Common.String request, ServerCallContext context)
     {
-        return FileLogger.SetFileName(request.Value, "SEYE", _fileLogger, _logger);
+        return Helpers.SetLogFileName(request.Value, "SEYE", _fileLogger, _logger);
     }
 
     /*

@@ -1,6 +1,7 @@
 ﻿using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Microsoft.Extensions.Options;
+using System.IO;
 
 namespace ClientExample;
 
@@ -53,6 +54,12 @@ public class ScreenClient : Client
             return;
 
         _ = _client.Close(new Common.String { Value = id });
+    }
+
+    public async Task<Common.UploadResult> UploadFile(string filename)
+    {
+        using var call = _client.UploadFile();
+        return await FileService.UploadFile(call, filename, "image");
     }
 
     #region Internal

@@ -14,6 +14,8 @@ service Dispatcher {
 
 	rpc Play (SoundDescription) returns (Common.Bool) {}
 	rpc Stop (google.protobuf.Empty) returns (google.protobuf.Empty) {}
+
+	rpc UploadFile(stream Common.UploadRequest) returns (Common.UploadResult);
 }
 
 message Device {

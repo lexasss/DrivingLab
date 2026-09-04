@@ -2,6 +2,13 @@ syntax = "proto3";
 
 package Common;
 
+enum Status {
+	Disconnected = 0;
+	Connected = 1;
+	Calibrating = 2;
+	Calibrated = 3;
+}
+
 message Bool {
 	bool value = 1;
 }
@@ -30,9 +37,19 @@ message Vector {
 	double z = 3;
 }
 
-enum Status {
-	Disconnected = 0;
-	Connected = 1;
-	Calibrating = 2;
-	Calibrated = 3;
+message UploadRequest {
+  oneof payload {
+    FileMetadata metadata = 1;
+    bytes chunk = 2;
+  }
+}
+
+message FileMetadata {
+  string fileName = 1;
+  string contentType = 2;
+}
+
+message UploadResult {
+  string fileName = 1;
+  int64 size = 2;
 }

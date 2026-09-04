@@ -18,9 +18,11 @@ public partial class SoundPlayerViewModel : ObservableObject
     public partial SoundPlayer.Device? Device { get; set; }
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CanTogglePlayback))]
+    [NotifyPropertyChangedFor(nameof(CanUploadFile))]
     public partial PlaybackType PlaybackType { get; set; }
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CanTogglePlayback))]
+    [NotifyPropertyChangedFor(nameof(CanUploadFile))]
     public partial string Filename { get; set; } = string.Empty;
     [ObservableProperty]
     public partial SoundPlayer.ToneType ToneType { get; set; } = SoundPlayer.ToneType.Sine;
@@ -35,6 +37,7 @@ public partial class SoundPlayerViewModel : ObservableObject
     public partial bool IsPlaying { get; set; } = false;
     public bool CanTogglePlayback => IsAvailable && 
         (IsPlaying || PlaybackType == PlaybackType.Tone || Filename.Length > 0);
+    public bool CanUploadFile => IsAvailable && Filename.Length > 0;
     [ObservableProperty]
     public partial string PlayerButtonText { get; set; } = "Play";
     [ObservableProperty]
@@ -49,6 +52,7 @@ public partial class SoundPlayerViewModel : ObservableObject
             Device = Devices.FirstOrDefault();
             OnPropertyChanged(nameof(IsAvailable));
             OnPropertyChanged(nameof(CanTogglePlayback));
+            OnPropertyChanged(nameof(CanUploadFile));
         };
         _soundPlayerClient.PlaybackFinished += SoundPlayerClient_PlaybackFinished;
     }
@@ -93,6 +97,29 @@ public partial class SoundPlayerViewModel : ObservableObject
             {
                 Data = "failed to play the file";
             }
+        }
+    }
+
+    [RelayCommand]
+    private async Task UploadFile()
+    {
+        if (!System.IO.File.Exists(Filename))
+        {
+            return;
+        }
+
+        Data = "Uploading file ...";
+        try
+        {
+            var result = await _soundPlayerClient.UploadFile(Filename);
+            if (result.Size > 0)
+            {
+                Data = "File uploaded successfully.";
+            }
+        }
+        catch
+        {
+            Data = "Failed to upload the file.";
         }
     }
 

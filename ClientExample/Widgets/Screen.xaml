@@ -44,22 +44,35 @@
                             <Setter Property="Margin" Value="4,0"/>
                         </Style>
                     </StackPanel.Resources>
-                    <TextBox Text="{Binding Filename, UpdateSourceTrigger=PropertyChanged}"
-                             md:HintAssist.Hint="Filename">
-                        <TextBox.ToolTip>
-                            <TextBlock>
-                                <Run Text="Enter the path to a media file to show / play."/>
-                                <LineBreak/>
-                                <Run Text="Supported types are PNG, JPG, MP4, AVI and WMV."/>
-                                <LineBreak/>
-                                <Run Text="Use either the absolute path,"/>
-                                <LineBreak/>
-                                <Run Text="or the path relative to the 'Media' folder"/>
-                                <LineBreak/>
-                                <Run Text="in the server application root folder"/>
-                            </TextBlock>
-                        </TextBox.ToolTip> 
-                    </TextBox>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox Text="{Binding Filename, UpdateSourceTrigger=PropertyChanged}"
+                                 md:HintAssist.Hint="filename">
+                            <TextBox.ToolTip>
+                                <TextBlock>
+                                    <Run Text="A media file to show / play."/>
+                                    <LineBreak/>
+                                    <Run Text="Supported types are PNG, JPG, MP4, AVI and WMV."/>
+                                    <LineBreak/>
+                                    <Run Text="Use either the absolute path,"/>
+                                    <LineBreak/>
+                                    <Run Text="or the path relative to the 'Media' folder"/>
+                                    <LineBreak/>
+                                    <Run Text="in the server application root folder"/>
+                                </TextBlock>
+                            </TextBox.ToolTip>
+                        </TextBox>
+                        <Button Grid.Column="1"
+                                Style="{StaticResource MaterialDesignPaperDarkButton}"
+                                Content="↑"
+                                Padding="12,0"
+                                FontSize="20"
+                                IsEnabled="{Binding CanUploadFile}"
+                                Command="{Binding UploadFileCommand}"/> 
+                    </Grid>
                     <Grid Margin="4">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>

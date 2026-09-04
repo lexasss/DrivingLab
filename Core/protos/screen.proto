@@ -14,6 +14,8 @@ service Dispatcher {
 
 	rpc Show (Media) returns (Common.String) {}
 	rpc Close (Common.String) returns (google.protobuf.Empty) {}
+
+	rpc UploadFile(stream Common.UploadRequest) returns (Common.UploadResult);
 }
 
 message Screen {

@@ -10,6 +10,11 @@ public enum Ports
     Screen = 30055
 }
 
+public static class Constants
+{
+    public const int FILE_CHUNK_SIZE = 64 * 1024;
+}
+
 public partial class Vector
 {
     public readonly static Vector ZEROS = new() { X = 0, Y = 0, Z = 0 };
@@ -34,7 +39,6 @@ public partial class Point
         y = Y;
     }
 }
-
 
 public partial class Size
 {

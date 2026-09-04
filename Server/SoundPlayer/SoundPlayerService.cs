@@ -9,7 +9,7 @@ using Proto = global::SoundPlayer;
 namespace Server.SoundPlayer;
 
 [System.Diagnostics.CodeAnalysis.SuppressMessage("Interoperability", "CA1416:Validate platform compatibility")]
-public class SoundPlayerService : Proto.Dispatcher.DispatcherBase, IService
+public class SoundPlayerService : Proto.Dispatcher.DispatcherBase, IFileService
 {
     public bool IsAvailable() => true;
 
@@ -111,6 +111,13 @@ public class SoundPlayerService : Proto.Dispatcher.DispatcherBase, IService
 
         _logger.LogInformation("[SNDP] Stopping playback");
         return Task.FromResult(new Empty());
+    }
+
+    public override async Task<Common.UploadResult> UploadFile(
+        IAsyncStreamReader<Common.UploadRequest> requestStream,
+        ServerCallContext context)
+    {
+        return await Helpers.UploadFile(requestStream, context, SOUND_FOLDER);
     }
 
     #region Internal

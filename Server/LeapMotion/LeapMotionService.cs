@@ -123,7 +123,7 @@ internal class LeapMotionService : Proto.Dispatcher.DispatcherBase, ITelemetrySe
 
     public override Task<Common.Bool> SetLogFileName(Common.String request, ServerCallContext context)
     {
-        return FileLogger.SetFileName(request.Value, "LEAP", _fileLogger, _logger);
+        return Helpers.SetLogFileName(request.Value, "LEAP", _fileLogger, _logger);
     }
 
     public override async Task ReadData(Empty request, IServerStreamWriter<Proto.Sample> responseStream, ServerCallContext context)
