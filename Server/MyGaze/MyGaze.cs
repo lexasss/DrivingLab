@@ -10,7 +10,7 @@ internal class MyGaze : IDisposable
 	public bool IsConnected { get; private set; }
 	public bool IsTracking { get; private set; }
 
-	public MyGaze(ILogger<MyGazeService> logger)
+	public MyGaze(ILogger logger)
 	{
 		_logger = logger;
 
@@ -22,7 +22,7 @@ internal class MyGaze : IDisposable
 			var info = new MyGazeAPI.SystemInfoStruct();
             _ = MyGazeAPI.GetSystemInfo(ref info);
 
-            _logger.LogInformation($"[VIMG] {info.iV_ETDevice} v{info.iV_MajorVersion}.{info.iV_MinorVersion}.{info.iV_Buildnumber} @ {info.samplerate} Hz [API v{info.API_MajorVersion}.{info.API_MinorVersion}.{info.API_Buildnumber}]");
+            _logger.LogInformation($"{info.iV_ETDevice} v{info.iV_MajorVersion}.{info.iV_MinorVersion}.{info.iV_Buildnumber} @ {info.samplerate} Hz [API v{info.API_MajorVersion}.{info.API_MinorVersion}.{info.API_Buildnumber}]");
         }
 
 		IsConnected = MyGazeAPI.IsConnected() == MyGazeAPI.RET_SUCCESS;
@@ -61,7 +61,7 @@ internal class MyGaze : IDisposable
 
 	readonly StringBuilder LICENSE = new("NBBwa2iQ1Iu3eLwt");
 
-	readonly ILogger<MyGazeService> _logger;
+	readonly ILogger _logger;
 
     private void GetSampleCallbackFunction(MyGazeAPI.SampleStruct sample)
 	{
@@ -71,7 +71,7 @@ internal class MyGaze : IDisposable
 	private MyGazeAPI.Ret Log(int result, string fnc)
     {
 		MyGazeAPI.Ret code = (MyGazeAPI.Ret)result;
-        _logger.LogInformation("[VIMG] {fnc} => {code}", fnc, code);
+        _logger.LogInformation("{fnc} => {code}", fnc, code);
 		return code;
 	}
 

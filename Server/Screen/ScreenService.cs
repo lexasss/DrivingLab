@@ -10,21 +10,25 @@ public class ScreenService : Proto.Dispatcher.DispatcherBase, IFileService
 {
     public bool IsAvailable() => true;
 
-    public ScreenService(ILogger<ScreenService> logger) : base()
+    public ScreenService(ILoggerFactory loggerFactory) : base()
     {
-        _logger = logger;
+        _logger = loggerFactory.CreateLogger("SCRN");
 
         UpdateScreenList();
 
         foreach (var screen in _screens)
         {
-            _logger.LogInformation("[SCRN] Found screen {id} ({name}) at ({x},{y}) with size {width}x{height}",
-                screen.Id, screen.Name, screen.Origin.X, screen.Origin.Y, screen.Size.Width, screen.Size.Height);
+            _logger.LogInformation("Found screen {name} at ({x},{y}) with size {width}x{height}",
+                screen.Name, screen.Origin.X, screen.Origin.Y, screen.Size.Width, screen.Size.Height);
         }
 
-        ListMediaFiles();
+        Tools.Helpers.ListFiles(
+            MEDIA_FOLDER,
+            _supportedMediaFormats,
+            _logger
+        );
 
-        _logger.LogInformation("[SCRN] Running");
+        _logger.LogInformation("Running");
     }
 
     public void Dispose()
@@ -36,7 +40,7 @@ public class ScreenService : Proto.Dispatcher.DispatcherBase, IFileService
             media.Close();
         }
 
-        _logger.LogInformation("[SCRN] Disposed");
+        _logger.LogInformation("Disposed");
 
         GC.SuppressFinalize(this);
     }
@@ -63,7 +67,10 @@ public class ScreenService : Proto.Dispatcher.DispatcherBase, IFileService
         return result;
     }
 
-    public override async Task ReadEvents(Empty request, IServerStreamWriter<Proto.Event> responseStream, ServerCallContext context)
+    public override async Task ReadEvents(
+        Empty request,
+        IServerStreamWriter<Proto.Event> responseStream,
+        ServerCallContext context)
     {
         while (_isActive && !context.CancellationToken.IsCancellationRequested)
         {
@@ -107,19 +114,21 @@ public class ScreenService : Proto.Dispatcher.DispatcherBase, IFileService
                 {
                     if (success)
                     {
-                        _logger.LogInformation("[SNDP] Showing {filename}", Path.GetFileNameWithoutExtension(request.FileName));
+                        _logger.LogInformation("Showing {filename}",
+                            Path.GetFileNameWithoutExtension(request.FileName));
                         _media[id] = mediaWindow;
                     }
                     else
                     {
-                        _logger.LogError("[SNDP] Media type of {filename} is not supported", Path.GetFileName(request.FileName));
+                        _logger.LogError("Media type of {filename} is not supported",
+                            Path.GetFileName(request.FileName));
                     }
                 };
                 mediaWindow.Hidden += (sender, mediaId) =>
                 {
                     if (_media.TryGetValue(mediaId, out MediaWindow? value))
                     {
-                        _logger.LogInformation("[SNDP] Image {name} was hidden", value.Name);
+                        _logger.LogInformation("Image {name} was hidden", value.Name);
                         _media.Remove(mediaId);
                         _events.Enqueue(new Proto.Event
                         {
@@ -131,12 +140,13 @@ public class ScreenService : Proto.Dispatcher.DispatcherBase, IFileService
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "[SNDP] Error showing {filename}: {reason}", request.FileName, ex.Message);
+                _logger.LogError(ex, "Error showing {filename}: {reason}",
+                    request.FileName, ex.Message);
             }
         }
         else
         {
-            _logger.LogWarning("[SNDP] File not found: {filename}", filePath);
+            _logger.LogWarning("File not found: {filename}", filePath);
         }
 
         return Task.FromResult(new Common.String { Value = id });
@@ -148,7 +158,7 @@ public class ScreenService : Proto.Dispatcher.DispatcherBase, IFileService
         {
             mediaWindow.Close();
             _media.Remove(request.Value);
-            _logger.LogInformation("[SNDP] Closing the media {name}", mediaWindow.Name);
+            _logger.LogInformation("Closing the media {name}", mediaWindow.Name);
         }
 
         return Task.FromResult(new Empty());
@@ -158,15 +168,28 @@ public class ScreenService : Proto.Dispatcher.DispatcherBase, IFileService
         IAsyncStreamReader<Common.UploadRequest> requestStream,
         ServerCallContext context)
     {
-        return await Helpers.UploadFile(requestStream, context, MEDIA_FOLDER);
+        var filename = requestStream.Current?.Metadata?.FileName;
+        var result = await Tools.Helpers.UploadFile(requestStream, context, MEDIA_FOLDER);
+
+        if (result.Size > 0)
+            _logger.LogInformation("Uploaded {name} ({size} bytes)",
+                filename, result.Size);
+        else
+            _logger.LogWarning("Upload failed for {name}: {error}",
+                filename, result.ErrorMessage);
+
+        return result;
     }
     
     #region Internal
 
-    const int MAX_MEDIA_FILES_TO_LIST = 7;
     const string MEDIA_FOLDER = "media";
 
-    readonly ILogger<ScreenService> _logger;
+    readonly string[] _supportedMediaFormats = [
+        .. MediaWindow.SupportedImageFormats,
+        .. MediaWindow.SupportedVideoFormats];
+
+    readonly ILogger _logger;
     readonly Queue<Proto.Event> _events = [];
     readonly List<Proto.Screen> _screens = [];
     readonly Dictionary<string, MediaWindow> _media = [];
@@ -184,37 +207,6 @@ public class ScreenService : Proto.Dispatcher.DispatcherBase, IFileService
                 Origin = new Common.Point { X = screen.X, Y = screen.Y },
                 Size = new Common.Size { Width = screen.Width, Height = screen.Height }
             });
-    }
-
-    private void ListMediaFiles()
-    {
-        try
-        {
-            string[] supportedFormats = [.. MediaWindow.SupportedImageFormats, .. MediaWindow.SupportedVideoFormats];
-            List<string> mediaFiles = [];
-            foreach (var mediaFormat in supportedFormats)
-            {
-                foreach (var file in Directory.EnumerateFiles(MEDIA_FOLDER, $"*{mediaFormat}"))
-                {
-                    mediaFiles.Add(Path.GetFileNameWithoutExtension(file));
-                }
-            }
-
-            int i = 0;
-            foreach (var file in mediaFiles)
-            {
-                if (++i == MAX_MEDIA_FILES_TO_LIST)
-                {
-                    _logger.LogInformation("[SCRN]   ...   [skipping other {count} media files]", mediaFiles.Count - MAX_MEDIA_FILES_TO_LIST);
-                    break;
-                }
-                _logger.LogInformation("[SCRN] Found media file {file}", file);
-            }
-        }
-        catch
-        {
-            _logger.LogWarning("[SCRN] Media folder does not exist");
-        }
     }
 
     #endregion

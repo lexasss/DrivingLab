@@ -12,7 +12,7 @@ internal class EyeX : IDisposable
 
     public bool IsValid { get; private set; } = false;
 
-    public EyeX(ILogger<TobiiEyeXService> logger)
+    public EyeX(ILogger logger)
     {
         _logger = logger;
 
@@ -27,18 +27,18 @@ internal class EyeX : IDisposable
                 var devices = etLib.ListUsbEyeTrackers();
                 foreach (EyeXCore.DeviceInfo device in devices)
                 {
-                    _logger.LogInformation("[EYEX] Found Tobii EyeX device: {device}", device);
+                    _logger.LogInformation("Found Tobii EyeX device: {device}", device);
                 }
             }
             catch (Exception)
             {
-                _logger.LogWarning("[EYEX] Failed to list devices (Tobii EyeX software is not installed or not running)");
+                _logger.LogWarning("Failed to list devices (Tobii EyeX software is not installed or not running)");
             }
 
             Uri url = etLib.GetConnectedEyeTracker();
             if (url == null)
             {
-                _logger.LogWarning("[EYEX] No devices");
+                _logger.LogWarning("No devices");
                 return;
             }
 
@@ -48,7 +48,7 @@ internal class EyeX : IDisposable
             }
             catch (EyeXCore.EyeTrackerException ex)
             {
-                _logger.LogError("[EYEX] Failed to created an eye tracker instance on {url} ({msg})", url, ex.Message);
+                _logger.LogError("Failed to created an eye tracker instance on {url} ({msg})", url, ex.Message);
                 return;
             }
 
@@ -56,9 +56,9 @@ internal class EyeX : IDisposable
             _tracker.ConnectAsync((error) =>
             {
                 if (error == EyeXCore.ErrorCode.Success)
-                    _logger.LogInformation("[EYEX] Connected");
+                    _logger.LogInformation("Connected");
                 else
-                    _logger.LogError("[EYEX] Cannot connect to the device ({error})", error);
+                    _logger.LogError("Cannot connect to the device ({error})", error);
             });
         }
 
@@ -83,13 +83,13 @@ internal class EyeX : IDisposable
     readonly EyeXCore.EyeTracker? _tracker;
     readonly EyeXFramework.EyePositionDataStream? _posStream;
     readonly EyeXFramework.GazePointDataStream? _gazeStream;
-    readonly ILogger<TobiiEyeXService> _logger;
+    readonly ILogger _logger;
 
     private void Host_DeviceStatusChanged(object? sender, EyeXFramework.EngineStateValue<EyeXFramewor.EyeTrackingDeviceStatus> e)
     {
         if (e.IsValid)
         {
-            _logger.LogInformation($"[EYEX] Status: {e.Value}");
+            _logger.LogInformation($"Status: {e.Value}");
         }
     }
 

@@ -13,18 +13,22 @@ public class SoundPlayerService : Proto.Dispatcher.DispatcherBase, IFileService
 {
     public bool IsAvailable() => true;
 
-    public SoundPlayerService(ILogger<SoundPlayerService> logger) : base()
+    public SoundPlayerService(ILoggerFactory loggerFactory) : base()
     {
-        _logger = logger;
+        _logger = loggerFactory.CreateLogger("SNDP");
 
         foreach (var device in GetSoundDevices().Result)
         {
-            _logger.LogInformation("[SNDP] Found sound device {name}", device.Name);
+            _logger.LogInformation("Found sound device {name}", device.Name);
         }
 
-        ListAudioFiles();
+        Tools.Helpers.ListFiles(
+            SOUND_FOLDER,
+            _supportedAudioFormats,
+            _logger
+        );
 
-        _logger.LogInformation("[SNDP] Running");
+        _logger.LogInformation("Running");
     }
 
     public void Dispose()
@@ -35,7 +39,7 @@ public class SoundPlayerService : Proto.Dispatcher.DispatcherBase, IFileService
         _audioFile?.Dispose();
         _soundPlayer?.Dispose();
 
-        _logger.LogInformation("[SNDP] Disposed");
+        _logger.LogInformation("Disposed");
 
         GC.SuppressFinalize(this);
     }
@@ -91,7 +95,7 @@ public class SoundPlayerService : Proto.Dispatcher.DispatcherBase, IFileService
         }
         else
         {
-            _logger.LogWarning("[SNDP] Unsupported sound type");
+            _logger.LogWarning("Unsupported sound type");
         }
 
         return Task.FromResult(new Common.Bool { Value = result });
@@ -109,7 +113,7 @@ public class SoundPlayerService : Proto.Dispatcher.DispatcherBase, IFileService
         _soundPlayer?.Dispose();
         _soundPlayer = null;
 
-        _logger.LogInformation("[SNDP] Stopping playback");
+        _logger.LogInformation("Stopping playback");
         return Task.FromResult(new Empty());
     }
 
@@ -117,7 +121,15 @@ public class SoundPlayerService : Proto.Dispatcher.DispatcherBase, IFileService
         IAsyncStreamReader<Common.UploadRequest> requestStream,
         ServerCallContext context)
     {
-        return await Helpers.UploadFile(requestStream, context, SOUND_FOLDER);
+        var filename = requestStream.Current?.Metadata?.FileName;
+        var result = await Tools.Helpers.UploadFile(requestStream, context, SOUND_FOLDER);
+
+        if (result.Size > 0)
+            _logger.LogInformation("Uploaded {name} ({size} bytes)", filename, result.Size);
+        else
+            _logger.LogWarning("Upload failed for {name}: {error}", filename, result.ErrorMessage);
+
+        return result;
     }
 
     #region Internal
@@ -129,12 +141,11 @@ public class SoundPlayerService : Proto.Dispatcher.DispatcherBase, IFileService
         public override string ToString() => name;
     }
 
-    const int MAX_AUDIO_FILES_TO_LIST = 7;
     const string SOUND_FOLDER = "sounds";
 
     static string[] _supportedAudioFormats = [".wav"];
 
-    readonly ILogger<SoundPlayerService> _logger;
+    readonly ILogger _logger;
     readonly Queue<Proto.Event> _events = [];
 
     bool _isActive = true;
@@ -162,36 +173,6 @@ public class SoundPlayerService : Proto.Dispatcher.DispatcherBase, IFileService
         return devices.FirstOrDefault(d => d.ID == id);
     }
 
-    private void ListAudioFiles()
-    {
-        try
-        {
-            List<string> audioFiles = [];
-            foreach (var audioFormat in _supportedAudioFormats)
-            {
-                foreach (var file in Directory.EnumerateFiles(SOUND_FOLDER, $"*{audioFormat}"))
-                {
-                    audioFiles.Add(Path.GetFileNameWithoutExtension(file));
-                }
-            }
-
-            int i = 0;
-            foreach (var file in audioFiles)
-            {
-                if (++i == MAX_AUDIO_FILES_TO_LIST)
-                {
-                    _logger.LogInformation("[SCRN]   ...   [skipping other {count} audio files]", audioFiles.Count - MAX_AUDIO_FILES_TO_LIST);
-                    break;
-                }
-                _logger.LogInformation("[SCRN] Found audio file {file}", file);
-            }
-        }
-        catch
-        {
-            _logger.LogWarning("[SCRN] Audio folder does not exist");
-        }
-    }
-
     private WasapiPlayer CreatePlayer(string deviceId)
     {
         var device = GetDevice(deviceId);
@@ -206,7 +187,7 @@ public class SoundPlayerService : Proto.Dispatcher.DispatcherBase, IFileService
 
         soundPlayer.PlaybackStopped += (sender, e) =>
         {
-            _logger.LogInformation("[SNDP] Playback finished");
+            _logger.LogInformation("Playback finished");
             _events.Enqueue(new Proto.Event { Name = Proto.Events.PLAYBACK_FINISHED });
         };
 
@@ -233,12 +214,12 @@ public class SoundPlayerService : Proto.Dispatcher.DispatcherBase, IFileService
 
                 tonePlayer.Stop();
 
-                _logger.LogInformation("[SNDP] Tone finished");
+                _logger.LogInformation("Tone finished");
                 _events.Enqueue(new Proto.Event { Name = Proto.Events.PLAYBACK_FINISHED });
             });
         }
 
-        _logger.LogInformation("[SNDP] Playing {tone}", tone.ToneType);
+        _logger.LogInformation("Playing {tone}", tone.ToneType);
         return tonePlayer;
     }
 
@@ -261,16 +242,16 @@ public class SoundPlayerService : Proto.Dispatcher.DispatcherBase, IFileService
                 soundPlayer.Init(audioFile);
                 soundPlayer.Play();
 
-                _logger.LogInformation("[SNDP] Playing {filename}", filename);
+                _logger.LogInformation("Playing {filename}", filename);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "[SNDP] Error playing {filename}: {reason}", filename, ex.Message);
+                _logger.LogError(ex, "Error playing {filename}: {reason}", filename, ex.Message);
             }
         }
         else
         {
-            _logger.LogWarning("[SNDP] File not found: {filename}", filePath);
+            _logger.LogWarning("File not found: {filename}", filePath);
         }
 
         return audioFile;

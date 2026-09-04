@@ -50,6 +50,6 @@ message FileMetadata {
 }
 
 message UploadResult {
-  string fileName = 1;
+  string errorMessage = 1;
   int64 size = 2;
 }

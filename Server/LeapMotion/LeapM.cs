@@ -16,7 +16,7 @@ internal class LeapM: IDisposable
     public event EventHandler<global::LeapMotion.Sample>? HandLocationChanged;
     public event EventHandler<bool>? HandProximityChanged;
 
-    public LeapM(ILogger<LeapMotionService> logger) 
+    public LeapM(ILogger logger) 
     {
         _logger = logger;
 
@@ -78,7 +78,7 @@ internal class LeapM: IDisposable
     readonly static Common.Vector UH_TRANSLATION = new() { X = LEAP_TO_UH_X, Y = LEAP_TO_UH_Y, Z = 0 };
     readonly static Common.Vector UH_SCALE = new() { X = 0.001, Y = -0.001, Z = 0.001 };
 
-    readonly ILogger<LeapMotionService> _logger;
+    readonly ILogger _logger;
 
     Controller? _controller = null;
     bool _isHandVisible = false;
@@ -92,15 +92,15 @@ internal class LeapM: IDisposable
 
     private void PrintDeviceInfo(Device device)
     {
-        _logger.LogInformation("[LEAP]   baseline = {baseline}", device.Baseline);
-        _logger.LogInformation("[LEAP]   view angle");
-        _logger.LogInformation("[LEAP]     horizontal  = {viewAngle}", device.HorizontalViewAngle);
-        _logger.LogInformation("[LEAP]     vertical = {viewAngle}", device.VerticalViewAngle);
-        _logger.LogInformation("[LEAP]   is lightning bad = {isLightBad}", device.IsLightingBad);
-        _logger.LogInformation("[LEAP]   is smudged = {isSmudged}", device.IsSmudged);
-        _logger.LogInformation("[LEAP]   is streaming = {isStreaming}", device.IsStreaming);
-        _logger.LogInformation("[LEAP]   range = {range}", device.Range);
-        _logger.LogInformation("[LEAP]   type = {type}", device.Type);
+        _logger.LogInformation("   baseline = {baseline}", device.Baseline);
+        _logger.LogInformation("   view angle");
+        _logger.LogInformation("     horizontal  = {viewAngle}", device.HorizontalViewAngle);
+        _logger.LogInformation("     vertical = {viewAngle}", device.VerticalViewAngle);
+        _logger.LogInformation("   is lightning bad = {isLightBad}", device.IsLightingBad);
+        _logger.LogInformation("   is smudged = {isSmudged}", device.IsSmudged);
+        _logger.LogInformation("   is streaming = {isStreaming}", device.IsStreaming);
+        _logger.LogInformation("   range = {range}", device.Range);
+        _logger.LogInformation("   type = {type}", device.Type);
     }
 
     private bool IsHandClose(Vector aPos)
@@ -112,7 +112,7 @@ internal class LeapM: IDisposable
 
     private void OnConnect(object? sender, DeviceEventArgs args)
     {
-        _logger.LogInformation("[LEAP] Connected to {id}", args.Device.SerialNumber);
+        _logger.LogInformation("Connected to {id}", args.Device.SerialNumber);
 
         Info = args.Device;
 
@@ -121,7 +121,7 @@ internal class LeapM: IDisposable
 
     private void OnDisconnect(object? sender, DeviceEventArgs args)
     {
-        _logger.LogInformation("[LEAP] Disconnected");
+        _logger.LogInformation("Disconnected");
         ConnectionChanged?.Invoke(this, false);
     }
 
@@ -181,23 +181,23 @@ internal class LeapM: IDisposable
 
     private void OnServiceConnect(object? sender, ConnectionEventArgs args)
     {
-        _logger.LogInformation("[LEAP] Service Connected");
+        _logger.LogInformation("Service Connected");
 
         ServiceStatusChanged?.Invoke(this, "connected");
     }
 
     private void OnServiceDisconnect(object? sender, ConnectionLostEventArgs args)
     {
-        _logger.LogInformation("[LEAP] Service Disconnected");
+        _logger.LogInformation("Service Disconnected");
 
         ServiceStatusChanged?.Invoke(this, "disconnected");
     }
 
     private void OnDeviceFailure(object? sender, DeviceFailureEventArgs args)
     {
-        _logger.LogError("[LEAP] Device Error");
-        _logger.LogError("[LEAP]   PNP ID: {sn}", args.DeviceSerialNumber);
-        _logger.LogError("[LEAP]   Failure message: {msg}", args.ErrorMessage);
+        _logger.LogError("Device Error");
+        _logger.LogError("   PNP ID: {sn}", args.DeviceSerialNumber);
+        _logger.LogError("   Failure message: {msg}", args.ErrorMessage);
     }
 
     private void OnLogMessage(object? sender, LogEventArgs args)
@@ -210,7 +210,7 @@ internal class LeapM: IDisposable
             _ => ("Unknown", LogLevel.Debug),
         };
 
-        _logger.Log(level, "[LEAP] [{severity}] {type}: {msg}", severity, args.type, args.message);
+        _logger.Log(level, "[{severity}] {type}: {msg}", severity, args.type, args.message);
     }
 
     #endregion

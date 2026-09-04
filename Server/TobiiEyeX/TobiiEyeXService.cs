@@ -12,13 +12,13 @@ internal class TobiiEyeXService : Gaze.Dispatcher.DispatcherBase, ITelemetryServ
 {
     public bool IsAvailable() => _eyeX != null;
 
-    public TobiiEyeXService(ILogger<TobiiEyeXService> logger) : base()
+    public TobiiEyeXService(ILoggerFactory loggerFactory) : base()
     {
-        _logger = logger;
+        _logger = loggerFactory.CreateLogger("EYEX");
 
         try
         {
-            _eyeX = new EyeX(logger);
+            _eyeX = new EyeX(_logger);
 
             if (_eyeX.IsValid)
             {
@@ -26,7 +26,7 @@ internal class TobiiEyeXService : Gaze.Dispatcher.DispatcherBase, ITelemetryServ
                 _eyeX.PosStream?.Next += EyeX_Pos;
                 _eyeX.GazeStream?.Next += EyeX_Gaze;
 
-                _logger.LogInformation("[EYEX] Running");
+                _logger.LogInformation("Running");
             }
             else
             {
@@ -35,7 +35,7 @@ internal class TobiiEyeXService : Gaze.Dispatcher.DispatcherBase, ITelemetryServ
         }
         catch (Exception)
         {
-            _logger.LogError("[EYEX] Cannot start the service");
+            _logger.LogError("Cannot start the service");
         }
     }
 
@@ -47,7 +47,7 @@ internal class TobiiEyeXService : Gaze.Dispatcher.DispatcherBase, ITelemetryServ
         _eyeX = null;
 
         _fileLogger.Dispose();
-        _logger.LogInformation("[EYEX] Disposed");
+        _logger.LogInformation("Disposed");
 
         GC.SuppressFinalize(this);
     }
@@ -61,7 +61,7 @@ internal class TobiiEyeXService : Gaze.Dispatcher.DispatcherBase, ITelemetryServ
     {
         if (!_isSending)
         {
-            _logger.LogInformation("[EYEX] Data streaming: started");
+            _logger.LogInformation("Data streaming: started");
             _isSending = true;
         }
         return Task.FromResult(new Empty());
@@ -71,7 +71,7 @@ internal class TobiiEyeXService : Gaze.Dispatcher.DispatcherBase, ITelemetryServ
     {
         if (_isSending)
         {
-            _logger.LogInformation("[EYEX] Data streaming: stopped");
+            _logger.LogInformation("Data streaming: stopped");
             _isSending = false;
         }
         return Task.FromResult(new Empty());
@@ -79,7 +79,8 @@ internal class TobiiEyeXService : Gaze.Dispatcher.DispatcherBase, ITelemetryServ
 
     public override Task<Common.Bool> SetLogFileName(Common.String request, ServerCallContext context)
     {
-        return Helpers.SetLogFileName(request.Value, "EYEX", _fileLogger, _logger);
+        var result = Helpers.SetLogFileName(request.Value, _fileLogger, _logger);
+        return Task.FromResult(new Common.Bool { Value = result });
     }
 
     public override async Task ReadData(Empty request, IServerStreamWriter<Gaze.Sample> responseStream, ServerCallContext context)
@@ -88,7 +89,7 @@ internal class TobiiEyeXService : Gaze.Dispatcher.DispatcherBase, ITelemetryServ
             return;
 
         _eyeX.Tracker?.StartTracking();
-        _logger.LogInformation("[EYEX] Data reading: start");
+        _logger.LogInformation("Data reading: start");
         _isReading = true;
 
         try
@@ -106,7 +107,7 @@ internal class TobiiEyeXService : Gaze.Dispatcher.DispatcherBase, ITelemetryServ
         finally
         {
             _eyeX.Tracker?.StopTracking();
-            _logger.LogInformation("[EYEX] Data reading: stop");
+            _logger.LogInformation("Data reading: stop");
             _isReading = false;
         }
     }
@@ -117,7 +118,7 @@ internal class TobiiEyeXService : Gaze.Dispatcher.DispatcherBase, ITelemetryServ
     readonly static int SCREEN_WIDTH = GetSystemMetrics(SystemMetric.SM_CXSCREEN);
     readonly static int SCREEN_HEIGHT = GetSystemMetrics(SystemMetric.SM_CYSCREEN);
 
-    readonly ILogger<TobiiEyeXService> _logger;
+    readonly ILogger _logger;
     readonly Channel<Gaze.Sample> _channel = Channel.CreateUnbounded<Gaze.Sample>();
     readonly CancellationTokenSource _cts = new();
     readonly Tools.FileLogger _fileLogger = new();

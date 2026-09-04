@@ -1,35 +1,67 @@
 ﻿using Grpc.Core;
 using Microsoft.Extensions.Logging;
-using Server.Tools;
 using System.IO;
 
-namespace Server;
+namespace Server.Tools;
 
 internal class Helpers
 {
-    public static Task<Common.Bool> SetLogFileName<T>(
+    public static void ListFiles(
+        string folder,
+        string[] extensions,
+        ILogger serviceLogger)
+    {
+        try
+        {
+            List<string> files = [];
+            foreach (var ext in extensions)
+            {
+                foreach (var file in Directory.EnumerateFiles(folder, $"*{ext}"))
+                {
+                    files.Add(Path.GetFileNameWithoutExtension(file));
+                }
+            }
+
+            int i = 0;
+            foreach (var file in files)
+            {
+                if (++i == MAX_MEDIA_FILES_TO_LIST)
+                {
+                    serviceLogger.LogInformation(" ... [skipping other {count} files]",
+                        files.Count - MAX_MEDIA_FILES_TO_LIST);
+                    break;
+                }
+                serviceLogger.LogInformation("Found file {file}", file);
+            }
+        }
+        catch
+        {
+            serviceLogger.LogWarning("Folder {folder} does not exist", folder);
+        }
+    }
+
+    public static bool SetLogFileName(
         string filename,
-        string serviceName,
         FileLogger fileLogger,
-        ILogger<T> serviceLogger)
+        ILogger serviceLogger)
     {
         if (string.IsNullOrEmpty(filename))
         {
             if (fileLogger.IsLogging)
             {
-                serviceLogger.LogInformation($"[{serviceName}] Logging disabled");
+                serviceLogger.LogInformation("Logging disabled");
                 fileLogger.SetFileName(string.Empty);
             }
-            return Task.FromResult(new Common.Bool() { Value = false });
+            return false;
         }
         else
         {
             var result = fileLogger.SetFileName(filename);
             if (result)
-                serviceLogger.LogInformation($"[{serviceName}] Logging to {{filename}}", filename);
+                serviceLogger.LogInformation("Logging to {filename}", filename);
             else
-                serviceLogger.LogWarning($"[{serviceName}] Cannot log to {{filename}}", filename);
-            return Task.FromResult(new Common.Bool() { Value = result });
+                serviceLogger.LogWarning("Cannot log to {filename}", filename);
+            return result;
         }
     }
 
@@ -41,6 +73,13 @@ internal class Helpers
         Common.FileMetadata? metadata = null;
         FileStream? output = null;
         long totalBytes = 0;
+        Common.UploadResult result;
+
+        if (!Directory.Exists(folder))
+        {
+            var path = Path.Combine(AppContext.BaseDirectory, folder);
+            Directory.CreateDirectory(path);
+        }
 
         try
         {
@@ -60,9 +99,7 @@ internal class Helpers
 
                     metadata = request.Metadata;
 
-                    // Never trust a client-provided path.
                     var fileName = Path.GetFileName(metadata.FileName);
-
                     if (string.IsNullOrWhiteSpace(fileName))
                     {
                         throw new RpcException(
@@ -72,7 +109,6 @@ internal class Helpers
                     }
 
                     var filePath = Path.Combine(AppContext.BaseDirectory, folder, fileName);
-
                     output = new FileStream(
                         filePath,
                         FileMode.CreateNew,
@@ -111,10 +147,18 @@ internal class Helpers
 
             await output.FlushAsync(context.CancellationToken);
 
-            return new Common.UploadResult
+            result = new Common.UploadResult
             {
-                FileName = metadata.FileName,
+                ErrorMessage = string.Empty,
                 Size = totalBytes
+            };
+        }
+        catch (Exception ex)
+        {
+            result = new Common.UploadResult
+            {
+                ErrorMessage = ex.Message,
+                Size = 0
             };
         }
         finally
@@ -124,5 +168,9 @@ internal class Helpers
                 await output.DisposeAsync();
             }
         }
+
+        return result;
     }
+
+    const int MAX_MEDIA_FILES_TO_LIST = 7;
 }

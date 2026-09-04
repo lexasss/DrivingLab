@@ -4,24 +4,28 @@ using Grpc.Reflection.V1Alpha;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Serilog;
+using Serilog.Sinks.SystemConsole.Themes;
 
 namespace Server;
 
 class Program
 {
-    static ILogger<Program>? _logger;
+    static Microsoft.Extensions.Logging.ILogger? _logger;
 
     public async static Task Main()
     {
-        var serviceCollection = new ServiceCollection();
-
         Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Information()
-            .WriteTo.Console()
-            .WriteTo.File(
+            .WriteTo.Console(
+                outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {SourceContext} - {Message:lj}{NewLine}",
+                theme: _consoleTheme)
+            .WriteTo.File(  
                 "logs/app.log",
-                rollingInterval: RollingInterval.Day)
+                rollingInterval: RollingInterval.Day,
+                outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss} {Level:u3}] {SourceContext} {Message:lj}{NewLine}{Exception}")
             .CreateLogger();
+
+        var serviceCollection = new ServiceCollection();
 
         serviceCollection.AddLogging(builder =>
         {
@@ -38,7 +42,8 @@ class Program
 
         var serviceProvider = serviceCollection.BuildServiceProvider();
 
-        _logger = serviceProvider.GetRequiredService<ILogger<Program>>();
+        var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
+        _logger = loggerFactory.CreateLogger("MAIN");
 
         var creators = new Task<(IService, Grpc.Core.Server)?>[]
         {
@@ -117,7 +122,7 @@ class Program
             };
             server.Start();
 
-            _logger?.LogInformation("[APP] {name} server is listening on port {port}", name, port);
+            _logger?.LogInformation("{name} server is listening on port {port}", name, port);
 
             return (service, server);
         }
@@ -128,4 +133,29 @@ class Program
 
         return null;
     }
+
+    static SystemConsoleTheme _consoleTheme = new SystemConsoleTheme(
+        new Dictionary<ConsoleThemeStyle, SystemConsoleThemeStyle>()
+        {
+            [ConsoleThemeStyle.Text] = new SystemConsoleThemeStyle { Foreground = ConsoleColor.White },
+            [ConsoleThemeStyle.SecondaryText] = new SystemConsoleThemeStyle { Foreground = ConsoleColor.Gray },
+            [ConsoleThemeStyle.TertiaryText] = new SystemConsoleThemeStyle { Foreground = ConsoleColor.DarkGray },
+
+            [ConsoleThemeStyle.Invalid] = new SystemConsoleThemeStyle { Foreground = ConsoleColor.Yellow },
+
+            [ConsoleThemeStyle.Null] = new SystemConsoleThemeStyle { Foreground = ConsoleColor.Blue },
+            [ConsoleThemeStyle.Name] = new SystemConsoleThemeStyle { Foreground = ConsoleColor.Gray },
+            [ConsoleThemeStyle.String] = new SystemConsoleThemeStyle { Foreground = ConsoleColor.Cyan },
+            [ConsoleThemeStyle.Number] = new SystemConsoleThemeStyle { Foreground = ConsoleColor.Green },
+            [ConsoleThemeStyle.Boolean] = new SystemConsoleThemeStyle { Foreground = ConsoleColor.Blue },
+            [ConsoleThemeStyle.Scalar] = new SystemConsoleThemeStyle { Foreground = ConsoleColor.DarkBlue },
+
+            [ConsoleThemeStyle.LevelVerbose] = new SystemConsoleThemeStyle { Foreground = ConsoleColor.Gray },
+            [ConsoleThemeStyle.LevelDebug] = new SystemConsoleThemeStyle { Foreground = ConsoleColor.Gray },
+            [ConsoleThemeStyle.LevelInformation] = new SystemConsoleThemeStyle { Foreground = ConsoleColor.White },
+            [ConsoleThemeStyle.LevelWarning] = new SystemConsoleThemeStyle { Foreground = ConsoleColor.Yellow },
+            [ConsoleThemeStyle.LevelError] = new SystemConsoleThemeStyle { Foreground = ConsoleColor.Red },
+            [ConsoleThemeStyle.LevelFatal] = new SystemConsoleThemeStyle { Foreground = ConsoleColor.White, Background = ConsoleColor.Red },
+        }
+    );
 }

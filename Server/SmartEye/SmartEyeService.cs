@@ -10,9 +10,9 @@ internal class SmartEyeService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
 {
     public bool IsAvailable() => _seClient != null;
 
-    public SmartEyeService(ILogger<SmartEyeService> logger) : base()
+    public SmartEyeService(ILoggerFactory loggerFactory) : base()
     {
-        _logger = logger;
+        _logger = loggerFactory.CreateLogger("SEYE");
 
         try
         {
@@ -32,11 +32,11 @@ internal class SmartEyeService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
 
             _isActive = true;
 
-            _logger.LogInformation("[SEYE] Running");
+            _logger.LogInformation("Running");
         }
         catch (Exception)
         {
-            _logger.LogError("[SEYE] Cannot start the service");
+            _logger.LogError("Cannot start the service");
         }
     }
 
@@ -45,7 +45,7 @@ internal class SmartEyeService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
         _isActive = false;
         _seClient?.Dispose();
         _fileLogger.Dispose();
-        _logger.LogInformation("[SEYE] Disposed");
+        _logger.LogInformation("Disposed");
 
         GC.SuppressFinalize(this);
     }
@@ -69,19 +69,19 @@ internal class SmartEyeService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
 
             _planeMappingMode = request.PlaneMappingMode;
 
-            _logger.LogInformation("[SEYE] Configured");
+            _logger.LogInformation("Configured");
 
             var result = await _seClient.Connect(request.Ip, request.Port);
             if (result == null)
             {
-                _logger.LogInformation("[SEYE] Connected");
+                _logger.LogInformation("Connected");
                 _isConnected = true;
 
                 _seClient.Sample += Client_Sample;
             }
             else
             {
-                _logger.LogError("[SEYE] Failed to connect: {reason}", result.Message);
+                _logger.LogError("Failed to connect: {reason}", result.Message);
             }
         }
 
@@ -92,7 +92,7 @@ internal class SmartEyeService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
     {
         if (!_isSending)
         {
-            _logger.LogInformation("[SEYE] Data streaming: started");
+            _logger.LogInformation("Data streaming: started");
             _isSending = true;
         }
         return Task.FromResult(new Empty());
@@ -102,7 +102,7 @@ internal class SmartEyeService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
     {
         if (_isSending)
         {
-            _logger.LogInformation("[SEYE] Data streaming: stopped");
+            _logger.LogInformation("Data streaming: stopped");
             _isSending = false;
         }
         return Task.FromResult(new Empty());
@@ -110,7 +110,8 @@ internal class SmartEyeService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
 
     public override Task<Common.Bool> SetLogFileName(Common.String request, ServerCallContext context)
     {
-        return Helpers.SetLogFileName(request.Value, "SEYE", _fileLogger, _logger);
+        var result = Helpers.SetLogFileName(request.Value, _fileLogger, _logger);
+        return Task.FromResult(new Common.Bool { Value = result });
     }
 
     /*
@@ -119,7 +120,7 @@ internal class SmartEyeService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
         if (_isReading)
             return;
 
-        _logger.LogInformation("[LEAP] [req] Data reading: start");
+        _logger.LogInformation("Data reading: start");
         _isReading = true;
 
         await foreach (var data in _channel.Reader.ReadAllAsync(context.CancellationToken))
@@ -131,7 +132,7 @@ internal class SmartEyeService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
             }
         }
 
-        _logger.LogInformation("[LEAP] [---] Data reading: stop");
+        _logger.LogInformation("Data reading: stop");
         _isReading = false;
     }*/
 
@@ -155,7 +156,7 @@ internal class SmartEyeService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
 
     const string SE_CLIENT_OPTIONS_FILENAME = "se_client_options.json";
 
-    readonly ILogger<SmartEyeService> _logger;
+    readonly ILogger _logger;
     readonly SmartEyeTools.Client? _seClient;
     readonly Queue<Proto.Event> _events = [];
     readonly Tools.FileLogger _fileLogger = new();
@@ -204,7 +205,7 @@ internal class SmartEyeService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
             if (_currentIntersectionName != intersectionName)
             {
                 _currentIntersectionName = intersectionName;
-                Console.WriteLine($"Plane = {intersection.ObjectName.AsString}");
+                _logger.LogInformation("Plane {planeName}", intersection.ObjectName.AsString);
             }
 
             _events.Enqueue(new Proto.Event()

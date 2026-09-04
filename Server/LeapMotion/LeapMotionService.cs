@@ -11,9 +11,9 @@ internal class LeapMotionService : Proto.Dispatcher.DispatcherBase, ITelemetrySe
 {
     public bool IsAvailable() => _leap != null;
 
-    public LeapMotionService(ILogger<LeapMotionService> logger) : base()
+    public LeapMotionService(ILoggerFactory loggerFactory) : base()
     {
-        _logger = logger;
+        _logger = loggerFactory.CreateLogger("LEAP");
 
         try
         {
@@ -44,11 +44,11 @@ internal class LeapMotionService : Proto.Dispatcher.DispatcherBase, ITelemetrySe
 
             _isActive = true;
 
-            _logger.LogInformation("[LEAP] Running");
+            _logger.LogInformation("Running");
         }
         catch (Exception)
         {
-            _logger.LogError("[LEAP] Cannot start the service");
+            _logger.LogError("Cannot start the service");
         }
     }
 
@@ -59,7 +59,7 @@ internal class LeapMotionService : Proto.Dispatcher.DispatcherBase, ITelemetrySe
         _leap?.Dispose();
         _fileLogger.Dispose();
 
-        _logger.LogInformation("[LEAP] Disposed");
+        _logger.LogInformation("Disposed");
 
         GC.SuppressFinalize(this);
     }
@@ -97,7 +97,7 @@ internal class LeapMotionService : Proto.Dispatcher.DispatcherBase, ITelemetrySe
             _leap?.SetTransform();
         }
 
-        _logger.LogInformation("[LEAP] Configured as '{type}'", request.Config);
+        _logger.LogInformation("Configured as '{type}'", request.Config);
         return Task.FromResult(new Empty());
     }
 
@@ -105,7 +105,7 @@ internal class LeapMotionService : Proto.Dispatcher.DispatcherBase, ITelemetrySe
     {
         if (!_isSending)
         {
-            _logger.LogInformation("[LEAP] Data streaming: started");
+            _logger.LogInformation("Data streaming: started");
             _isSending = true;
         }
         return Task.FromResult(new Empty());
@@ -115,7 +115,7 @@ internal class LeapMotionService : Proto.Dispatcher.DispatcherBase, ITelemetrySe
     {
         if (_isSending)
         {
-            _logger.LogInformation("[LEAP] Data streaming: stopped");
+            _logger.LogInformation("Data streaming: stopped");
             _isSending = false;
         }
         return Task.FromResult(new Empty());
@@ -123,7 +123,8 @@ internal class LeapMotionService : Proto.Dispatcher.DispatcherBase, ITelemetrySe
 
     public override Task<Common.Bool> SetLogFileName(Common.String request, ServerCallContext context)
     {
-        return Helpers.SetLogFileName(request.Value, "LEAP", _fileLogger, _logger);
+        var result = Helpers.SetLogFileName(request.Value, _fileLogger, _logger);
+        return Task.FromResult(new Common.Bool { Value = result });
     }
 
     public override async Task ReadData(Empty request, IServerStreamWriter<Proto.Sample> responseStream, ServerCallContext context)
@@ -131,7 +132,7 @@ internal class LeapMotionService : Proto.Dispatcher.DispatcherBase, ITelemetrySe
         if (_isReading)
             return;
 
-        _logger.LogInformation("[LEAP] Data reading: start");
+        _logger.LogInformation("Data reading: start");
         _isReading = true;
 
         try
@@ -148,7 +149,7 @@ internal class LeapMotionService : Proto.Dispatcher.DispatcherBase, ITelemetrySe
         catch (Exception) { }
         finally
         {
-            _logger.LogInformation("[LEAP] Data reading: stop");
+            _logger.LogInformation("Data reading: stop");
             _isReading = false;
         }
     }
@@ -171,7 +172,7 @@ internal class LeapMotionService : Proto.Dispatcher.DispatcherBase, ITelemetrySe
 
     record class Event(string Name, bool Value);
 
-    readonly ILogger<LeapMotionService> _logger;
+    readonly ILogger _logger;
     readonly LeapM? _leap;
     readonly Queue<Proto.Event> _events = [];
     readonly Tools.FileLogger _fileLogger = new();
