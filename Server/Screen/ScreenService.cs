@@ -104,7 +104,7 @@ public class ScreenService : Proto.Dispatcher.DispatcherBase, IFileService
         {
             var screen = _screens.FirstOrDefault(s => s.Id == request.ScreenId) ?? _screens.First();
 
-            var mediaWindow = new MediaWindow();
+            var mediaWindow = _pool.Obtain();
             mediaWindow.Shown += MediaWindow_Shown;
             mediaWindow.Hidden += MediaWindow_Hidden;
 
@@ -168,6 +168,7 @@ public class ScreenService : Proto.Dispatcher.DispatcherBase, IFileService
     readonly Queue<Proto.Event> _events = [];
     readonly List<Proto.Screen> _screens = [];
     readonly Dictionary<string, MediaWindow> _media = [];
+    readonly WindowPool _pool = new();
 
     bool _isActive = true;
 

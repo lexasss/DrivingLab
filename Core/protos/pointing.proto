@@ -1,0 +1,94 @@
+syntax = "proto3";
+
+package Pointing;
+
+import "protos/common.proto";
+import "google/protobuf/empty.proto";
+
+service Dispatcher {
+	rpc IsAvailable (google.protobuf.Empty) returns (Common.Bool) {}
+
+	rpc GetDevices (DeviceRequest) returns (Devices) {}
+	rpc SetPointingDevice (Device) returns (Common.Bool) {}
+
+	rpc SetLogFileName (Common.String) returns (Common.Bool) {}
+
+	// Initializes data reading stream, but the data is not polling to clients
+	// until Start is called
+	rpc ReadData (google.protobuf.Empty) returns (stream Data) {}
+	rpc ReadEvents (google.protobuf.Empty) returns (stream Event) {}
+
+	// Enable of disable data polling to clients
+	// (has no effect if ReadData was not called yet)
+	rpc Start (google.protobuf.Empty) returns (google.protobuf.Empty) {}
+	rpc Stop (google.protobuf.Empty) returns (google.protobuf.Empty) {}
+}
+
+enum DeviceType {
+	Mouse = 0;
+	Joystick = 1;
+	Gamepad = 2;
+}
+
+message DeviceRequest {
+	DeviceType type = 1;
+}
+
+message Device {
+	DeviceType type = 1;
+	string name = 2;
+}
+
+message Devices {
+	repeated Device items = 1;
+}
+
+message Button {
+	int32 offset = 1;
+	int32 id = 2;
+	string name = 3;
+	bool isPressed = 4;
+}
+
+enum SliderType {
+    General = 0;
+    Velocity = 1;
+    Acceleration = 2;
+    Force = 3;
+}
+
+message Slider {
+	int32 offset = 1;
+	int32 id = 2;
+	string name = 3;
+	SliderType type = 4;
+	double value = 5;
+}
+
+message PointOfView {
+	int32 offset = 1;
+	int32 id = 2;
+	string name = 3;
+	bool isPressed = 4;
+	double degrees = 5;
+}
+
+message Data {
+	Common.Vector point = 1;
+	repeated Button buttons = 2;
+	repeated Slider sliders = 3;
+	repeated PointOfView pointOfViews = 4;
+	optional Common.Vector rotation = 5;
+	optional Common.Vector velocity = 6;
+	optional Common.Vector angularVelocity = 7;
+	optional Common.Vector acceleration = 8;
+	optional Common.Vector angularAcceleration = 9;
+	optional Common.Vector force = 10;
+	optional Common.Vector torque = 11;
+}
+
+message Event {
+	oneof value {
+		bool isConnected = 1;
+	}
+}

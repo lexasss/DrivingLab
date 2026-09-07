@@ -39,6 +39,7 @@ class Program
         serviceCollection.AddTransient<SmartEye.SmartEyeService>();
         serviceCollection.AddTransient<SoundPlayer.SoundPlayerService>();
         serviceCollection.AddTransient<Screen.ScreenService>();
+        serviceCollection.AddTransient<Pointing.PointingService>();
 
         var serviceProvider = serviceCollection.BuildServiceProvider();
 
@@ -76,6 +77,11 @@ class Program
                 "Screen", (int)Common.Ports.Screen,
                 global::Screen.Dispatcher.Descriptor,
                 service => global::Screen.Dispatcher.BindService((global::Screen.Dispatcher.DispatcherBase)service)
+            ),
+            Create<Pointing.PointingService>(serviceProvider,
+                "Pointing", (int)Common.Ports.Pointing,
+                global::Pointing.Dispatcher.Descriptor,
+                service => global::Pointing.Dispatcher.BindService((global::Pointing.Dispatcher.DispatcherBase)service)
             )
         };
 

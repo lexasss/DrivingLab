@@ -44,7 +44,7 @@ message Intersection {
 }
 
 message Intersections {
-	repeated Intersection Items = 1;
+	repeated Intersection items = 1;
 }
 
 message Event {
