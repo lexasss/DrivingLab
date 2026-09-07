@@ -131,7 +131,7 @@ internal class LeapMotionService : Proto.Dispatcher.DispatcherBase, ITelemetrySe
         if (_isReading)
             return;
 
-        _logger.LogInformation("Data reading: start");
+        _logger.LogInformation("Data reading: started");
         _isReading = true;
 
         try
@@ -148,7 +148,7 @@ internal class LeapMotionService : Proto.Dispatcher.DispatcherBase, ITelemetrySe
         catch (Exception) { }
         finally
         {
-            _logger.LogInformation("Data reading: stop");
+            _logger.LogInformation("Data reading: stopped");
             _isReading = false;
         }
     }

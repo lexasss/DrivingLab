@@ -7,6 +7,11 @@ public static class Controls
     public const string PointOfView = "POV";
 }
 
+public partial class Device
+{
+    public string Description => $"{Type} {Name}";
+}
+
 public partial class Button
 {
     public string[] ToStringArray() => [

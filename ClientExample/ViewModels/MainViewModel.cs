@@ -4,10 +4,12 @@ public partial class MainViewModel(
     LeapMotionViewModel leapMotionVm,
     SmartEyeViewModel smartEyeVm,
     SoundPlayerViewModel soundPlayerVm,
-    ScreenViewModel screenVm)
+    ScreenViewModel screenVm,
+    PointingViewModel pointingVm)
 {
     public LeapMotionViewModel LeapMotion { get; } = leapMotionVm;
     public SmartEyeViewModel SmartEye { get; } = smartEyeVm;
     public SoundPlayerViewModel SoundPlayer { get; } = soundPlayerVm;
     public ScreenViewModel Screen { get; } = screenVm;
+    public PointingViewModel Pointing { get; } = pointingVm;
 }

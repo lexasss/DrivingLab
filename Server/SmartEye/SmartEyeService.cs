@@ -43,8 +43,10 @@ internal class SmartEyeService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
     public void Dispose()
     {
         _isActive = false;
+
         _seClient?.Dispose();
         _fileLogger.Dispose();
+
         _logger.LogInformation("Disposed");
 
         GC.SuppressFinalize(this);

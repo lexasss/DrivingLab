@@ -45,8 +45,6 @@ internal class TobiiEyeXService : Proto.Dispatcher.DispatcherBase, ITelemetrySer
     {
         _isActive = false;
 
-        _cts.Cancel();
-
         _eyeX?.Dispose();
         _eyeX = null;
 
@@ -98,7 +96,7 @@ internal class TobiiEyeXService : Proto.Dispatcher.DispatcherBase, ITelemetrySer
 
         try
         {
-            await foreach (var data in _channel.Reader.ReadAllAsync(_cts.Token))
+            await foreach (var data in _channel.Reader.ReadAllAsync(context.CancellationToken))
             {
                 if (_isSending)
                 {
@@ -139,7 +137,6 @@ internal class TobiiEyeXService : Proto.Dispatcher.DispatcherBase, ITelemetrySer
     readonly ILogger _logger;
     readonly Queue<Proto.Event> _events = [];
     readonly Channel<Proto.Sample> _channel = Channel.CreateUnbounded<Proto.Sample>();
-    readonly CancellationTokenSource _cts = new();
     readonly Tools.FileLogger _fileLogger = new();
     readonly Proto.Sample _sample = new();
 

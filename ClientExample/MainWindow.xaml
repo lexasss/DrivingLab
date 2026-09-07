@@ -10,11 +10,12 @@
         Style="{StaticResource MaterialDesignWindow}"
         Title="Driving Lab Client Example"
         Height="450"
-        Width="814"
+        Width="1024"
         MinHeight="380"
         MinWidth="320">
     <Grid>
         <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="200"/>
             <ColumnDefinition Width="200"/>
             <ColumnDefinition Width="200"/>
             <ColumnDefinition Width="200"/>
@@ -29,5 +30,7 @@
                           DataContext="{Binding SoundPlayer}"/>
         <widgets:Screen Grid.Column="3"
                         DataContext="{Binding Screen}"/>
+        <widgets:Pointing Grid.Column="4"
+                        DataContext="{Binding Pointing}"/>
     </Grid>
 </Window>

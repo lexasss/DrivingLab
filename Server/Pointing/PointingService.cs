@@ -38,8 +38,6 @@ internal class PointingService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
     {
         _isActive = false;
 
-        _cts.Cancel();
-
         _device?.Dispose();
         _device = null;
 
@@ -134,7 +132,7 @@ internal class PointingService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
 
     public override async Task ReadData(Empty request, IServerStreamWriter<Proto.Data> responseStream, ServerCallContext context)
     {
-        if (_device == null || _isReading)
+        if (_isReading)
             return;
 
         _logger.LogInformation("Data reading: started");
@@ -142,7 +140,7 @@ internal class PointingService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
 
         try
         {
-            await foreach (var data in _channel.Reader.ReadAllAsync(_cts.Token))
+            await foreach (var data in _channel.Reader.ReadAllAsync(context.CancellationToken))
             {
                 if (_isSending)
                 {
@@ -151,8 +149,7 @@ internal class PointingService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
                 }
             }
         }
-        catch (Exception)
-        { }
+        catch (Exception) { }
         finally
         {
             _logger.LogInformation("Data reading: stopped");
@@ -179,7 +176,6 @@ internal class PointingService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
     readonly ILogger _logger;
     readonly Queue<Proto.Event> _events = [];
     readonly Channel<Proto.Data> _channel = Channel.CreateUnbounded<Proto.Data>();
-    readonly CancellationTokenSource _cts = new();
     readonly Tools.FileLogger _fileLogger = new();
 
     PointingDevice? _device;
