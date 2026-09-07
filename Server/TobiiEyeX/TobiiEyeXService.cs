@@ -1,14 +1,14 @@
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Microsoft.Extensions.Logging;
-using Server.Tools;
 using System.Threading.Channels;
 using Channel = System.Threading.Channels.Channel;
 using EyeXCore = Tobii.Gaze.Core;
+using Proto = global::Gaze;
 
 namespace Server.TobiiEyeX;
 
-internal class TobiiEyeXService : Gaze.Dispatcher.DispatcherBase, ITelemetryService
+internal class TobiiEyeXService : Proto.Dispatcher.DispatcherBase, ITelemetryService
 {
     public bool IsAvailable() => _eyeX != null;
 
@@ -22,6 +22,8 @@ internal class TobiiEyeXService : Gaze.Dispatcher.DispatcherBase, ITelemetryServ
 
             if (_eyeX.IsValid)
             {
+                _isActive = true;
+
                 _eyeX.Tracker?.GazeData += EyeX_GazeData;
                 _eyeX.PosStream?.Next += EyeX_Pos;
                 _eyeX.GazeStream?.Next += EyeX_Gaze;
@@ -41,6 +43,8 @@ internal class TobiiEyeXService : Gaze.Dispatcher.DispatcherBase, ITelemetryServ
 
     public void Dispose()
     {
+        _isActive = false;
+
         _cts.Cancel();
 
         _eyeX?.Dispose();
@@ -79,11 +83,11 @@ internal class TobiiEyeXService : Gaze.Dispatcher.DispatcherBase, ITelemetryServ
 
     public override Task<Common.Bool> SetLogFileName(Common.String request, ServerCallContext context)
     {
-        var result = Helpers.SetLogFileName(request.Value, _fileLogger, _logger);
+        var result = Tools.Helpers.SetLogFileName(request.Value, _fileLogger, _logger);
         return Task.FromResult(new Common.Bool { Value = result });
     }
 
-    public override async Task ReadData(Empty request, IServerStreamWriter<Gaze.Sample> responseStream, ServerCallContext context)
+    public override async Task ReadData(Empty request, IServerStreamWriter<Proto.Sample> responseStream, ServerCallContext context)
     {
         if (_eyeX == null || _isReading)
             return;
@@ -112,6 +116,20 @@ internal class TobiiEyeXService : Gaze.Dispatcher.DispatcherBase, ITelemetryServ
         }
     }
 
+    public override async Task ReadEvents(Empty request, IServerStreamWriter<Proto.Event> responseStream, ServerCallContext context)
+    {
+        while (_isActive && !context.CancellationToken.IsCancellationRequested)
+        {
+            await Task.Delay(5);
+
+            if (_events.Count > 0)
+            {
+                var evt = _events.Dequeue();
+                await responseStream.WriteAsync(evt);
+            }
+        }
+    }
+
 
     #region Internal
 
@@ -119,13 +137,15 @@ internal class TobiiEyeXService : Gaze.Dispatcher.DispatcherBase, ITelemetryServ
     readonly static int SCREEN_HEIGHT = GetSystemMetrics(SystemMetric.SM_CYSCREEN);
 
     readonly ILogger _logger;
-    readonly Channel<Gaze.Sample> _channel = Channel.CreateUnbounded<Gaze.Sample>();
+    readonly Queue<Proto.Event> _events = [];
+    readonly Channel<Proto.Sample> _channel = Channel.CreateUnbounded<Proto.Sample>();
     readonly CancellationTokenSource _cts = new();
     readonly Tools.FileLogger _fileLogger = new();
-    readonly Gaze.Sample _sample = new();
+    readonly Proto.Sample _sample = new();
 
     EyeX? _eyeX;
 
+    bool _isActive = false;
     bool _isReading = false;
     bool _isSending = false;
 
@@ -157,14 +177,14 @@ internal class TobiiEyeXService : Gaze.Dispatcher.DispatcherBase, ITelemetryServ
         EyeXCore.Point2D left, right;
         double x = 0, y = 0;
 
-        Gaze.Sample.Types.Eye validEye = Gaze.Sample.Types.Eye.None;
+        Proto.Sample.Types.Eye validEye = Proto.Sample.Types.Eye.None;
 
         switch (e.GazeData.TrackingStatus)
         {
             case EyeXCore.TrackingStatus.BothEyesTracked:
                 left = new EyeXCore.Point2D(e.GazeData.Left.GazePointOnDisplayNormalized.X, e.GazeData.Left.GazePointOnDisplayNormalized.Y);
                 right = new EyeXCore.Point2D(e.GazeData.Right.GazePointOnDisplayNormalized.X, e.GazeData.Right.GazePointOnDisplayNormalized.Y);
-                validEye = Gaze.Sample.Types.Eye.Both;
+                validEye = Proto.Sample.Types.Eye.Both;
                 x = (left.X + right.X) / 2;
                 y = (left.Y + right.Y) / 2;
                 break;
@@ -174,7 +194,7 @@ internal class TobiiEyeXService : Gaze.Dispatcher.DispatcherBase, ITelemetryServ
             case EyeXCore.TrackingStatus.OneEyeTrackedUnknownWhich:
                 left = new EyeXCore.Point2D(e.GazeData.Left.GazePointOnDisplayNormalized.X, e.GazeData.Left.GazePointOnDisplayNormalized.Y);
                 right = new EyeXCore.Point2D(0.0, 0.0);
-                validEye = Gaze.Sample.Types.Eye.Left;
+                validEye = Proto.Sample.Types.Eye.Left;
                 x = left.X;
                 y = left.Y;
                 break;
@@ -183,7 +203,7 @@ internal class TobiiEyeXService : Gaze.Dispatcher.DispatcherBase, ITelemetryServ
             case EyeXCore.TrackingStatus.OneEyeTrackedProbablyRight:
                 left = new EyeXCore.Point2D(0.0, 0.0);
                 right = new EyeXCore.Point2D(e.GazeData.Right.GazePointOnDisplayNormalized.X, e.GazeData.Right.GazePointOnDisplayNormalized.Y);
-                validEye = Gaze.Sample.Types.Eye.Right;
+                validEye = Proto.Sample.Types.Eye.Right;
                 x = right.X;
                 y = right.Y;
                 break;

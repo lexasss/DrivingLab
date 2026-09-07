@@ -1,13 +1,13 @@
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Microsoft.Extensions.Logging;
-using Server.Tools;
 using System.Threading.Channels;
 using Channel = System.Threading.Channels.Channel;
+using Proto = global::Gaze;
 
 namespace Server.MyGaze;
 
-internal class MyGazeService : Gaze.Dispatcher.DispatcherBase, ITelemetryService
+internal class MyGazeService : Proto.Dispatcher.DispatcherBase, ITelemetryService
 {
     public bool IsAvailable() => _myGaze != null;
 
@@ -18,9 +18,11 @@ internal class MyGazeService : Gaze.Dispatcher.DispatcherBase, ITelemetryService
         try
         {
             _myGaze = new MyGaze(_logger);
+            _myGaze.Event += MyGaze_Event;
             _myGaze.Sample += MyGaze_Sample;
 
             _logger.LogInformation("Running");
+            _isActive = true;
         }
         catch (Exception)
         {
@@ -30,6 +32,8 @@ internal class MyGazeService : Gaze.Dispatcher.DispatcherBase, ITelemetryService
 
     public void Dispose()
     {
+        _isActive = false;
+
         _cts.Cancel();
 
         _myGaze?.Dispose();
@@ -68,11 +72,11 @@ internal class MyGazeService : Gaze.Dispatcher.DispatcherBase, ITelemetryService
 
     public override Task<Common.Bool> SetLogFileName(Common.String request, ServerCallContext context)
     {
-        var result = Helpers.SetLogFileName(request.Value, _fileLogger, _logger);
+        var result = Tools.Helpers.SetLogFileName(request.Value, _fileLogger, _logger);
         return Task.FromResult(new Common.Bool { Value = result });
     }
 
-    public override async Task ReadData(Empty request, IServerStreamWriter<Gaze.Sample> responseStream, ServerCallContext context)
+    public override async Task ReadData(Empty request, IServerStreamWriter<Proto.Sample> responseStream, ServerCallContext context)
     {
         if (_myGaze == null || _isReading)
             return;
@@ -108,23 +112,49 @@ internal class MyGazeService : Gaze.Dispatcher.DispatcherBase, ITelemetryService
         }
     }
 
+    public override async Task ReadEvents(Empty request, IServerStreamWriter<Proto.Event> responseStream, ServerCallContext context)
+    {
+        while (_isActive && !context.CancellationToken.IsCancellationRequested)
+        {
+            await Task.Delay(5);
+
+            if (_events.Count > 0)
+            {
+                var evt = _events.Dequeue();
+                await responseStream.WriteAsync(evt);
+            }
+        }
+    }
+
     #region Internal
 
     readonly ILogger _logger;
-    readonly Channel<Gaze.Sample> _channel = Channel.CreateUnbounded<Gaze.Sample>();
+    readonly Queue<Proto.Event> _events = [];
+    readonly Channel<Proto.Sample> _channel = Channel.CreateUnbounded<Proto.Sample>();
     readonly CancellationTokenSource _cts = new();
     readonly Tools.FileLogger _fileLogger = new();
 
     MyGaze? _myGaze;
 
+    bool _isActive = false;
     bool _isReading = false;
     bool _isSending = false;
 
     // Event handlers
 
+    private void MyGaze_Event(object? sender, MyGazeAPI.EventStruct e)
+    {
+        switch (e.eventType)
+        {
+            default:
+                System.Diagnostics.Debug.WriteLine($"MyGaze event '{e.eventType}'");
+                break;
+        }
+    }
+
     private void MyGaze_Sample(object? sender, MyGazeAPI.SampleStruct sample)
     {
-        var data = new Gaze.Sample
+        var data = new Proto.Sample
         {
             Timestamp = sample.timestamp,
             EyeXL = sample.leftEye.gazeX,
@@ -135,25 +165,25 @@ internal class MyGazeService : Gaze.Dispatcher.DispatcherBase, ITelemetryService
 
         if (data.EyeXL > MyGazeAPI.MIN_VALID_COORD && data.EyeXR > MyGazeAPI.MIN_VALID_COORD)
         {
-            data.ValidEye = Gaze.Sample.Types.Eye.Both;
+            data.ValidEye = Proto.Sample.Types.Eye.Both;
             data.EyeX = (data.EyeXL + data.EyeXR) / 2;
             data.EyeY = (data.EyeYL + data.EyeYR) / 2;
         }
         else if (data.EyeXL > MyGazeAPI.MIN_VALID_COORD)
         {
-            data.ValidEye = Gaze.Sample.Types.Eye.Left;
+            data.ValidEye = Proto.Sample.Types.Eye.Left;
             data.EyeX = data.EyeXL;
             data.EyeY = data.EyeYL;
         }
         else if (data.EyeXR > MyGazeAPI.MIN_VALID_COORD)
         {
-            data.ValidEye = Gaze.Sample.Types.Eye.Right;
+            data.ValidEye = Proto.Sample.Types.Eye.Right;
             data.EyeX = data.EyeXR;
             data.EyeY = data.EyeYR;
         }
         else
         {
-            data.ValidEye = Gaze.Sample.Types.Eye.None;
+            data.ValidEye = Proto.Sample.Types.Eye.None;
             data.EyeX = 0;
             data.EyeY = 0;
         }

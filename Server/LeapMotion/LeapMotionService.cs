@@ -1,7 +1,6 @@
 ﻿using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Microsoft.Extensions.Logging;
-using Server.Tools;
 using System.Threading.Channels;
 using Proto = global::LeapMotion;
 
@@ -23,17 +22,17 @@ internal class LeapMotionService : Proto.Dispatcher.DispatcherBase, ITelemetrySe
             _leap.ConnectionChanged += (s, e) =>
             {
                 _isConnected = e;
-                _events.Enqueue(new Proto.Event() { Name = Proto.Events.IS_CONNECTED, Value = _isConnected });
+                _events.Enqueue(new Proto.Event() { IsConnected = _isConnected });
             };
             _leap.HandVisibilityChanged += (s, e) =>
             {
                 _isHandVisible = e;
-                _events.Enqueue(new Proto.Event() { Name = Proto.Events.IS_HAND_VISIBLE, Value = _isHandVisible });
+                _events.Enqueue(new Proto.Event() { IsHandVisible = _isHandVisible });
             };
             _leap.HandProximityChanged += (s, e) =>
             {
                 _isHandClose = e;
-                _events.Enqueue(new Proto.Event() { Name = Proto.Events.IS_HAND_CLOSE, Value = _isHandClose });
+                _events.Enqueue(new Proto.Event() { IsHandClose = _isHandClose });
             };
             _leap.HandLocationChanged += (s, e) =>
             {
@@ -123,7 +122,7 @@ internal class LeapMotionService : Proto.Dispatcher.DispatcherBase, ITelemetrySe
 
     public override Task<Common.Bool> SetLogFileName(Common.String request, ServerCallContext context)
     {
-        var result = Helpers.SetLogFileName(request.Value, _fileLogger, _logger);
+        var result = Tools.Helpers.SetLogFileName(request.Value, _fileLogger, _logger);
         return Task.FromResult(new Common.Bool { Value = result });
     }
 

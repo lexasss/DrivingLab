@@ -48,7 +48,6 @@ message Intersections {
 }
 
 message Event {
-	string name = 1;
 	oneof value {
 		bool isConnected = 2;
 		Intersection intersection = 3;

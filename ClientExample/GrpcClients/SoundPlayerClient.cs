@@ -95,9 +95,14 @@ public class SoundPlayerClient : Client
                     break;
 
                 var evt = responseStream.Current;
-                if (evt.Name == SoundPlayer.Events.PLAYBACK_FINISHED)
+                switch (evt.ValueCase)
                 {
-                    PlaybackFinished?.Invoke(this, EventArgs.Empty);
+                    case SoundPlayer.Event.ValueOneofCase.IsPlaybackFinished:
+                        PlaybackFinished?.Invoke(this, EventArgs.Empty);
+                        break;
+                    default:
+                        System.Diagnostics.Debug.WriteLine($"SoundPlayer event '{evt.ValueCase}' is not supported");
+                        break;
                 }
             }
         }

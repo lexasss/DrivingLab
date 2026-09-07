@@ -210,7 +210,6 @@ internal class SmartEyeService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
 
             _events.Enqueue(new Proto.Event()
             {
-                Name = Proto.Events.INTERSECTION,
                 Intersection = new Proto.Intersection
                 {
                     Name = _currentIntersectionName,
@@ -229,7 +228,6 @@ internal class SmartEyeService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
 
             _events.Enqueue(new Proto.Event()
             {
-                Name = Proto.Events.INTERSECTION,
                 Intersection = new Proto.Intersection
                 {
                     Name = string.Empty,
@@ -274,7 +272,6 @@ internal class SmartEyeService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
 
             _events.Enqueue(new Proto.Event()
             {
-                Name = Proto.Events.INTERSECTION,
                 Intersections = ints
             });
         }

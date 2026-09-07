@@ -37,16 +37,16 @@ message Vector {
 	double z = 3;
 }
 
+message FileMetadata {
+  string fileName = 1;
+  string contentType = 2;
+}
+
 message UploadRequest {
   oneof payload {
     FileMetadata metadata = 1;
     bytes chunk = 2;
   }
-}
-
-message FileMetadata {
-  string fileName = 1;
-  string contentType = 2;
 }
 
 message UploadResult {

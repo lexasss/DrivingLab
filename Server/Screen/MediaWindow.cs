@@ -12,7 +12,7 @@ internal sealed class MediaWindow
     public static string[] SupportedImageFormats { get; } = [".png", ".jpg", ".jpeg"];
     public static string[] SupportedVideoFormats { get; } = [".mp4", ".avi", ".wmv"];
 
-    public string Name { get; private set; } = string.Empty;
+    public string FileName { get; private set; } = string.Empty;
     public string Id { get; }
 
     public event EventHandler<bool>? Shown;
@@ -28,7 +28,7 @@ internal sealed class MediaWindow
         if (_thread != null)
             return;
 
-        Name = System.IO.Path.GetFileNameWithoutExtension(filename);
+        FileName = System.IO.Path.GetFileNameWithoutExtension(filename);
 
         _thread = new Thread(() =>
         {

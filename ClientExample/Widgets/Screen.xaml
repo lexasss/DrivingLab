@@ -88,32 +88,48 @@
                                Content="Location"/>
                         <UniformGrid Grid.Row="0" Grid.Column="1"
                                      Columns="2">
-                            <TextBox Text="{Binding X, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                     md:HintAssist.Hint="X"/>
-                            <TextBox Text="{Binding Y, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                     md:HintAssist.Hint="Y"/>
+                            <TextBox md:HintAssist.Hint="X"
+                                     ToolTip="X coordinate within the selected screen">
+                                <TextBox.Text>
+                                    <Binding Path="X" Mode="TwoWay" UpdateSourceTrigger="PropertyChanged">
+                                        <Binding.ValidationRules>
+                                            <local:DoubleRangeValidationRule Minimum="-10000" Maximum="10000"/>
+                                        </Binding.ValidationRules>
+                                    </Binding>
+                                </TextBox.Text>
+                            </TextBox>
+                            <TextBox md:HintAssist.Hint="Y"
+                                     ToolTip="Y coordinate within the selected screen">
+                                <TextBox.Text>
+                                    <Binding Path="Y" Mode="TwoWay" UpdateSourceTrigger="PropertyChanged">
+                                        <Binding.ValidationRules>
+                                            <local:DoubleRangeValidationRule Minimum="-10000" Maximum="10000"/>
+                                        </Binding.ValidationRules>
+                                    </Binding>
+                                </TextBox.Text>
+                            </TextBox>
                         </UniformGrid>
                         <Label Grid.Row="1" Grid.Column="0"
                                Style="{StaticResource OptionName}"
                                Content="Size"/>
                         <UniformGrid Grid.Row="1" Grid.Column="1"
                                      Columns="2">
-                            <TextBox md:HintAssist.Hint="Width">
+                            <TextBox md:HintAssist.Hint="Width"
+                                     ToolTip="Set 0 to keep the original width (or to keep the aspect ratio if height is not 0)">
                                 <TextBox.Text>
                                     <Binding Path="Width" Mode="TwoWay" UpdateSourceTrigger="PropertyChanged">
                                         <Binding.ValidationRules>
-                                            <local:DoubleRangeValidationRule
-                                                   Minimum="0"/>
+                                            <local:DoubleRangeValidationRule Minimum="0" Maximum="3000"/>
                                         </Binding.ValidationRules>
                                     </Binding>
                                 </TextBox.Text>
                             </TextBox>
-                            <TextBox md:HintAssist.Hint="Height">
+                            <TextBox md:HintAssist.Hint="Height"
+                                     ToolTip="Set 0 to keep the original height (or to keep the aspect ratio if width is not 0)">
                                 <TextBox.Text>
                                     <Binding Path="Height" Mode="TwoWay" UpdateSourceTrigger="PropertyChanged">
                                         <Binding.ValidationRules>
-                                            <local:DoubleRangeValidationRule
-                                                   Minimum="0"/>
+                                            <local:DoubleRangeValidationRule Minimum="0" Maximum="2000"/>
                                         </Binding.ValidationRules>
                                     </Binding>
                                 </TextBox.Text>
@@ -122,12 +138,13 @@
                         <Label Grid.Row="2" Grid.Column="0"
                                Style="{StaticResource OptionName}"
                                Content="Duration"/>
-                        <TextBox Grid.Row="2" Grid.Column="1">
+                        <TextBox Grid.Row="2" Grid.Column="1"
+                                 md:HintAssist.Hint="seconds"
+                                 ToolTip="Duration in seconds. Set to 0 keep it visible until hidden manually.">
                             <TextBox.Text>
                                 <Binding Path="Duration" Mode="TwoWay" UpdateSourceTrigger="PropertyChanged">
                                     <Binding.ValidationRules>
-                                        <local:DoubleRangeValidationRule
-                                               Minimum="0"/>
+                                        <local:DoubleRangeValidationRule Minimum="0" Maximum="3600"/>
                                     </Binding.ValidationRules>
                                 </Binding>
                             </TextBox.Text>

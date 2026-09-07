@@ -30,8 +30,9 @@ message Screens {
 }
 
 message Event {
-	string name = 1;
-	string value = 2;
+	oneof value {
+		string hiddenMediaId = 1;
+	}
 }
 
 message Media {

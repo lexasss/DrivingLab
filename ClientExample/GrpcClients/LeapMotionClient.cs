@@ -125,27 +125,26 @@ public class LeapMotionClient : Client
                     break;
 
                 var evt = responseStream.Current;
-                if (evt.Name == LeapMotion.Events.IS_CONNECTED)
+                switch (evt.ValueCase)
                 {
-                    _isConnected = evt.Value;
-                    ConnectionChanged?.Invoke(this, evt.Value);
-                    if (!_isConnected)
-                    {
-                        HandVisibilityChanged?.Invoke(this, false);
-                        HandProximityChanged?.Invoke(this, false);
-                    }
-                }
-                else if (evt.Name == LeapMotion.Events.IS_HAND_VISIBLE)
-                {
-                    HandVisibilityChanged?.Invoke(this, evt.Value);
-                }
-                else if (evt.Name == LeapMotion.Events.IS_HAND_CLOSE)
-                {
-                    HandProximityChanged?.Invoke(this, evt.Value);
-                }
-                else
-                {
-                    // unhandled event!
+                    case LeapMotion.Event.ValueOneofCase.IsConnected:
+                        _isConnected = evt.IsConnected;
+                        ConnectionChanged?.Invoke(this, _isConnected);
+                        if (!_isConnected)
+                        {
+                            HandVisibilityChanged?.Invoke(this, false);
+                            HandProximityChanged?.Invoke(this, false);
+                        }
+                        break;
+                    case LeapMotion.Event.ValueOneofCase.IsHandVisible:
+                        HandVisibilityChanged?.Invoke(this, evt.IsHandVisible);
+                        break;
+                    case LeapMotion.Event.ValueOneofCase.IsHandClose:
+                        HandProximityChanged?.Invoke(this, evt.IsHandClose);
+                        break;
+                    default:
+                        System.Diagnostics.Debug.WriteLine($"LeapMotion event '{evt.ValueCase}' is not supported");
+                        break;
                 }
             }
         }

@@ -94,59 +94,34 @@ public class ScreenService : Proto.Dispatcher.DispatcherBase, IFileService
             filePath = Path.Combine(AppContext.BaseDirectory, MEDIA_FOLDER, filePath);
         }
 
-        if (File.Exists(filePath))
-        {
-            try
-            {
-                var screen = _screens.FirstOrDefault(s => s.Id == request.ScreenId) ?? _screens.First();
-
-                var mediaWindow = new MediaWindow();
-                id = mediaWindow.Id;
-                mediaWindow.Show(filePath,
-                    new Common.Point {
-                        X = screen.Origin.X + request.Location.X,
-                        Y = screen.Origin.Y + request.Location.Y
-                    },
-                    request.Size,
-                    request.Duration);
-
-                mediaWindow.Shown += (sender, success) =>
-                {
-                    if (success)
-                    {
-                        _logger.LogInformation("Showing {filename}",
-                            Path.GetFileNameWithoutExtension(request.FileName));
-                        _media[id] = mediaWindow;
-                    }
-                    else
-                    {
-                        _logger.LogError("Media type of {filename} is not supported",
-                            Path.GetFileName(request.FileName));
-                    }
-                };
-                mediaWindow.Hidden += (sender, mediaId) =>
-                {
-                    if (_media.TryGetValue(mediaId, out MediaWindow? value))
-                    {
-                        _logger.LogInformation("Image {name} was hidden", value.Name);
-                        _media.Remove(mediaId);
-                        _events.Enqueue(new Proto.Event
-                        {
-                            Name = Proto.Events.MEDIA_HIDDEN,
-                            Value = mediaId
-                        });
-                    }
-                };
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error showing {filename}: {reason}",
-                    request.FileName, ex.Message);
-            }
-        }
-        else
+        if (!File.Exists(filePath))
         {
             _logger.LogWarning("File not found: {filename}", filePath);
+            return Task.FromResult(new Common.String { Value = id });
+        }
+
+        try
+        {
+            var screen = _screens.FirstOrDefault(s => s.Id == request.ScreenId) ?? _screens.First();
+
+            var mediaWindow = new MediaWindow();
+            mediaWindow.Shown += MediaWindow_Shown;
+            mediaWindow.Hidden += MediaWindow_Hidden;
+
+            id = mediaWindow.Id;
+
+            mediaWindow.Show(filePath,
+                new Common.Point {
+                    X = screen.Origin.X + request.Location.X,
+                    Y = screen.Origin.Y + request.Location.Y
+                },
+                request.Size,
+                request.Duration);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error showing {filename}: {reason}",
+                request.FileName, ex.Message);
         }
 
         return Task.FromResult(new Common.String { Value = id });
@@ -158,7 +133,7 @@ public class ScreenService : Proto.Dispatcher.DispatcherBase, IFileService
         {
             mediaWindow.Close();
             _media.Remove(request.Value);
-            _logger.LogInformation("Closing the media {name}", mediaWindow.Name);
+            _logger.LogInformation("Closing the media {name}", mediaWindow.FileName);
         }
 
         return Task.FromResult(new Empty());
@@ -207,6 +182,32 @@ public class ScreenService : Proto.Dispatcher.DispatcherBase, IFileService
                 Origin = new Common.Point { X = screen.X, Y = screen.Y },
                 Size = new Common.Size { Width = screen.Width, Height = screen.Height }
             });
+    }
+
+    private void MediaWindow_Shown(object? sender, bool success)
+    {
+        var mediaWindow = (MediaWindow)sender!;
+        if (success)
+        {
+            _logger.LogInformation("Showing {filename}",
+                Path.GetFileNameWithoutExtension(mediaWindow.FileName));
+            _media[mediaWindow.Id] = mediaWindow;
+        }
+        else
+        {
+            _logger.LogError("Media type of {filename} is not supported",
+                Path.GetFileName(mediaWindow.FileName));
+        }
+    }
+
+    private void MediaWindow_Hidden(object? sender, string mediaId)
+    {
+        if (_media.TryGetValue(mediaId, out MediaWindow? value))
+        {
+            _logger.LogInformation("Image {name} was hidden", value.FileName);
+            _media.Remove(mediaId);
+            _events.Enqueue(new Proto.Event { HiddenMediaId = mediaId });
+        }
     }
 
     #endregion

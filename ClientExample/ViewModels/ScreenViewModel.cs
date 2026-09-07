@@ -68,7 +68,7 @@ public partial class ScreenViewModel : ObservableObject
                 Screen?.Id ?? 0,
                 new Common.Point { X = X, Y = Y },
                 new Common.Size { Width = Width, Height = Height },
-                Duration
+                Duration * 1000
             );
 
             message = _mediaId == null ? "media is not available" : "media is visible ...";

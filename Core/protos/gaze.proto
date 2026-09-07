@@ -13,6 +13,7 @@ service Dispatcher {
 	// Initializes data reading stream, but the data is not polling to clients
 	// until Start is called
 	rpc ReadData (google.protobuf.Empty) returns (stream Sample) {}
+	rpc ReadEvents (google.protobuf.Empty) returns (stream Event) {}
 
 	// Enable of disable data polling to clients
 	// (has no effect if ReadData was not called yet)
@@ -43,14 +44,10 @@ message Sample {
 	Eye validEye = 12;
 }
 
-/*message Event {
-	enum ID {
-		Unknown = 0;		// args = []
-		Calibrated = 1;		// args = []
+message Event {
+	oneof value {
+		bool isConnected = 1;
+		bool isCalibrated = 2;
+		bool isTracking = 3;
 	}
-
-	ID id = 1;
-
-	// General info, if any: check ID enum 
-	repeated string args = 2;
-}*/
+}

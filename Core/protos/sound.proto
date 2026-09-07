@@ -28,7 +28,9 @@ message Devices {
 }
 
 message Event {
-	string name = 1;
+	oneof value {
+		bool isPlaybackFinished = 1;
+	}
 }
 
 enum ToneType {

@@ -90,9 +90,14 @@ public class ScreenClient : Client
                     break;
 
                 var evt = responseStream.Current;
-                if (evt.Name == Screen.Events.MEDIA_HIDDEN)
+                switch (evt.ValueCase)
                 {
-                    MediaHidden?.Invoke(this, evt.Value);
+                    case Screen.Event.ValueOneofCase.HiddenMediaId:
+                        MediaHidden?.Invoke(this, evt.HiddenMediaId);
+                        break;
+                    default:
+                        System.Diagnostics.Debug.WriteLine($"Screen event '{evt.ValueCase}' is not supported");
+                        break;
                 }
             }
         }

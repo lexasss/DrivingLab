@@ -188,7 +188,7 @@ public class SoundPlayerService : Proto.Dispatcher.DispatcherBase, IFileService
         soundPlayer.PlaybackStopped += (sender, e) =>
         {
             _logger.LogInformation("Playback finished");
-            _events.Enqueue(new Proto.Event { Name = Proto.Events.PLAYBACK_FINISHED });
+            _events.Enqueue(new Proto.Event { IsPlaybackFinished = true });
         };
 
         return soundPlayer;
@@ -215,7 +215,7 @@ public class SoundPlayerService : Proto.Dispatcher.DispatcherBase, IFileService
                 tonePlayer.Stop();
 
                 _logger.LogInformation("Tone finished");
-                _events.Enqueue(new Proto.Event { Name = Proto.Events.PLAYBACK_FINISHED });
+                _events.Enqueue(new Proto.Event { IsPlaybackFinished = true });
             });
         }
 

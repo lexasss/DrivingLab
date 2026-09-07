@@ -6,8 +6,9 @@ namespace Server.MyGaze;
 internal class MyGaze : IDisposable
 {
 	public event EventHandler<MyGazeAPI.SampleStruct>? Sample;
+    public event EventHandler<MyGazeAPI.EventStruct>? Event;
 
-	public bool IsConnected { get; private set; }
+    public bool IsConnected { get; private set; }
 	public bool IsTracking { get; private set; }
 
 	public MyGaze(ILogger logger)
@@ -21,6 +22,8 @@ internal class MyGaze : IDisposable
         {
 			var info = new MyGazeAPI.SystemInfoStruct();
             _ = MyGazeAPI.GetSystemInfo(ref info);
+
+			MyGazeAPI.SetEventCallback(GetEventCallbackFunction);
 
             _logger.LogInformation($"{info.iV_ETDevice} v{info.iV_MajorVersion}.{info.iV_MinorVersion}.{info.iV_Buildnumber} @ {info.samplerate} Hz [API v{info.API_MajorVersion}.{info.API_MinorVersion}.{info.API_Buildnumber}]");
         }
@@ -68,7 +71,12 @@ internal class MyGaze : IDisposable
 		Sample?.Invoke(this, sample);
 	}
 
-	private MyGazeAPI.Ret Log(int result, string fnc)
+	private void GetEventCallbackFunction(MyGazeAPI.EventStruct evt)
+	{
+		Event?.Invoke(this, evt);
+	}
+
+    private MyGazeAPI.Ret Log(int result, string fnc)
     {
 		MyGazeAPI.Ret code = (MyGazeAPI.Ret)result;
         _logger.LogInformation("{fnc} => {code}", fnc, code);

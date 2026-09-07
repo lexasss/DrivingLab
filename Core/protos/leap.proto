@@ -43,6 +43,9 @@ message Sample {
 }
 
 message Event {
-	string name = 1;
-	bool value = 2;
+	oneof value {
+		bool isConnected = 1;
+		bool isHandVisible = 2;
+		bool isHandClose = 3;
+	}
 }
