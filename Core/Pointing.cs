@@ -1,6 +1,6 @@
 ﻿namespace Pointing;
 
-public static class Controls
+public static class ControlIds
 {
     public const string Button = "BTN";
     public const string Slider = "SLD";
@@ -9,7 +9,9 @@ public static class Controls
 
 public partial class Device
 {
-    public string Description => $"{Type} {Name}";
+    public string Description => string.IsNullOrEmpty(Name)
+        ? Type.ToString()
+        : $"{Type} {Name}";
 }
 
 public partial class Button
@@ -63,12 +65,14 @@ public partial class Data
     public string[] ToStringArray() => [
         ..Point.ToStringArray(),
         ..Rotation.ToStringArray(),
+        /* JOYSTICK_DATA
         ..Velocity.ToStringArray(),
         ..AngularVelocity.ToStringArray(),
         ..Acceleration.ToStringArray(),
         ..AngularAcceleration.ToStringArray(),
         ..Force.ToStringArray(),
         ..Torque.ToStringArray(),
+        */
         ..Buttons.SelectMany(v => v.ToStringArray()),
         ..Sliders.SelectMany(v => v.ToStringArray()),
         ..PointOfViews.SelectMany(v => v.ToStringArray()),
@@ -76,12 +80,14 @@ public partial class Data
     public string[] ToStringArray(int decimals) => [
         ..Point.ToStringArray(decimals),
         ..Rotation.ToStringArray(decimals),
+        /* JOYSTICK_DATA
         ..Velocity.ToStringArray(decimals),
         ..AngularVelocity.ToStringArray(decimals),
         ..Acceleration.ToStringArray(decimals),
         ..AngularAcceleration.ToStringArray(decimals),
         ..Force.ToStringArray(decimals),
         ..Torque.ToStringArray(decimals),
+        */
         ..Buttons.SelectMany(v => v.ToStringArray()),
         ..Sliders.SelectMany(v => v.ToStringArray(decimals)),
         ..PointOfViews.SelectMany(v => v.ToStringArray(decimals)),

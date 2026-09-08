@@ -7,7 +7,8 @@ abstract class PointingDevice : IDisposable
 {
     public abstract DeviceType Type { get; }
 
-    public event EventHandler<Proto.Data>? Updated;
+    public event EventHandler<Proto.Data>? Data;
+    public event EventHandler? Disconnected;
 
     public PointingDevice()
     {
@@ -87,13 +88,28 @@ abstract class PointingDevice : IDisposable
 
     protected abstract void Step(); // this should update _x, _y and _buttons
 
+    protected void OnDisconnected()
+    {
+        Disconnected?.Invoke(this, EventArgs.Empty);
+    }
+
     private async void RunCycle(CancellationToken cts)
     {
         await Task.Delay(100, cts);    // just in case, as this loop may start earlier then a device is initialized
 
         while (!cts.IsCancellationRequested)
         {
-            Step();
+            try
+            {
+                Step();
+            }
+            catch
+            {
+                _timer.Stop();
+                OnDisconnected();
+                break;
+            }
+
             Thread.Sleep(10);
         }
     }
@@ -104,12 +120,14 @@ abstract class PointingDevice : IDisposable
         {
             Point = new Common.Vector() { X = _x, Y = _y, Z = _z },
             Rotation = rotation,
+            /* JOYSTICK_DATA
             Velocity = velocity,
             AngularVelocity = angularVelocity,
             Acceleration = acceleration,
             AngularAcceleration = angularAcceleration,
             Force = force,
             Torque = torque
+            */
         };
 
         lock (_buttons)
@@ -142,6 +160,6 @@ abstract class PointingDevice : IDisposable
             _povs.Clear();
         }
 
-        Updated?.Invoke(this, data);
+        Data?.Invoke(this, data);
     }
 }

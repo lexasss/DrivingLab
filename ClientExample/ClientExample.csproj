@@ -34,6 +34,9 @@
     <Compile Update="Widgets\Pointing.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Update="Widgets\Joystick.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Update="Widgets\Screen.xaml.cs">
       <SubType>Code</SubType>
     </Compile>

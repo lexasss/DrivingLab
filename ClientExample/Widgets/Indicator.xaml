@@ -25,6 +25,7 @@
                                           Converter={x:Static conv:BooleanToVisibilityConverter.CollapsedInstance}}"/>
         </Grid>
 
-        <Label Content="{Binding Text, ElementName=root}" />
+        <Label Content="{Binding Text, ElementName=root}"
+               Padding="0,4"/>
     </WrapPanel>
 </UserControl>

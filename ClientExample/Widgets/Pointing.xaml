@@ -6,6 +6,7 @@
              xmlns:local="clr-namespace:ClientExample"
              xmlns:widgets="clr-namespace:ClientExample.Widgets"
              xmlns:pt="clr-namespace:Pointing;assembly=Core"
+             xmlns:md="clr-namespace:MaterialDesignThemes.Wpf;assembly=MaterialDesignThemes.Wpf"
              xmlns:conv="clr-namespace:MaterialDesignThemes.Wpf.Converters;assembly=MaterialDesignThemes.Wpf"
              mc:Ignorable="d" 
              d:DesignHeight="450"
@@ -46,7 +47,8 @@
                             Command="{Binding UpdateDeviceListCommand}"/>
                 </Grid>
                 <widgets:Indicator IsOn="{Binding IsConnected, Mode=OneWay}"
-                                   Text="Connected"/>
+                                   Text="Connected"
+                                   HorizontalAlignment="Center"/>
                 <Separator/>
                 <WrapPanel>
                     <ToggleButton Style="{StaticResource Switch}"
@@ -62,6 +64,68 @@
                     <Label Style="{StaticResource RowHeader}"
                            Content="Log data"/>
                 </WrapPanel>
+                <Separator/>
+                <StackPanel>
+                    <Label Content="Buttons"
+                           HorizontalContentAlignment="Center"/>
+                    <UniformGrid Columns="6">
+                        <widgets:Indicator IsOn="{Binding Buttons[0].IsPressed, Mode=OneWay}"/>
+                        <widgets:Indicator IsOn="{Binding Buttons[1].IsPressed, Mode=OneWay}"/>
+                        <widgets:Indicator IsOn="{Binding Buttons[2].IsPressed, Mode=OneWay}"/>
+                        <widgets:Indicator IsOn="{Binding Buttons[3].IsPressed, Mode=OneWay}"/>
+                        <widgets:Indicator IsOn="{Binding Buttons[4].IsPressed, Mode=OneWay}"/>
+                        <widgets:Indicator IsOn="{Binding Buttons[5].IsPressed, Mode=OneWay}"/>
+                        <widgets:Indicator IsOn="{Binding Buttons[6].IsPressed, Mode=OneWay}"/>
+                        <widgets:Indicator IsOn="{Binding Buttons[7].IsPressed, Mode=OneWay}"/>
+                        <widgets:Indicator IsOn="{Binding Buttons[8].IsPressed, Mode=OneWay}"/>
+                        <widgets:Indicator IsOn="{Binding Buttons[9].IsPressed, Mode=OneWay}"/>
+                        <widgets:Indicator IsOn="{Binding Buttons[10].IsPressed, Mode=OneWay}"/>
+                        <widgets:Indicator IsOn="{Binding Buttons[11].IsPressed, Mode=OneWay}"/>
+                        <widgets:Indicator IsOn="{Binding Buttons[12].IsPressed, Mode=OneWay}"/>
+                        <widgets:Indicator IsOn="{Binding Buttons[13].IsPressed, Mode=OneWay}"/>
+                        <widgets:Indicator IsOn="{Binding Buttons[14].IsPressed, Mode=OneWay}"/>
+                        <widgets:Indicator IsOn="{Binding Buttons[15].IsPressed, Mode=OneWay}"/>
+                        <widgets:Indicator IsOn="{Binding Buttons[16].IsPressed, Mode=OneWay}"/>
+                        <widgets:Indicator IsOn="{Binding Buttons[17].IsPressed, Mode=OneWay}"/>
+                    </UniformGrid>
+                </StackPanel>
+                <Separator/>
+                <UniformGrid Columns="3">
+                    <StackPanel>
+                        <Label Content="Sliders"
+                               HorizontalContentAlignment="Center"/>
+                        <UniformGrid Columns="2" Height="60">
+                            <Slider Value="{Binding Sliders[0].Value}"
+                                    Orientation="Vertical"
+                                    Maximum="1.0"
+                                    SmallChange="0.001"
+                                    TickFrequency="0.001"
+                                    Margin="4"/>
+                            <Slider Value="{Binding Sliders[1].Value}"
+                                    Orientation="Vertical"
+                                    Maximum="1.0"
+                                    SmallChange="0.001"
+                                    TickFrequency="0.001"
+                                    Margin="4"/>
+                        </UniformGrid>
+                    </StackPanel>
+                    <StackPanel>
+                        <Label Content="Dial"
+                               HorizontalContentAlignment="Center"/>
+                        <widgets:PointOfView Value="{Binding PointOfView}"
+                                            Height="50"
+                                            Width="50"
+                                            Margin="4"/>
+                    </StackPanel>
+                    <StackPanel>
+                        <Label Content="Point"
+                               HorizontalContentAlignment="Center"/>
+                        <widgets:Joystick Value="{Binding Point}"
+                                            Height="50"
+                                            Width="50"
+                                            Margin="4"/>
+                    </StackPanel>
+                </UniformGrid>
                 <Separator/>
                 <TextBlock Style="{StaticResource Data}"
                            Text="{Binding Data, Mode=OneWay}"/>

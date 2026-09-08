@@ -79,12 +79,14 @@ message Data {
 	repeated Slider sliders = 3;
 	repeated PointOfView pointOfViews = 4;
 	optional Common.Vector rotation = 5;
+	/* JOYSTICK_DATA Not necessary at this point
 	optional Common.Vector velocity = 6;
 	optional Common.Vector angularVelocity = 7;
 	optional Common.Vector acceleration = 8;
 	optional Common.Vector angularAcceleration = 9;
 	optional Common.Vector force = 10;
 	optional Common.Vector torque = 11;
+	*/
 }
 
 message Event {

@@ -5,38 +5,26 @@ namespace Server.Pointing;
 
 class Joystick : PointingDevice
 {
-    public string[] Effects => _joystick.GetEffects().Select(effect => effect.Name).ToArray();
-
     public override DeviceType Type => DeviceType.Joystick;
 
     public Joystick(string name) : base()
     {
-        if (_devices == null)
+        var devices = ListDevices(DeviceType.Joystick);
+        var selectedDevice = devices.FirstOrDefault(device => device.ProductName.Equals(name)) ?? devices.FirstOrDefault();
+
+        if (selectedDevice != null)
         {
-            _devices = ListDevices();
+            var joystick = new SharpDX.DirectInput.Joystick(_directInput, selectedDevice.InstanceGuid);
+            joystick.Properties.BufferSize = 128;
+            joystick.Acquire();
+
+            _joystick = joystick;
         }
-        
-        var selectedDevice = _devices.FirstOrDefault(device => device.ProductName.Equals(name)) ?? _devices[0];
-
-        var joystick = new SharpDX.DirectInput.Joystick(_directInput, selectedDevice.InstanceGuid);
-        joystick.Properties.BufferSize = 128;
-        joystick.Acquire();
-
-        _joystick = joystick;
     }
 
-    public static DeviceInstance[] ListDevices()
-    {
-        _devices = ListDevices(DeviceType.Joystick);
-        return _devices;
-    }
+    #region Internal
 
-
-    // Internal
-
-    static DeviceInstance[]? _devices;
-
-    readonly SharpDX.DirectInput.Joystick _joystick;
+    readonly SharpDX.DirectInput.Joystick? _joystick;
 
     protected override void Step()
     {
@@ -44,7 +32,9 @@ class Joystick : PointingDevice
             return;
 
         _joystick.Poll();
+
         var datas = _joystick.GetBufferedData();
+
         if (datas.Length > 0)
         {
             foreach (var data in datas)
@@ -66,7 +56,7 @@ class Joystick : PointingDevice
                             {
                                 Offset = data.RawOffset,
                                 Id = (int)data.Offset - (int)JoystickOffset.Buttons0,
-                                Name = Proto.Controls.Button,
+                                Name = Proto.ControlIds.Button,
                                 IsPressed = data.Value > 0,
                             });
                         }
@@ -79,7 +69,7 @@ class Joystick : PointingDevice
                             {
                                 Offset = data.RawOffset,
                                 Id = int.Parse(name[^1..]),
-                                Name = Proto.Controls.PointOfView,
+                                Name = Proto.ControlIds.PointOfView,
                                 IsPressed = data.Value >= 0,
                                 Degrees = data.Value >= 0 ? (double)data.Value / 100 : 0,
                             });
@@ -93,7 +83,7 @@ class Joystick : PointingDevice
                             {
                                 Offset = data.RawOffset,
                                 Id = int.Parse(name[^1..]),
-                                Name = Proto.Controls.Slider,
+                                Name = Proto.ControlIds.Slider,
                                 Value = (double)data.Value / 0xFFFF,
                                 Type = data.Offset switch
                                 {
@@ -112,6 +102,7 @@ class Joystick : PointingDevice
                         if (data.Offset == JoystickOffset.RotationY) rotation.Y = (double)(data.Value - 0x8000) / 0x8000;
                         if (data.Offset == JoystickOffset.RotationZ) rotation.Z = (double)(data.Value - 0x8000) / 0x8000;
                     }
+                    /* JOYSTICK_DATA
                     else if (name.StartsWith("Velocity"))
                     {
                         if (data.Offset == JoystickOffset.VelocityX) velocity.X = data.Value;
@@ -147,9 +138,11 @@ class Joystick : PointingDevice
                         if (data.Offset == JoystickOffset.TorqueX) torque.X = data.Value;
                         if (data.Offset == JoystickOffset.TorqueY) torque.Y = data.Value;
                         if (data.Offset == JoystickOffset.TorqueZ) torque.Z = data.Value;
-                    }
+                    }*/
                 }
             }
         }
     }
+
+    #endregion
 }

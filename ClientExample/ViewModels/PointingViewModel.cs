@@ -4,6 +4,18 @@ using System.Collections.ObjectModel;
 
 namespace ClientExample;
 
+public partial class ButtonState : ObservableObject
+{
+    [ObservableProperty]
+    public partial bool IsPressed { get; set; } = false;
+}
+
+public partial class SliderState : ObservableObject
+{
+    [ObservableProperty]
+    public partial double Value { get; set; } = 0;
+}
+
 public partial class PointingViewModel : ObservableObject
 {
     public bool IsAvailable => _pointingClient.IsAvailable;
@@ -20,6 +32,15 @@ public partial class PointingViewModel : ObservableObject
     [ObservableProperty]
     public partial bool IsLogging { get; set; } = false;
 
+    public ObservableCollection<ButtonState> Buttons { get; } =
+        new(Enumerable.Range(0, 18).Select(_ => new ButtonState()));
+    public ObservableCollection<SliderState> Sliders { get; } =
+        new(Enumerable.Range(0, 18).Select(_ => new SliderState()));
+    [ObservableProperty]
+    public partial double PointOfView { get; set; } = double.NaN;
+    [ObservableProperty]
+    public partial System.Windows.Point Point { get; set; } = new System.Windows.Point(0, 0);
+
     public PointingViewModel(PointingClient pointingClient)
     {
         _pointingClient = pointingClient;
@@ -35,6 +56,16 @@ public partial class PointingViewModel : ObservableObject
         _pointingClient.ConnectionChanged += (s, e) =>
         {
             IsConnected = e;
+            if (!IsConnected)
+            {
+                IsStreaming = false;
+
+                System.Windows.Application.Current.Dispatcher.Invoke(async () => {
+                    Device = null;
+                    await Task.Delay(500);
+                    UpdateDeviceList();
+                });
+            }
         };
         _pointingClient.DataUpdated += (s, e) =>
         {
@@ -52,6 +83,10 @@ public partial class PointingViewModel : ObservableObject
     {
         Devices.Clear();
         foreach (var device in _pointingClient.GetDevices(Pointing.DeviceType.Joystick))
+        {
+            Devices.Add(device);
+        }
+        foreach (var device in _pointingClient.GetDevices(Pointing.DeviceType.Mouse))
         {
             Devices.Add(device);
         }
@@ -82,8 +117,22 @@ public partial class PointingViewModel : ObservableObject
         IsLogging = _pointingClient.IsLogging;
     }
 
-    private void SetData(Pointing.Data data) =>
-        Data = $"X = {data.Point.X:F3}\nY = {data.Point.Y:F3}\nZ = {data.Rotation.Z:F3}";
+    private void SetData(Pointing.Data data)
+    {
+        Data = $"Z = {data.Point.Z:F3} | {data.Rotation.Z:F3}";
+
+        Point = new System.Windows.Point(data.Point.X, data.Point.Y);
+
+        foreach (var button in data.Buttons)
+            if (button.Id < Buttons.Count)
+                Buttons[button.Id].IsPressed = button.IsPressed;
+        foreach (var slider in data.Sliders)
+            if (slider.Type == Pointing.SliderType.General)
+                Sliders[slider.Id].Value = slider.Value;
+        foreach (var pointOfView in data.PointOfViews)
+            if (pointOfView.Id == 0)
+                PointOfView = pointOfView.IsPressed ? pointOfView.Degrees : double.NaN;
+    }
 
     #endregion
 }

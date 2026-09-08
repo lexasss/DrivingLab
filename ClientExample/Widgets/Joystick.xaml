@@ -1,0 +1,26 @@
+﻿<UserControl x:Class="ClientExample.Widgets.Joystick"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:ClientExample.Widgets"
+             mc:Ignorable="d" 
+             d:DesignHeight="80"
+             d:DesignWidth="80"
+             x:Name="root">
+    
+    <Grid>
+        <Rectangle Fill="#E0EFFF"
+                   Stroke="#404040"
+                   StrokeThickness="1"/>
+
+        <Canvas x:Name="canvas"
+                Margin="2">
+            <Ellipse Fill="Red"
+                     Width="4"
+                     Height="4"
+                     Canvas.Top="{Binding PointY, ElementName=root}"
+                     Canvas.Left="{Binding PointX, ElementName=root}"/>
+        </Canvas>
+    </Grid>
+</UserControl>

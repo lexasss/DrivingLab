@@ -68,7 +68,9 @@ internal class PointingService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
             result.Items.Add(new Proto.Device()
             {
                 Type = request.Type,
-                Name = device.ProductName
+                Name = device.ProductName.Equals(request.Type.ToString())
+                    ? string.Empty
+                    : device.ProductName
             });
         }
 
@@ -96,7 +98,8 @@ internal class PointingService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
                 //Proto.DeviceType.Gamepad => DeviceType.Gamepad,
                 _ => throw new NotImplementedException()
             };
-            _device.Updated += Input_Updated;
+            _device.Data += Device_Data;
+            _device.Disconnected += Device_Disconnected;
         }
 
         return Task.FromResult(new Common.Bool() { Value = result });
@@ -186,10 +189,15 @@ internal class PointingService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
 
     // Event handlers
 
-    private void Input_Updated(object? sender, Proto.Data data)
+    private void Device_Data(object? sender, Proto.Data data)
     {
         _channel.Writer.TryWrite(data);
     }
-    
+
+    private void Device_Disconnected(object? sender, EventArgs e)
+    {
+        _events.Enqueue(new Proto.Event() { IsConnected = false });
+    }
+
     #endregion
 }

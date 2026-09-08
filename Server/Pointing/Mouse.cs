@@ -1,5 +1,5 @@
 ﻿using SharpDX.DirectInput;
-using Server.Tools;
+using Proto = global::Pointing;
 
 namespace Server.Pointing;
 
@@ -9,11 +9,6 @@ class Mouse : PointingDevice
 
     public Mouse() : base()
     {
-        if (_devices == null)
-        {
-            _devices = ListDevices();
-        }
-
         var mouse = new SharpDX.DirectInput.Mouse(_directInput);
         mouse.Properties.BufferSize = 128;
         mouse.Acquire();
@@ -21,25 +16,9 @@ class Mouse : PointingDevice
         _mouse = mouse;
     }
 
-    public static DeviceInstance[] ListDevices()
-    {
-        _devices = ListDevices(DeviceType.Mouse);
-        return _devices;
-    }
-
-
-    // Internal
-
-    const double SCALE = 1f / 250;     // -1..1 inside 500 px
-
-    static DeviceInstance[]? _devices;
+    #region
 
     readonly SharpDX.DirectInput.Mouse _mouse;
-
-    bool _isLeftButtonPressed = false;
-
-    int _relX = 0;
-    int _relY = 0;
 
     protected override void Step()
     {
@@ -52,34 +31,26 @@ class Mouse : PointingDevice
         {
             foreach (var data in datas)
             {
-                if (data.Offset == MouseOffset.Buttons0)
-                {
-                    _isLeftButtonPressed = data.Value != 0;
-                    if (!_isLeftButtonPressed)
-                    {
-                        _relX = 0;
-                        _relY = 0;
-                        _x = 0;
-                        _y = 0;
-                    }
-                }
-                else if (data.Offset == MouseOffset.X)
-                {
-                    if (_isLeftButtonPressed)
-                    {
-                        _relX += data.Value;
-                        _x = (SCALE * _relX).ToRange(-1, 1);
-                    }
-                }
+                if (data.Offset == MouseOffset.X)
+                    _x = data.Value;
                 else if (data.Offset == MouseOffset.Y)
-                {
-                    if (_isLeftButtonPressed)
+                    _y = data.Value;
+                else if (data.Offset == MouseOffset.Z)
+                    _z = data.Value;
+                else
+                    lock (_buttons)
                     {
-                        _relY += data.Value;
-                        _y = (SCALE * _relY).ToRange(-1, 1);
+                        _buttons.Add(new Proto.Button()
+                        {
+                            Offset = data.RawOffset,
+                            Id = (int)data.Offset - (int)MouseOffset.Buttons0,
+                            Name = Proto.ControlIds.Button,
+                            IsPressed = data.Value > 0,
+                        });
                     }
-                }
             }
         }
     }
+
+    #endregion
 }
