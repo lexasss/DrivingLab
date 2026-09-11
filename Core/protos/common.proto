@@ -17,6 +17,10 @@ message Int {
 	int32 value = 1;
 }
 
+message Double {
+	double value = 1;
+}
+
 message String {
 	string value = 1;
 }

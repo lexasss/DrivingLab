@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package TensionR;
+
+import "protos/common.proto";
+import "google/protobuf/empty.proto";
+
+service Dispatcher {
+	rpc IsAvailable (google.protobuf.Empty) returns (Common.Bool) {}
+
+	rpc Connect (Common.String) returns (Common.Bool) {}
+	rpc SetLogFileName (Common.String) returns (Common.Bool) {}
+
+	rpc ReadEvents (google.protobuf.Empty) returns (stream Event) {}
+
+	rpc Start (google.protobuf.Empty) returns (google.protobuf.Empty) {}
+	rpc Stop (google.protobuf.Empty) returns (google.protobuf.Empty) {}
+	rpc Calibrate (google.protobuf.Empty) returns (google.protobuf.Empty) {}
+
+	// 0..64
+	rpc SetTension (Common.Int) returns (google.protobuf.Empty) {}
+}
+
+message Event {
+	oneof value {
+		bool isConnected = 1;
+		bool isCalibrated = 2;
+		bool isEnabled = 3;
+	}
+}

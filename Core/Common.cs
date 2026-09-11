@@ -9,6 +9,7 @@ public enum Ports
     SoundPlayer = 30054,
     Screen = 30055,
     Pointing = 30056,
+    TensionR = 30057,
 }
 
 public static class Constants

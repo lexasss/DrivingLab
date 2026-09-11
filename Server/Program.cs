@@ -40,6 +40,7 @@ class Program
         serviceCollection.AddTransient<SoundPlayer.SoundPlayerService>();
         serviceCollection.AddTransient<Screen.ScreenService>();
         serviceCollection.AddTransient<Pointing.PointingService>();
+        serviceCollection.AddTransient<TensionR.TensionRService>();
 
         var serviceProvider = serviceCollection.BuildServiceProvider();
 
@@ -82,7 +83,12 @@ class Program
                 "Pointing", (int)Common.Ports.Pointing,
                 global::Pointing.Dispatcher.Descriptor,
                 service => global::Pointing.Dispatcher.BindService((global::Pointing.Dispatcher.DispatcherBase)service)
-            )
+            ),
+            Create<TensionR.TensionRService>(serviceProvider,
+                "TensionR Belt", (int)Common.Ports.TensionR,
+                global::TensionR.Dispatcher.Descriptor,
+                service => global::TensionR.Dispatcher.BindService((global::TensionR.Dispatcher.DispatcherBase)service)
+            ),
         };
 
         Task.WaitAll(creators);
