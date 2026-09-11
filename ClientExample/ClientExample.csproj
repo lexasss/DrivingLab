@@ -24,6 +24,8 @@
     <PackageReference Include="MaterialDesignThemes" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="System.IO.Ports" />
+    <PackageReference Include="System.Management" />
   </ItemGroup>
 
   <ItemGroup>
@@ -38,6 +40,9 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Update="Widgets\Screen.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="Widgets\TensionR.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Update="Widgets\SoundPlayer.xaml.cs">

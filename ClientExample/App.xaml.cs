@@ -45,12 +45,14 @@ public partial class App : Application
         services.AddSingleton<SoundPlayerClient>();
         services.AddSingleton<ScreenClient>();
         services.AddSingleton<PointingClient>();
+        services.AddSingleton<TensionRClient>();
 
         services.AddTransient<LeapMotionViewModel>();
         services.AddTransient<SmartEyeViewModel>();
         services.AddTransient<SoundPlayerViewModel>();
         services.AddTransient<ScreenViewModel>();
         services.AddTransient<PointingViewModel>();
+        services.AddTransient<TensionRViewModel>();
 
         services.AddTransient<MainViewModel>();
         services.AddTransient<MainWindow>();

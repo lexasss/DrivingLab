@@ -20,7 +20,7 @@
     <PackageVersion Include="Serilog.Sinks.File" Version="7.0.0" />
     <PackageVersion Include="SharpDX.DirectInput" Version="4.2.0" />
     <PackageVersion Include="System.IO.Ports" Version="10.0.12" />
-    <PackageVersion Include="System.Management" Version="10.0.11" />
+    <PackageVersion Include="System.Management" Version="10.0.12" />
     <PackageVersion Include="Tuni.SmartEyeTools" Version="1.0.2" />
   </ItemGroup>
 </Project>

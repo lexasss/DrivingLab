@@ -43,6 +43,21 @@ internal class TensionRService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
         return Task.FromResult(new Common.Bool() { Value = IsAvailable() });
     }
 
+    public override Task<Common.Bool> IsConnected(Empty request, ServerCallContext context)
+    {
+        return Task.FromResult(new Common.Bool() { Value = _belt?.IsConnected ?? false });
+    }
+
+    public override Task<Common.Bool> IsEnabled(Empty request, ServerCallContext context)
+    {
+        return Task.FromResult(new Common.Bool() { Value = _isEnabled });
+    }
+
+    public override Task<Common.Bool> IsCalibrated(Empty request, ServerCallContext context)
+    {
+        return Task.FromResult(new Common.Bool() { Value = _isCalibrated });
+    }
+
     public override Task<Common.Bool> Connect(Common.String request, ServerCallContext context)
     {
         bool isConnected = false;
@@ -59,6 +74,8 @@ internal class TensionRService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
         }
         else
         {
+            _logger.LogInformation($"Connected to {request.Value}");
+
             _belt.Error += Belt_Error;
             _belt.RequestSent += Belt_RequestSent;
             _belt.DataReceived += Belt_DataReceived;
@@ -117,12 +134,16 @@ internal class TensionRService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
         return Task.FromResult(new Empty());
     }
 
-    public override Task<Empty> SetTension(Common.Int request, ServerCallContext context)
+    public override Task<Empty> SetTension(Proto.Tension request, ServerCallContext context)
     {
         if (_belt != null && _isEnabled && _isCalibrated)
         {
-            _belt.Comm.SetTension(request.Value);
-            _logger.LogInformation("Tension {value}", request.Value);
+            _belt.Comm.SetTension(request.Value, request.Side switch {
+                Proto.Side.Left => API.Side.Left,
+                Proto.Side.Right => API.Side.Right,
+                _ => API.Side.Both,
+            });
+            _logger.LogInformation("Tension {value} ({side})", request.Value, request.Side);
         }
 
         return Task.FromResult(new Empty());
@@ -166,6 +187,8 @@ internal class TensionRService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
         {
             _isCalibrating = false;
             _isCalibrated = true;
+
+            _logger.LogInformation($"Calibrated");
 
             _events.Enqueue(new Proto.Event() { IsCalibrated = true });
         }

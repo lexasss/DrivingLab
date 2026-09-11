@@ -9,28 +9,17 @@
         mc:Ignorable="d"
         Style="{StaticResource MaterialDesignWindow}"
         Title="Driving Lab Client Example"
-        Height="450"
-        Width="1024"
+        Height="900"
+        Width="816"
         MinHeight="380"
         MinWidth="320">
-    <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="200"/>
-            <ColumnDefinition Width="200"/>
-            <ColumnDefinition Width="200"/>
-            <ColumnDefinition Width="200"/>
-            <ColumnDefinition Width="200"/>
-        </Grid.ColumnDefinitions>
 
-        <widgets:LeapMotion Grid.Column="0"
-                            DataContext="{Binding LeapMotion}"/>
-        <widgets:SmartEye Grid.Column="1"
-                          DataContext="{Binding SmartEye}"/>
-        <widgets:SoundPlayer Grid.Column="2"
-                          DataContext="{Binding SoundPlayer}"/>
-        <widgets:Screen Grid.Column="3"
-                        DataContext="{Binding Screen}"/>
-        <widgets:Pointing Grid.Column="4"
-                        DataContext="{Binding Pointing}"/>
-    </Grid>
+    <UniformGrid Columns="4">
+        <widgets:LeapMotion DataContext="{Binding LeapMotion}"/>
+        <widgets:SmartEye DataContext="{Binding SmartEye}"/>
+        <widgets:SoundPlayer DataContext="{Binding SoundPlayer}"/>
+        <widgets:Screen DataContext="{Binding Screen}"/>
+        <widgets:Pointing DataContext="{Binding Pointing}"/>
+        <widgets:TensionR DataContext="{Binding TensionR}"/>
+    </UniformGrid>
 </Window>

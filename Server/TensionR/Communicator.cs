@@ -115,7 +115,7 @@ internal class Communicator : IDisposable
 
     public void Calibrate()
     {
-        if (_state == State.On && !_isCalibrated)
+        if (_state == State.On)
             _state = State.CalibrationStart;
     }
 

@@ -7,6 +7,9 @@ import "google/protobuf/empty.proto";
 
 service Dispatcher {
 	rpc IsAvailable (google.protobuf.Empty) returns (Common.Bool) {}
+	rpc IsConnected (google.protobuf.Empty) returns (Common.Bool) {}
+	rpc IsEnabled (google.protobuf.Empty) returns (Common.Bool) {}
+	rpc IsCalibrated (google.protobuf.Empty) returns (Common.Bool) {}
 
 	rpc Connect (Common.String) returns (Common.Bool) {}
 	rpc SetLogFileName (Common.String) returns (Common.Bool) {}
@@ -18,7 +21,18 @@ service Dispatcher {
 	rpc Calibrate (google.protobuf.Empty) returns (google.protobuf.Empty) {}
 
 	// 0..64
-	rpc SetTension (Common.Int) returns (google.protobuf.Empty) {}
+	rpc SetTension (Tension) returns (google.protobuf.Empty) {}
+}
+
+enum Side {
+	Left = 0;
+	Right = 1;
+	Both = 2;
+}
+
+message Tension {
+	int32 value = 1;
+	Side side = 2;
 }
 
 message Event {
