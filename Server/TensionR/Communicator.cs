@@ -166,7 +166,7 @@ internal class Communicator : IDisposable
     const int INTERVAL = 150;    // ms
     const int TENSION_MIN = 0;
     const int TENSION_MAX = 64;
-    const int CALIBRATION_CYCLE_COUNT = 25;
+    const int CALIBRATION_CYCLE_COUNT = 16;
 
     State _state = State.Off;
     bool _isDisposed = false;

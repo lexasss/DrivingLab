@@ -60,6 +60,9 @@ internal class TensionRService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
 
     public override Task<Common.Bool> Connect(Common.String request, ServerCallContext context)
     {
+        if (_belt != null)
+            return Task.FromResult(new Common.Bool() { Value = false });
+
         bool isConnected = false;
 
         _belt = new API.Belt(request.Value);
@@ -94,7 +97,7 @@ internal class TensionRService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
 
     public override Task<Empty> Start(Empty request, ServerCallContext context)
     {
-        if (_belt != null && !_isEnabled)
+        if (_belt != null && !_isEnabled && !_isCalibrating)
         {
             _belt.Comm.Start();
 
@@ -108,7 +111,7 @@ internal class TensionRService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
 
     public override Task<Empty> Stop(Empty request, ServerCallContext context)
     {
-        if (_belt != null && _isEnabled)
+        if (_belt != null && _isEnabled && !_isCalibrating)
         {
             _belt.Comm.Stop();
 
@@ -161,6 +164,13 @@ internal class TensionRService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
                 await responseStream.WriteAsync(evt);
             }
         }
+
+        _isEnabled = false;
+        _isCalibrating = false;
+        _isCalibrated = false;
+
+        _belt?.Dispose();
+        _belt = null;
     }
 
     #region Internal
