@@ -82,14 +82,12 @@ public partial class PointingViewModel : ObservableObject
     private void UpdateDeviceList()
     {
         Devices.Clear();
-        foreach (var device in _pointingClient.GetDevices(Pointing.DeviceType.Joystick))
-        {
-            Devices.Add(device);
-        }
         foreach (var device in _pointingClient.GetDevices(Pointing.DeviceType.Mouse))
-        {
             Devices.Add(device);
-        }
+        foreach (var device in _pointingClient.GetDevices(Pointing.DeviceType.Joystick))
+            Devices.Add(device);
+        foreach (var device in _pointingClient.GetDevices(Pointing.DeviceType.Gamepad))
+            Devices.Add(device);
     }
 
     partial void OnDeviceChanged(Pointing.Device? value)

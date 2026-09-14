@@ -9,6 +9,9 @@ class Joystick : PointingDevice
 
     public Joystick(string name) : base()
     {
+        if (string.IsNullOrEmpty(name))
+            return;
+
         var devices = ListDevices(DeviceType.Joystick);
         var selectedDevice = devices.FirstOrDefault(device => device.ProductName.Equals(name)) ?? devices.FirstOrDefault();
 
@@ -24,7 +27,7 @@ class Joystick : PointingDevice
 
     #region Internal
 
-    readonly SharpDX.DirectInput.Joystick? _joystick;
+    protected SharpDX.DirectInput.Joystick? _joystick;
 
     protected override void Step()
     {

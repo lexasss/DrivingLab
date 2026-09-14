@@ -36,13 +36,16 @@ abstract class PointingDevice : IDisposable
             _povs.Clear();
     }
 
-    public static DeviceInstance[] ListDevices(DeviceType type)
+    public static DeviceInstance[] ListDevices(params DeviceType[] types)
     {
         List<DeviceInstance> devices = [];
 
-        foreach (var deviceInstance in _directInput.GetDevices(type, DeviceEnumerationFlags.AttachedOnly))
+        foreach (var type in types)
         {
-            devices.Add(deviceInstance);
+            foreach (var deviceInstance in _directInput.GetDevices(type, DeviceEnumerationFlags.AttachedOnly))
+            {
+                devices.Add(deviceInstance);
+            }
         }
 
         return devices.ToArray();

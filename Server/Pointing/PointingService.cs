@@ -23,6 +23,8 @@ internal class PointingService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
         foreach (var device in PointingDevice.ListDevices(DeviceType.Gamepad))
             _logger.LogInformation("Found a gamepad {device}", device.ProductName);
 
+        var gamepads = PointingDevice.ListDevices(DeviceType.Gamepad);
+
         try
         {
             _logger.LogInformation("Running");
@@ -95,7 +97,7 @@ internal class PointingService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
             {
                 Proto.DeviceType.Mouse => new Mouse(),
                 Proto.DeviceType.Joystick => new Joystick(request.Name),
-                //Proto.DeviceType.Gamepad => DeviceType.Gamepad,
+                Proto.DeviceType.Gamepad => new Gamepad(request.Name),
                 _ => throw new NotImplementedException()
             };
             _device.Data += Device_Data;
