@@ -10,6 +10,7 @@ public enum Ports
     Screen = 30055,
     Pointing = 30056,
     TensionR = 30057,
+    StreamDeck = 30058,
 }
 
 public static class Constants

@@ -6,11 +6,11 @@ using Proto = global::SmartEye;
 
 namespace Server.SmartEye;
 
-internal class SmartEyeService : Proto.Dispatcher.DispatcherBase, ITelemetryService
+internal class StreamDeckService : Proto.Dispatcher.DispatcherBase, ITelemetryService
 {
     public bool IsAvailable() => _seClient != null;
 
-    public SmartEyeService(ILoggerFactory loggerFactory) : base()
+    public StreamDeckService(ILoggerFactory loggerFactory) : base()
     {
         _logger = loggerFactory.CreateLogger("SEYE");
 
@@ -34,9 +34,9 @@ internal class SmartEyeService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
 
             _logger.LogInformation("Running");
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            _logger.LogError("Cannot start the service");
+            _logger.LogError("Cannot start the service ({ex})", ex.Message);
         }
     }
 
@@ -153,8 +153,6 @@ internal class SmartEyeService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
     }
 
     #region Internal
-
-    record class Event(string Name, object Value);
 
     const string SE_CLIENT_OPTIONS_FILENAME = "se_client_options.json";
 

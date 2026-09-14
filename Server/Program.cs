@@ -36,11 +36,12 @@ class Program
         serviceCollection.AddTransient<LeapMotion.LeapMotionService>();
         serviceCollection.AddTransient<MyGaze.MyGazeService>();
         serviceCollection.AddTransient<TobiiEyeX.TobiiEyeXService>();
-        serviceCollection.AddTransient<SmartEye.SmartEyeService>();
+        serviceCollection.AddTransient<SmartEye.StreamDeckService>();
         serviceCollection.AddTransient<SoundPlayer.SoundPlayerService>();
         serviceCollection.AddTransient<Screen.ScreenService>();
         serviceCollection.AddTransient<Pointing.PointingService>();
         serviceCollection.AddTransient<TensionR.TensionRService>();
+        serviceCollection.AddTransient<StreamDeck.StreamDeckService>();
 
         var serviceProvider = serviceCollection.BuildServiceProvider();
 
@@ -64,7 +65,7 @@ class Program
                 Gaze.Dispatcher.Descriptor,
                 service => Gaze.Dispatcher.BindService((Gaze.Dispatcher.DispatcherBase)service)
             ),
-            Create<SmartEye.SmartEyeService>(serviceProvider,
+            Create<SmartEye.StreamDeckService>(serviceProvider,
                 "Smart Eye", (int)Common.Ports.SmartEye,
                 global::SmartEye.Dispatcher.Descriptor,
                 service => global::SmartEye.Dispatcher.BindService((global::SmartEye.Dispatcher.DispatcherBase)service)
@@ -88,6 +89,11 @@ class Program
                 "TensionR Belt", (int)Common.Ports.TensionR,
                 global::TensionR.Dispatcher.Descriptor,
                 service => global::TensionR.Dispatcher.BindService((global::TensionR.Dispatcher.DispatcherBase)service)
+            ),
+            Create<StreamDeck.StreamDeckService>(serviceProvider,
+                "Stream Deck", (int)Common.Ports.StreamDeck,
+                global::StreamDeck.Dispatcher.Descriptor,
+                service => global::StreamDeck.Dispatcher.BindService((global::StreamDeck.Dispatcher.DispatcherBase)service)
             ),
         };
 

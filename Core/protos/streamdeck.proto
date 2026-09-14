@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package StreamDeck;
+
+import "protos/common.proto";
+import "google/protobuf/empty.proto";
+
+service Dispatcher {
+	rpc IsAvailable (google.protobuf.Empty) returns (Common.Bool) {}
+
+	rpc UploadFile(stream Common.UploadRequest) returns (Common.UploadResult);
+
+	rpc GetKeyboard (google.protobuf.Empty) returns (Keyboard) {}
+	// 0-100
+	rpc SetBrightness (Common.Int) returns (google.protobuf.Empty) {}
+
+	rpc SetKey (Key) returns (Common.Bool) {}
+
+	rpc ReadEvents (google.protobuf.Empty) returns (stream Event) {}
+}
+
+message Key {
+	int32 id = 1;
+	// color is 3 bytes: R,G,B
+	string fileNameOrColor = 2;
+}
+
+message KeyState {
+	int32 id = 1;
+	bool isPressed = 2;
+}
+
+message Keyboard {
+	int32 count = 1;
+	int32 rows = 2;
+	int32 columns = 3;
+	int32 size = 4;
+	int32 gap = 5;
+}
+
+message Event {
+	oneof value {
+		bool isConnected = 1;
+		KeyState key = 2;
+	}
+}

@@ -16,6 +16,7 @@
     <Protobuf Include="protos\screen.proto" Link="protos\screen.proto" />
     <Protobuf Include="protos\pointing.proto" Link="protos\pointing.proto" />
     <Protobuf Include="protos\tensionr.proto" Link="protos\tensionr.proto" />
+    <Protobuf Include="protos\streamdeck.proto" Link="protos\streamdeck.proto" />
   </ItemGroup>
 	
 </Project>

@@ -19,10 +19,6 @@ public class TensionRClient : Client
         : base(appSettings, (int)Common.Ports.TensionR)
     {
         _client = new TensionR.Dispatcher.DispatcherClient(_channel);
-
-        _isConnected = _client.IsConnected(new Empty()).Value;
-        _isCalibrated = _client.IsCalibrated(new Empty()).Value;
-        _isEnabled = _client.IsEnabled(new Empty()).Value;
     }
 
     public override void Dispose()
@@ -99,6 +95,10 @@ public class TensionRClient : Client
         _isAvailable = _client.IsAvailable(new Empty()).Value;
         if (_isAvailable)
         {
+            _isConnected = _client.IsConnected(new Empty()).Value;
+            _isCalibrated = _client.IsCalibrated(new Empty()).Value;
+            _isEnabled = _client.IsEnabled(new Empty()).Value;
+
             _ = ReadEvents();
         }
     }
