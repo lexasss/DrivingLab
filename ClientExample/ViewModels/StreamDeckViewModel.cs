@@ -1,7 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
-using System.Windows.Input;
 
 namespace ClientExample;
 
@@ -32,7 +31,8 @@ public partial class StreamDeckViewModel : ObservableObject
     public bool CanSetKey => IsConnected;
     public string SetKeyButtonText => string.IsNullOrEmpty(KeyFileNameOrColor) ? "Clear" : "Set";
     public ObservableCollection<ButtonState> Keys { get; } = 
-        new(Enumerable.Range(0, 10).Select(i => new ButtonState()));
+        new(Enumerable.Range(0, KEYBOARD_UI_ROWS * KEYBOARD_UI_COLUMNS)
+            .Select(i => new ButtonState()));
 
     public StreamDeckViewModel(StreamDeckClient streamDeckClient)
     {
@@ -42,11 +42,11 @@ public partial class StreamDeckViewModel : ObservableObject
         {
             IsConnected = _streamDeckClient.IsConnected;
 
-            var keyboard = _streamDeckClient.GetKeyboard();
-            if (IsConnected && keyboard != null)
+            _keyboard = _streamDeckClient.GetKeyboard();
+            if (IsConnected && _keyboard != null)
             {
                 List<string> ids = [ALL_KEYS];
-                for (int i = 0; i < keyboard.Count; i++)
+                for (int i = 0; i < _keyboard.Count; i++)
                     ids.Add(i.ToString());
                 KeyIds = ids.ToArray();
             }
@@ -55,22 +55,29 @@ public partial class StreamDeckViewModel : ObservableObject
                 KeyIds = [];
             }
 
-            KeyboardSize = keyboard != null ? $"{keyboard.Rows}x{keyboard.Columns}" : string.Empty;
+            KeyboardSize = _keyboard != null ? $"{_keyboard.Rows}x{_keyboard.Columns}" : string.Empty;
 
             OnPropertyChanged(nameof(IsAvailable));
         };
 
-        _streamDeckClient.ConnectionChanged += (s, e) => IsConnected = e;
+        _streamDeckClient.ConnectionChanged += (s, e) =>
+        {
+            IsConnected = e;
+        };
         _streamDeckClient.KeyStateChanged += (s, e) =>
         {
-            // UI represents 2x5 button fromthe left-top StreamDeck corner
-            if (e.Id < 5)       // first row, left 5 buttons
+            int keyboardCols = _keyboard?.Columns ?? KEYBOARD_UI_COLUMNS;
+            int keyboardRows = _keyboard?.Rows ?? KEYBOARD_UI_ROWS;
+
+            // UI represents buttons from the left-top StreamDeck corner
+            if (e.Id < KEYBOARD_UI_COLUMNS)       // first row, left KEYBOARD_UI_COLUMNS buttons
             {
                 Keys[e.Id].IsPressed = e.IsPressed;
             }
-            else if (e.Id >= 8 && e.Id < 13)  // second row, left 5 buttons
+            else if (e.Id >= keyboardCols 
+                  && e.Id < (keyboardCols + KEYBOARD_UI_COLUMNS))  // second row, left KEYBOARD_UI_COLUMNS buttons
             {
-                Keys[e.Id - 3].IsPressed = e.IsPressed;
+                Keys[e.Id - (keyboardCols - KEYBOARD_UI_COLUMNS)].IsPressed = e.IsPressed;
             }
         };
     }
@@ -79,7 +86,12 @@ public partial class StreamDeckViewModel : ObservableObject
     #region Internal
 
     const string ALL_KEYS = "All";
+    const int KEYBOARD_UI_ROWS = 2;
+    const int KEYBOARD_UI_COLUMNS = 5;
+
     readonly StreamDeckClient _streamDeckClient;
+
+    StreamDeck.Keyboard? _keyboard;
 
     [RelayCommand]
     private async Task UploadFile()
