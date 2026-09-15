@@ -22,13 +22,15 @@ public partial class StreamDeckViewModel : ObservableObject
     [ObservableProperty]
     public partial int Brightness { get; set; } = 100;
     [ObservableProperty]
-    public partial int[] KeyIds { get; private set; } = [];
+    public partial string[] KeyIds { get; private set; } = [];
     [ObservableProperty]
-    public partial int KeyId { get; set; } = 0;
+    public partial string KeyId { get; set; } = "0";
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(CanSetKey))]
+    [NotifyPropertyChangedFor(nameof(SetKeyButtonText))]
     public partial string KeyFileNameOrColor { get; set; } = string.Empty;
+
     public bool CanSetKey => IsConnected;
+    public string SetKeyButtonText => string.IsNullOrEmpty(KeyFileNameOrColor) ? "Clear" : "Set";
     public ObservableCollection<ButtonState> Keys { get; } = 
         new(Enumerable.Range(0, 10).Select(i => new ButtonState()));
 
@@ -43,9 +45,9 @@ public partial class StreamDeckViewModel : ObservableObject
             var keyboard = _streamDeckClient.GetKeyboard();
             if (IsConnected && keyboard != null)
             {
-                List<int> ids = [-1];
+                List<string> ids = [ALL_KEYS];
                 for (int i = 0; i < keyboard.Count; i++)
-                    ids.Add(i);
+                    ids.Add(i.ToString());
                 KeyIds = ids.ToArray();
             }
             else
@@ -76,6 +78,7 @@ public partial class StreamDeckViewModel : ObservableObject
 
     #region Internal
 
+    const string ALL_KEYS = "All";
     readonly StreamDeckClient _streamDeckClient;
 
     [RelayCommand]
@@ -104,9 +107,10 @@ public partial class StreamDeckViewModel : ObservableObject
     [RelayCommand]
     private void SetKey()
     {
+
         _streamDeckClient.SetKey(new StreamDeck.Key()
         {
-            Id = KeyId,
+            Id = KeyId.Equals(ALL_KEYS) ? -1 : int.Parse(KeyId),
             FileNameOrColor = KeyFileNameOrColor
         });
     }

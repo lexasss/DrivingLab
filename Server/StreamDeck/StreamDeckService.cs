@@ -127,7 +127,7 @@ internal class StreamDeckService : Proto.Dispatcher.DispatcherBase, IFileService
                     System.IO.Path.GetFileName(filePath));
                 result = true;
             }
-            else
+            else if (string.IsNullOrEmpty(request.FileNameOrColor))
             {
                 _deck.ClearKeys();
                 _logger.LogInformation("All keys were cleared");
@@ -152,7 +152,7 @@ internal class StreamDeckService : Proto.Dispatcher.DispatcherBase, IFileService
                     System.IO.Path.GetFileName(filePath));
                 result = true;
             }
-            else
+            else if (string.IsNullOrEmpty(request.FileNameOrColor))
             {
                 _deck.ClearKey(request.Id);
                 _logger.LogInformation("Key {id} cleared", request.Id);

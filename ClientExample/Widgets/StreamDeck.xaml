@@ -116,7 +116,7 @@
                 </Grid>
                 <Button Margin="4"
                         IsEnabled="{Binding CanSetKey}"
-                        Content="Set"
+                        Content="{Binding SetKeyButtonText}"
                         Command="{Binding SetKeyCommand}"/>
                 <Separator/>
                 <UniformGrid Columns="5"
