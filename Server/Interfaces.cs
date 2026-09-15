@@ -18,6 +18,7 @@ internal interface ITelemetryService : IService
 
 internal interface IFileService : IService
 {
+    protected string StorageFolder { get; }
     Task<Common.UploadResult> UploadFile(
         IAsyncStreamReader<Common.UploadRequest> requestStream,
         ServerCallContext context);

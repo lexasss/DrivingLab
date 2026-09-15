@@ -112,8 +112,7 @@ internal class StreamDeckService : Proto.Dispatcher.DispatcherBase, ITelemetrySe
 
     public override Task<Common.Bool> SetLogFileName(Common.String request, ServerCallContext context)
     {
-        var result = Helpers.SetLogFileName(request.Value, _fileLogger, _logger);
-        return Task.FromResult(new Common.Bool { Value = result });
+        return TelemetryService.SetLogFileName(request.Value, _fileLogger, _logger);
     }
 
     /*

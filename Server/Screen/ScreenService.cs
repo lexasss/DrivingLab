@@ -8,6 +8,7 @@ namespace Server.Screen;
 
 public class ScreenService : Proto.Dispatcher.DispatcherBase, IFileService
 {
+    public string StorageFolder { get; } = "media";
     public bool IsAvailable() => true;
 
     public ScreenService(ILoggerFactory loggerFactory) : base()
@@ -22,8 +23,8 @@ public class ScreenService : Proto.Dispatcher.DispatcherBase, IFileService
                 screen.Name, screen.Origin.X, screen.Origin.Y, screen.Size.Width, screen.Size.Height);
         }
 
-        Tools.Helpers.ListFiles(
-            MEDIA_FOLDER,
+        Tools.FileService.ListFiles(
+            StorageFolder,
             _supportedMediaFormats,
             _logger
         );
@@ -86,19 +87,12 @@ public class ScreenService : Proto.Dispatcher.DispatcherBase, IFileService
 
     public override Task<Common.String> Show(Proto.Media request, ServerCallContext context)
     {
+        string? filePath = Tools.FileService.FileNameToPath(request.FileName, StorageFolder, _logger);
+
+        if (string.IsNullOrEmpty(filePath))
+            return Task.FromResult(new Common.String { Value = string.Empty });
+
         string id = string.Empty;
-
-        var filePath = request.FileName;
-        if (!Path.IsPathRooted(filePath))
-        {
-            filePath = Path.Combine(AppContext.BaseDirectory, MEDIA_FOLDER, filePath);
-        }
-
-        if (!File.Exists(filePath))
-        {
-            _logger.LogWarning("File not found: {filename}", filePath);
-            return Task.FromResult(new Common.String { Value = id });
-        }
 
         try
         {
@@ -143,22 +137,10 @@ public class ScreenService : Proto.Dispatcher.DispatcherBase, IFileService
         IAsyncStreamReader<Common.UploadRequest> requestStream,
         ServerCallContext context)
     {
-        var filename = requestStream.Current?.Metadata?.FileName;
-        var result = await Tools.Helpers.UploadFile(requestStream, context, MEDIA_FOLDER);
-
-        if (result.Size > 0)
-            _logger.LogInformation("Uploaded {name} ({size} bytes)",
-                filename, result.Size);
-        else
-            _logger.LogWarning("Upload failed for {name}: {error}",
-                filename, result.ErrorMessage);
-
-        return result;
+        return await Tools.FileService.UploadFile(requestStream, context, StorageFolder, _logger);
     }
-    
-    #region Internal
 
-    const string MEDIA_FOLDER = "media";
+    #region Internal
 
     readonly string[] _supportedMediaFormats = [
         .. MediaWindow.SupportedImageFormats,

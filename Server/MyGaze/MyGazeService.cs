@@ -70,8 +70,7 @@ internal class MyGazeService : Proto.Dispatcher.DispatcherBase, ITelemetryServic
 
     public override Task<Common.Bool> SetLogFileName(Common.String request, ServerCallContext context)
     {
-        var result = Tools.Helpers.SetLogFileName(request.Value, _fileLogger, _logger);
-        return Task.FromResult(new Common.Bool { Value = result });
+        return Tools.TelemetryService.SetLogFileName(request.Value, _fileLogger, _logger);
     }
 
     public override async Task ReadData(Empty request, IServerStreamWriter<Proto.Sample> responseStream, ServerCallContext context)

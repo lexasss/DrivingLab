@@ -3,13 +3,14 @@ using Grpc.Core;
 using Microsoft.Extensions.Logging;
 using OpenMacroBoard.SDK;
 using SixLabors.ImageSharp;
-using System.IO;
+using SixLabors.ImageSharp.PixelFormats;
 using Proto = global::StreamDeck;
 
 namespace Server.StreamDeck;
 
 internal class StreamDeckService : Proto.Dispatcher.DispatcherBase, IFileService
 {
+    public string StorageFolder { get; } = "deck";
     public bool IsAvailable() => StreamDeckSharp.StreamDeck.EnumerateDevices().Any();
 
     public StreamDeckService(ILoggerFactory loggerFactory) : base()
@@ -44,21 +45,14 @@ internal class StreamDeckService : Proto.Dispatcher.DispatcherBase, IFileService
         IAsyncStreamReader<Common.UploadRequest> requestStream,
         ServerCallContext context)
     {
-        var filename = requestStream.Current?.Metadata?.FileName;
-        var result = await Tools.Helpers.UploadFile(requestStream, context, ICONS_FOLDER);
-
-        if (result.Size > 0)
-            _logger.LogInformation("Uploaded {name} ({size} bytes)",
-                filename, result.Size);
-        else
-            _logger.LogWarning("Upload failed for {name}: {error}",
-                filename, result.ErrorMessage);
-
-        return result;
+        return await Tools.FileService.UploadFile(requestStream, context, StorageFolder, _logger);
     }
 
     public override Task<Proto.Keyboard> GetKeyboard(Empty request, ServerCallContext context)
     {
+        if (!_isConnected)
+            return Task.FromResult(new Proto.Keyboard());
+
         return Task.FromResult(new Proto.Keyboard {
             Count = _deck?.Keys.Count ?? 0,
             Rows = _deck?.Keys.CountY ?? 0,
@@ -70,67 +64,63 @@ internal class StreamDeckService : Proto.Dispatcher.DispatcherBase, IFileService
 
     public override Task<Empty> SetBrightness(Common.Int request, ServerCallContext context)
     {
-        _deck?.SetBrightness((byte)Math.Clamp(request.Value, 0, 100));
+        if (_isConnected)
+        {
+            _deck?.SetBrightness((byte)Math.Clamp(request.Value, 0, 100));
+        }
         return Task.FromResult(new Empty());
     }
 
     public override Task<Common.Bool> SetKey(Proto.Key request, ServerCallContext context)
     {
+        if (_deck == null || !_isConnected)
+            return Task.FromResult(new Common.Bool() { Value = false });
+
         bool result = false;
+
+        string? filePath = Tools.FileService.FileNameToPath(request.FileNameOrColor, StorageFolder, null);
+        var color = FromRGB(request.FileNameOrColor);
+
         if (request.Id < 0)
         {
-            if (string.IsNullOrEmpty(request.FileNameOrColor))
+            if (color != OmbColor.Black)
             {
-                _deck.ClearKeys();
+                var image = new Image<Rgba32>(
+                    _deck.Keys.Area.Width,
+                    _deck.Keys.Area.Height,
+                    Color.FromRgb(color.R, color.G, color.B).ToPixel<Rgba32>());
+                _deck.DrawFullScreenBitmap(image);
+                result = true;
+            }
+            else if (!string.IsNullOrEmpty(filePath))
+            {
+                var image = Image.Load(filePath);
+                _deck.DrawFullScreenBitmap(image);
                 result = true;
             }
             else
             {
-                var filePath = request.FileNameOrColor;
-                if (!Path.IsPathRooted(filePath))
-                {
-                    filePath = Path.Combine(AppContext.BaseDirectory, ICONS_FOLDER, filePath);
-                }
-
-                if (File.Exists(filePath))
-                {
-                    var bmp = Image.Load(filePath);
-                    _deck.DrawFullScreenBitmap(bmp);
-                    result = true;
-                }
-                else
-                {
-                    _logger.LogWarning("File not found: {filename}", filePath);
-                }
+                _deck.ClearKeys();
+                result = true;
             }
         }
         else if (request.Id < _deck?.Keys.Count)
         {
-            var color = FromRGB(request.FileNameOrColor);
             if (color != OmbColor.Black)
             {
                 var bmp = KeyBitmap.Create.FromColor(color);
                 _deck.SetKeyBitmap(request.Id, bmp);
                 result = true;
             }
+            else if (!string.IsNullOrEmpty(filePath))
+            {
+                var bmp = KeyBitmap.Create.FromFile(filePath);
+                _deck.SetKeyBitmap(request.Id, bmp);
+                result = true;
+            }
             else
             {
-                var filePath = request.FileNameOrColor;
-                if (!Path.IsPathRooted(filePath))
-                {
-                    filePath = Path.Combine(AppContext.BaseDirectory, ICONS_FOLDER, filePath);
-                }
-
-                if (File.Exists(filePath))
-                {
-                    var bmp = KeyBitmap.Create.FromFile(filePath);
-                    _deck.SetKeyBitmap(request.Id, bmp);
-                    result = true;
-                }
-                else
-                {
-                    _logger.LogWarning("File not found: {filename}", filePath);
-                }
+                _deck.ClearKey(request.Id);
             }
         }
 
@@ -153,8 +143,6 @@ internal class StreamDeckService : Proto.Dispatcher.DispatcherBase, IFileService
 
     #region Internal
 
-    const string ICONS_FOLDER = "icons";
-
     readonly ILogger _logger;
     readonly Queue<Proto.Event> _events = [];
 
@@ -170,21 +158,9 @@ internal class StreamDeckService : Proto.Dispatcher.DispatcherBase, IFileService
             _deck = StreamDeckSharp.StreamDeck.OpenDevice();
             _deck.ConnectionStateChanged += (s, e) =>
             {
-                Task.Run(() =>
-                {
-                    if (e.NewConnectionState && _deck == null)
-                    {
-                        Connect();
-                    }
-                    else if (!e.NewConnectionState && _deck != null)
-                    {
-                        _isConnected = false;
-                        _events.Enqueue(new Proto.Event() { IsConnected = _isConnected });
-
-                        _deck.Dispose();
-                        _deck = null;
-                    }
-                });
+                _isConnected = e.NewConnectionState;
+                _logger.LogInformation(_isConnected ? "Stream Deck connected" : "Stream Deck disconnected");
+                _events.Enqueue(new Proto.Event() { IsConnected = _isConnected });
             };
             _deck.KeyStateChanged += (s, e) =>
             {

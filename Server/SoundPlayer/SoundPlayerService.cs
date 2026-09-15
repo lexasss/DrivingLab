@@ -3,7 +3,6 @@ using Grpc.Core;
 using Microsoft.Extensions.Logging;
 using NAudio.CoreAudioApi;
 using NAudio.Wave;
-using System.IO;
 using Proto = global::SoundPlayer;
 
 namespace Server.SoundPlayer;
@@ -11,6 +10,7 @@ namespace Server.SoundPlayer;
 [System.Diagnostics.CodeAnalysis.SuppressMessage("Interoperability", "CA1416:Validate platform compatibility")]
 public class SoundPlayerService : Proto.Dispatcher.DispatcherBase, IFileService
 {
+    public string StorageFolder { get; } = "sounds";
     public bool IsAvailable() => true;
 
     public SoundPlayerService(ILoggerFactory loggerFactory) : base()
@@ -22,8 +22,8 @@ public class SoundPlayerService : Proto.Dispatcher.DispatcherBase, IFileService
             _logger.LogInformation("Found sound device {name}", device.Name);
         }
 
-        Tools.Helpers.ListFiles(
-            SOUND_FOLDER,
+        Tools.FileService.ListFiles(
+            StorageFolder,
             _supportedAudioFormats,
             _logger
         );
@@ -121,15 +121,7 @@ public class SoundPlayerService : Proto.Dispatcher.DispatcherBase, IFileService
         IAsyncStreamReader<Common.UploadRequest> requestStream,
         ServerCallContext context)
     {
-        var filename = requestStream.Current?.Metadata?.FileName;
-        var result = await Tools.Helpers.UploadFile(requestStream, context, SOUND_FOLDER);
-
-        if (result.Size > 0)
-            _logger.LogInformation("Uploaded {name} ({size} bytes)", filename, result.Size);
-        else
-            _logger.LogWarning("Upload failed for {name}: {error}", filename, result.ErrorMessage);
-
-        return result;
+        return await Tools.FileService.UploadFile(requestStream, context, StorageFolder, _logger);
     }
 
     #region Internal
@@ -140,8 +132,6 @@ public class SoundPlayerService : Proto.Dispatcher.DispatcherBase, IFileService
         public string Name => name;
         public override string ToString() => name;
     }
-
-    const string SOUND_FOLDER = "sounds";
 
     static string[] _supportedAudioFormats = [".wav"];
 
@@ -225,33 +215,25 @@ public class SoundPlayerService : Proto.Dispatcher.DispatcherBase, IFileService
 
     private AudioFileReader? PlayFile(WasapiPlayer soundPlayer, string filename)
     {
+        string? filePath = Tools.FileService.FileNameToPath(filename, StorageFolder, _logger);
+
+        if (string.IsNullOrEmpty(filePath))
+            return null;
+
         AudioFileReader? audioFile = null;
 
-        var filePath = filename;
-        if (!Path.IsPathRooted(filePath))
+        try
         {
-            filePath = Path.Combine(AppContext.BaseDirectory, SOUND_FOLDER, filename);
+            audioFile = new AudioFileReader(filePath);
+
+            soundPlayer.Init(audioFile);
+            soundPlayer.Play();
+
+            _logger.LogInformation("Playing {filename}", filename);
         }
-
-        if (File.Exists(filePath))
+        catch (Exception ex)
         {
-            try
-            {
-                audioFile = new AudioFileReader(filePath);
-
-                soundPlayer.Init(audioFile);
-                soundPlayer.Play();
-
-                _logger.LogInformation("Playing {filename}", filename);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error playing {filename}: {reason}", filename, ex.Message);
-            }
-        }
-        else
-        {
-            _logger.LogWarning("File not found: {filename}", filePath);
+            _logger.LogError(ex, "Error playing {filename}: {reason}", filename, ex.Message);
         }
 
         return audioFile;

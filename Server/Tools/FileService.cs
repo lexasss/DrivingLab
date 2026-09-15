@@ -4,12 +4,54 @@ using System.IO;
 
 namespace Server.Tools;
 
-internal class Helpers
+internal class FileService
 {
+    public static async Task<Common.UploadResult> UploadFile(
+        IAsyncStreamReader<Common.UploadRequest> requestStream,
+        ServerCallContext context,
+        string folder,
+        ILogger logger)
+    {
+        var filename = requestStream.Current?.Metadata?.FileName;
+        var result = await UploadFile(requestStream, context, folder);
+
+        if (result.Size > 0)
+            logger.LogInformation("Uploaded {name} ({size} bytes)",
+                filename, result.Size);
+        else
+            logger.LogError("Failed to upload {name}: {error}",
+                filename, result.ErrorMessage);
+
+        return result;
+    }
+
+    public static string? FileNameToPath(
+        string filename,
+        string folder,
+        ILogger? logger)
+    {
+        if (string.IsNullOrEmpty(filename))
+            return null;
+
+        string filePath = filename;
+        if (!Path.IsPathRooted(filePath))
+        {
+            filePath = Path.Combine(AppContext.BaseDirectory, folder, filePath);
+        }
+
+        if (!File.Exists(filePath))
+        {
+            logger?.LogWarning("File not found: {filename}", filePath);
+            return null;
+        }
+
+        return filePath;
+    }
+
     public static void ListFiles(
         string folder,
         string[] extensions,
-        ILogger serviceLogger)
+        ILogger logger)
     {
         try
         {
@@ -25,45 +67,25 @@ internal class Helpers
             int i = 0;
             foreach (var file in files)
             {
-                if (++i == MAX_MEDIA_FILES_TO_LIST)
+                if (++i == MAX_FILES_TO_LIST)
                 {
-                    serviceLogger.LogInformation(" ... [skipping other {count} files]",
-                        files.Count - MAX_MEDIA_FILES_TO_LIST);
+                    logger.LogInformation(" ... [skipping other {count} files]",
+                        files.Count - MAX_FILES_TO_LIST);
                     break;
                 }
-                serviceLogger.LogInformation("Found file {file}", file);
+                logger.LogInformation("Found file {file}", file);
             }
         }
         catch
         {
-            serviceLogger.LogWarning("Folder {folder} does not exist", folder);
+            logger.LogWarning("Folder {folder} does not exist", folder);
         }
     }
 
-    public static bool SetLogFileName(
-        string filename,
-        FileLogger fileLogger,
-        ILogger serviceLogger)
-    {
-        if (string.IsNullOrEmpty(filename))
-        {
-            if (fileLogger.IsLogging)
-            {
-                serviceLogger.LogInformation("Logging disabled");
-                fileLogger.SetFileName(string.Empty);
-            }
-            return false;
-        }
-        else
-        {
-            var result = fileLogger.SetFileName(filename);
-            if (result)
-                serviceLogger.LogInformation("Logging to {filename}", filename);
-            else
-                serviceLogger.LogWarning("Cannot log to {filename}", filename);
-            return result;
-        }
-    }
+    #region Internal
+
+    const int MAX_FILES_TO_LIST = 7;
+
 
     public static async Task<Common.UploadResult> UploadFile(
         IAsyncStreamReader<Common.UploadRequest> requestStream,
@@ -172,5 +194,5 @@ internal class Helpers
         return result;
     }
 
-    const int MAX_MEDIA_FILES_TO_LIST = 7;
+    #endregion
 }
