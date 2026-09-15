@@ -39,6 +39,9 @@
     <Compile Update="Widgets\Joystick.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Update="Widgets\StreamDeck.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Update="Widgets\Screen.xaml.cs">
       <SubType>Code</SubType>
     </Compile>

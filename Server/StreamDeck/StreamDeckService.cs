@@ -11,7 +11,9 @@ namespace Server.StreamDeck;
 internal class StreamDeckService : Proto.Dispatcher.DispatcherBase, IFileService
 {
     public string StorageFolder { get; } = "deck";
-    public bool IsAvailable() => StreamDeckSharp.StreamDeck.EnumerateDevices().Any();
+    public bool IsAvailable() => StreamDeckSharp.StreamDeck
+        .EnumerateDevices()
+        .Any();
 
     public StreamDeckService(ILoggerFactory loggerFactory) : base()
     {
@@ -36,19 +38,34 @@ internal class StreamDeckService : Proto.Dispatcher.DispatcherBase, IFileService
         GC.SuppressFinalize(this);
     }
 
-    public override Task<Common.Bool> IsAvailable (Empty request, ServerCallContext context)
+    public override Task<Common.Bool> IsAvailable(
+        Empty request,
+        ServerCallContext context)
     {
         return Task.FromResult(new Common.Bool { Value = IsAvailable() });
+    }
+
+    public override Task<Common.Bool> IsConnected(
+        Empty request,
+        ServerCallContext context)
+    {
+        return Task.FromResult(new Common.Bool { Value = _isConnected });
     }
 
     public override async Task<Common.UploadResult> UploadFile(
         IAsyncStreamReader<Common.UploadRequest> requestStream,
         ServerCallContext context)
     {
-        return await Tools.FileService.UploadFile(requestStream, context, StorageFolder, _logger);
+        return await Tools.FileService.UploadFile(
+            requestStream,
+            context,
+            StorageFolder,
+            _logger);
     }
 
-    public override Task<Proto.Keyboard> GetKeyboard(Empty request, ServerCallContext context)
+    public override Task<Proto.Keyboard> GetKeyboard(
+        Empty request,
+        ServerCallContext context)
     {
         if (!_isConnected)
             return Task.FromResult(new Proto.Keyboard());
@@ -62,23 +79,32 @@ internal class StreamDeckService : Proto.Dispatcher.DispatcherBase, IFileService
         });
     }
 
-    public override Task<Empty> SetBrightness(Common.Int request, ServerCallContext context)
+    public override Task<Empty> SetBrightness(
+        Common.Int request,
+        ServerCallContext context)
     {
         if (_isConnected)
         {
-            _deck?.SetBrightness((byte)Math.Clamp(request.Value, 0, 100));
+            var brightness = (byte)Math.Clamp(request.Value, 0, 100);
+            _deck?.SetBrightness(brightness);
+            _logger.LogInformation("Brightness set to {brightness}", brightness);
         }
         return Task.FromResult(new Empty());
     }
 
-    public override Task<Common.Bool> SetKey(Proto.Key request, ServerCallContext context)
+    public override Task<Common.Bool> SetKey(
+        Proto.Key request,
+        ServerCallContext context)
     {
         if (_deck == null || !_isConnected)
             return Task.FromResult(new Common.Bool() { Value = false });
 
         bool result = false;
 
-        string? filePath = Tools.FileService.FileNameToPath(request.FileNameOrColor, StorageFolder, null);
+        string? filePath = Tools.FileService.FileNameToPath(
+            request.FileNameOrColor,
+            StorageFolder,
+            null);
         var color = FromRGB(request.FileNameOrColor);
 
         if (request.Id < 0)
@@ -90,17 +116,21 @@ internal class StreamDeckService : Proto.Dispatcher.DispatcherBase, IFileService
                     _deck.Keys.Area.Height,
                     Color.FromRgb(color.R, color.G, color.B).ToPixel<Rgba32>());
                 _deck.DrawFullScreenBitmap(image);
+                _logger.LogInformation("All keys set to {color}", color);
                 result = true;
             }
             else if (!string.IsNullOrEmpty(filePath))
             {
                 var image = Image.Load(filePath);
                 _deck.DrawFullScreenBitmap(image);
+                _logger.LogInformation("The deck got {name} image",
+                    System.IO.Path.GetFileName(filePath));
                 result = true;
             }
             else
             {
                 _deck.ClearKeys();
+                _logger.LogInformation("All keys were cleared");
                 result = true;
             }
         }
@@ -110,24 +140,40 @@ internal class StreamDeckService : Proto.Dispatcher.DispatcherBase, IFileService
             {
                 var bmp = KeyBitmap.Create.FromColor(color);
                 _deck.SetKeyBitmap(request.Id, bmp);
+                _logger.LogInformation("Key {id} set to {color}", request.Id, color);
                 result = true;
             }
             else if (!string.IsNullOrEmpty(filePath))
             {
                 var bmp = KeyBitmap.Create.FromFile(filePath);
                 _deck.SetKeyBitmap(request.Id, bmp);
+                _logger.LogInformation("Key {id} got {name} image",
+                    request.Id,
+                    System.IO.Path.GetFileName(filePath));
                 result = true;
             }
             else
             {
                 _deck.ClearKey(request.Id);
+                _logger.LogInformation("Key {id} cleared", request.Id);
+                result = true;
             }
+        }
+
+        if (!result)
+        {
+            _logger.LogError("Failed to execute the request with ID={id} and parameter '{param}'.",
+                request.Id,
+                request.FileNameOrColor);
         }
 
         return Task.FromResult(new Common.Bool() { Value = result });
     }
 
-    public override async Task ReadEvents(Empty request, IServerStreamWriter<Proto.Event> responseStream, ServerCallContext context)
+    public override async Task ReadEvents(
+        Empty request,
+        IServerStreamWriter<Proto.Event> responseStream,
+        ServerCallContext context)
     {
         while (_isActive && !context.CancellationToken.IsCancellationRequested)
         {
@@ -159,8 +205,13 @@ internal class StreamDeckService : Proto.Dispatcher.DispatcherBase, IFileService
             _deck.ConnectionStateChanged += (s, e) =>
             {
                 _isConnected = e.NewConnectionState;
-                _logger.LogInformation(_isConnected ? "Stream Deck connected" : "Stream Deck disconnected");
-                _events.Enqueue(new Proto.Event() { IsConnected = _isConnected });
+                if (_isActive)
+                {
+                    _logger.LogInformation(_isConnected
+                        ? "Stream Deck connected"
+                        : "Stream Deck disconnected");
+                    _events.Enqueue(new Proto.Event() { IsConnected = _isConnected });
+                }
             };
             _deck.KeyStateChanged += (s, e) =>
             {
@@ -178,7 +229,10 @@ internal class StreamDeckService : Proto.Dispatcher.DispatcherBase, IFileService
 
             _events.Enqueue(new Proto.Event() { IsConnected = _isConnected });
 
-            _logger.LogInformation("Found stream deck {sn}: {row}x{col}", _deck.GetSerialNumber(), _deck.Keys.CountY, _deck.Keys.CountX);
+            _logger.LogInformation("Found stream deck {sn}: {row}x{col}",
+                _deck.GetSerialNumber(),
+                _deck.Keys.CountY,
+                _deck.Keys.CountX);
             _logger.LogInformation("Running");
         }
         catch (Exception ex)

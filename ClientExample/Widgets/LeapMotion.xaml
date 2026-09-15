@@ -16,6 +16,11 @@
     
     <Border Style="{StaticResource Card}">
         <StackPanel>
+            <StackPanel.Resources>
+                <Style TargetType="widgets:Indicator">
+                    <Setter Property="Margin" Value="8,0"/>
+                </Style>
+            </StackPanel.Resources>
             <Label Style="{StaticResource Device}"
                    Content="Leap Motion"/>
             <StackPanel Margin="4">

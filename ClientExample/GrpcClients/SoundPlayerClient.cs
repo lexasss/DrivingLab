@@ -63,6 +63,9 @@ public class SoundPlayerClient : Client
 
     public async Task<Common.UploadResult> UploadFile(string filename)
     {
+        if (!_isAvailable)
+            return new Common.UploadResult() { ErrorMessage = "Service unavailable" };
+
         using var call = _client.UploadFile();
         return await FileService.UploadFile(call, filename, "audio");
     }

@@ -12,15 +12,14 @@ internal class FileService
         string folder,
         ILogger logger)
     {
-        var filename = requestStream.Current?.Metadata?.FileName;
         var result = await UploadFile(requestStream, context, folder);
 
         if (result.Size > 0)
             logger.LogInformation("Uploaded {name} ({size} bytes)",
-                filename, result.Size);
+                result.FileName, result.Size);
         else
             logger.LogError("Failed to upload {name}: {error}",
-                filename, result.ErrorMessage);
+                result.FileName, result.ErrorMessage);
 
         return result;
     }
@@ -86,7 +85,6 @@ internal class FileService
 
     const int MAX_FILES_TO_LIST = 7;
 
-
     public static async Task<Common.UploadResult> UploadFile(
         IAsyncStreamReader<Common.UploadRequest> requestStream,
         ServerCallContext context,
@@ -95,6 +93,7 @@ internal class FileService
         Common.FileMetadata? metadata = null;
         FileStream? output = null;
         long totalBytes = 0;
+        string fileName = string.Empty;
         Common.UploadResult result;
 
         if (!Directory.Exists(folder))
@@ -121,7 +120,7 @@ internal class FileService
 
                     metadata = request.Metadata;
 
-                    var fileName = Path.GetFileName(metadata.FileName);
+                    fileName = Path.GetFileName(metadata.FileName);
                     if (string.IsNullOrWhiteSpace(fileName))
                     {
                         throw new RpcException(
@@ -171,6 +170,7 @@ internal class FileService
 
             result = new Common.UploadResult
             {
+                FileName = fileName,
                 ErrorMessage = string.Empty,
                 Size = totalBytes
             };
@@ -179,6 +179,7 @@ internal class FileService
         {
             result = new Common.UploadResult
             {
+                FileName = fileName,
                 ErrorMessage = ex.Message,
                 Size = 0
             };

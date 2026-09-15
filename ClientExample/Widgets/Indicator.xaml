@@ -6,14 +6,13 @@
              xmlns:local="clr-namespace:ClientExample"
              xmlns:conv="clr-namespace:MaterialDesignThemes.Wpf.Converters;assembly=MaterialDesignThemes.Wpf"
              mc:Ignorable="d" 
-             d:DesignHeight="30"
-             d:DesignWidth="200"
+             d:DesignHeight="12"
+             d:DesignWidth="28"
              x:Name="root">
     <WrapPanel>
         <Grid Width="12"
               Height="12"
-              VerticalAlignment="Center"
-              Margin="8,0">
+              VerticalAlignment="Center">
             <Ellipse Fill="#FFC12323"
                      Visibility="{Binding IsOn,
                                           ElementName=root,
@@ -26,6 +25,7 @@
         </Grid>
 
         <Label Content="{Binding Text, ElementName=root}"
-               Padding="0,4"/>
+               Padding="0,4"
+               Margin="8,0,0,0"/>
     </WrapPanel>
 </UserControl>

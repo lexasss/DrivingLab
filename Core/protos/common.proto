@@ -42,18 +42,19 @@ message Vector {
 }
 
 message FileMetadata {
-  string fileName = 1;
-  string contentType = 2;
+	string fileName = 1;
+	string contentType = 2;
 }
 
 message UploadRequest {
-  oneof payload {
-    FileMetadata metadata = 1;
-    bytes chunk = 2;
-  }
+	oneof payload {
+		FileMetadata metadata = 1;
+		bytes chunk = 2;
+	}
 }
 
 message UploadResult {
-  string errorMessage = 1;
-  int64 size = 2;
+	string fileName = 1;
+	string errorMessage = 2;
+	int64 size = 3;
 }

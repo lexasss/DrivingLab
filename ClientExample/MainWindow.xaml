@@ -21,5 +21,6 @@
         <widgets:Screen DataContext="{Binding Screen}"/>
         <widgets:Pointing DataContext="{Binding Pointing}"/>
         <widgets:TensionR DataContext="{Binding TensionR}"/>
+        <widgets:StreamDeck DataContext="{Binding StreamDeck}"/>
     </UniformGrid>
 </Window>

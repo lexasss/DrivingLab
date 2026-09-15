@@ -29,6 +29,11 @@
             <Label Style="{StaticResource Device}"
                    Content="Smart Eye"/>
             <StackPanel Margin="4">
+                <StackPanel.Resources>
+                    <Style TargetType="widgets:Indicator">
+                        <Setter Property="Margin" Value="4,0"/>
+                    </Style>
+                </StackPanel.Resources>
                 <widgets:Indicator IsOn="{Binding IsAvailable, Mode=OneWay}"
                                    Text="Available"/>
                 <widgets:Indicator IsOn="{Binding IsConnected, Mode=OneWay}"

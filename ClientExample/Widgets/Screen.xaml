@@ -6,7 +6,6 @@
              xmlns:sys="clr-namespace:System;assembly=mscorlib"
              xmlns:local="clr-namespace:ClientExample"
              xmlns:widgets="clr-namespace:ClientExample.Widgets"
-             xmlns:sp="clr-namespace:SoundPlayer;assembly=Core"
              xmlns:md="clr-namespace:MaterialDesignThemes.Wpf;assembly=MaterialDesignThemes.Wpf"
              xmlns:conv="clr-namespace:MaterialDesignThemes.Wpf.Converters;assembly=MaterialDesignThemes.Wpf"
              mc:Ignorable="d" 
@@ -20,6 +19,11 @@
     
     <Border Style="{StaticResource Card}">
         <StackPanel>
+            <StackPanel.Resources>
+                <Style TargetType="widgets:Indicator">
+                    <Setter Property="Margin" Value="8,0"/>
+                </Style>
+            </StackPanel.Resources>
             <Label Style="{StaticResource Device}"
                    Content="Screen"/>
             <StackPanel Margin="4">

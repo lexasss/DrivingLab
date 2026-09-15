@@ -32,6 +32,11 @@
             <Label Style="{StaticResource Device}"
                    Content="Sound Player"/>
             <StackPanel Margin="4">
+                <StackPanel.Resources>
+                    <Style TargetType="widgets:Indicator">
+                        <Setter Property="Margin" Value="4,0"/>
+                    </Style>
+                </StackPanel.Resources>
                 <widgets:Indicator IsOn="{Binding IsAvailable, Mode=OneWay}"
                                    Text="Available"/>
                 <Separator/>

@@ -22,6 +22,7 @@
                    Content="Pointing"/>
             <StackPanel Margin="4">
                 <widgets:Indicator IsOn="{Binding IsAvailable, Mode=OneWay}"
+                                   Margin="8,0"
                                    Text="Available"/>
                 <Separator/>
                 <Grid>
@@ -67,9 +68,15 @@
                 </WrapPanel>
                 <Separator/>
                 <StackPanel>
+                    <StackPanel.Resources>
+                        <Style TargetType="widgets:Indicator">
+                            <Setter Property="Margin" Value="4,0"/>
+                        </Style>
+                    </StackPanel.Resources>
                     <Label Content="Buttons"
                            HorizontalContentAlignment="Center"/>
-                    <UniformGrid Columns="6">
+                    <UniformGrid Columns="6"
+                                 HorizontalAlignment="Center">
                         <widgets:Indicator IsOn="{Binding Buttons[0].IsPressed, Mode=OneWay}"/>
                         <widgets:Indicator IsOn="{Binding Buttons[1].IsPressed, Mode=OneWay}"/>
                         <widgets:Indicator IsOn="{Binding Buttons[2].IsPressed, Mode=OneWay}"/>
