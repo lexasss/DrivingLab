@@ -6,6 +6,7 @@ namespace Server.Pointing;
 class Mouse : PointingDevice
 {
     public override DeviceType Type => DeviceType.Mouse;
+    public override bool IsCreated => true;
 
     public Mouse() : base()
     {

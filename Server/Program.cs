@@ -42,6 +42,7 @@ class Program
         serviceCollection.AddTransient<Pointing.PointingService>();
         serviceCollection.AddTransient<TensionR.TensionRService>();
         serviceCollection.AddTransient<StreamDeck.StreamDeckService>();
+        serviceCollection.AddTransient<Driving.DrivingService>();
 
         var serviceProvider = serviceCollection.BuildServiceProvider();
 
@@ -94,6 +95,11 @@ class Program
                 "Stream Deck", (int)Common.Ports.StreamDeck,
                 global::StreamDeck.Dispatcher.Descriptor,
                 service => global::StreamDeck.Dispatcher.BindService((global::StreamDeck.Dispatcher.DispatcherBase)service)
+            ),
+            Create<Driving.DrivingService>(serviceProvider,
+                "Driving", (int)Common.Ports.Driving,
+                global::Driving.Dispatcher.Descriptor,
+                service => global::Driving.Dispatcher.BindService((global::Driving.Dispatcher.DispatcherBase)service)
             ),
         };
 

@@ -16,17 +16,15 @@ internal class PointingService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
     {
         _logger = loggerFactory.CreateLogger("PNTG");
 
-        foreach (var device in PointingDevice.ListDevices(DeviceType.Mouse))
-            _logger.LogInformation("Found a mouse {device}", device.ProductName);
-        foreach (var device in PointingDevice.ListDevices(DeviceType.Joystick))
-            _logger.LogInformation("Found a joystick {device}", device.ProductName);
-        foreach (var device in PointingDevice.ListDevices(DeviceType.Gamepad))
-            _logger.LogInformation("Found a gamepad {device}", device.ProductName);
-
-        var gamepads = PointingDevice.ListDevices(DeviceType.Gamepad);
-
         try
         {
+            foreach (var device in PointingDevice.ListDevices(DeviceType.Mouse))
+                _logger.LogInformation("Found a mouse {device}", device.ProductName);
+            foreach (var device in PointingDevice.ListDevices(DeviceType.Joystick))
+                _logger.LogInformation("Found a joystick {device}", device.ProductName);
+            foreach (var device in PointingDevice.ListDevices(DeviceType.Gamepad))
+                _logger.LogInformation("Found a gamepad {device}", device.ProductName);
+
             _logger.LogInformation("Running");
             _isActive = true;
         }

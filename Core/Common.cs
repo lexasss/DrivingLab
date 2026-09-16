@@ -11,6 +11,7 @@ public enum Ports
     Pointing = 30056,
     TensionR = 30057,
     StreamDeck = 30058,
+    Driving = 30059,
 }
 
 public static class Constants

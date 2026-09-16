@@ -6,6 +6,7 @@ namespace Server.Pointing;
 abstract class PointingDevice : IDisposable
 {
     public abstract DeviceType Type { get; }
+    public abstract bool IsCreated { get; }
 
     public event EventHandler<Proto.Data>? Data;
     public event EventHandler? Disconnected;
@@ -54,18 +55,6 @@ abstract class PointingDevice : IDisposable
     public static bool Has(DeviceType type)
     {
         return _directInput.GetDevices(type, DeviceEnumerationFlags.AllDevices).Count > 0;
-    }
-
-    public static DeviceType GetFirstExistingType()
-    {
-        if (Has(DeviceType.Mouse))
-            return DeviceType.Mouse;
-        else if (Has(DeviceType.Joystick))
-            return DeviceType.Joystick;
-        else if (Has(DeviceType.Gamepad))
-            return DeviceType.Gamepad;
-
-        throw new InvalidProgramException();
     }
 
     // Internal

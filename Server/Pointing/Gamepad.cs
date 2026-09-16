@@ -9,6 +9,6 @@ class Gamepad : Joystick
     public Gamepad(string name) : base()
     {
         var devices = ListDevices(DeviceType.Gamepad);
-        Create(devices, name);
+        Create(devices, name, NameComparisionOption.Equals);
     }
 }

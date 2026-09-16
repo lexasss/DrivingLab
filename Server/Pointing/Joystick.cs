@@ -1,22 +1,33 @@
 ﻿using SharpDX.DirectInput;
-using System.Xml.Linq;
 using Proto = global::Pointing;
 
 namespace Server.Pointing;
 
 class Joystick : PointingDevice
 {
-    public override DeviceType Type => DeviceType.Joystick;
+    public enum NameComparisionOption
+    {
+        Equals,
+        StartsWith,
+        Contains
+    }
+
+    public override DeviceType Type { get; }
+    public override bool IsCreated => _joystick != null;
 
     public Joystick() : base() { }
 
-    public Joystick(string name) : base()
+    public Joystick(string name,
+        DeviceType deviceType = DeviceType.Joystick,
+        NameComparisionOption comparisionOption = NameComparisionOption.Equals)
+        : base()
     {
         if (string.IsNullOrEmpty(name))
             return;
 
-        var devices = ListDevices(DeviceType.Joystick);
-        Create(devices, name);
+        Type = deviceType;
+        var devices = ListDevices(deviceType);
+        Create(devices, name, comparisionOption);
     }
 
     #region Internal
@@ -146,9 +157,15 @@ class Joystick : PointingDevice
         _joystick?.Unacquire();
     }
 
-    protected void Create(DeviceInstance[] devices, string name)
+    protected void Create(DeviceInstance[] devices, string name, NameComparisionOption comparisionOption)
     {
-        var selectedDevice = devices.FirstOrDefault(device => device.ProductName.Equals(name));
+        var selectedDevice = devices.FirstOrDefault(device => comparisionOption switch
+        {
+            NameComparisionOption.Equals => device.ProductName.Equals(name, StringComparison.OrdinalIgnoreCase),
+            NameComparisionOption.StartsWith => device.ProductName.StartsWith(name, StringComparison.OrdinalIgnoreCase),
+            NameComparisionOption.Contains => device.ProductName.Contains(name, StringComparison.OrdinalIgnoreCase),
+            _ => throw new NotImplementedException()
+        });
 
         if (selectedDevice != null)
         {

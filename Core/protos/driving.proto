@@ -1,0 +1,85 @@
+syntax = "proto3";
+
+package Driving;
+
+import "protos/common.proto";
+import "google/protobuf/empty.proto";
+
+service Dispatcher {
+	rpc IsAvailable (google.protobuf.Empty) returns (Common.Bool) {}
+
+	rpc GetConnectionAvailable (google.protobuf.Empty) returns (ConnectionStatus) {}
+	rpc SetActivePedalProfile (ActivePedalProfile) returns (google.protobuf.Empty) {}
+
+	rpc SetLogFileName (Common.String) returns (Common.Bool) {}
+
+	// Initializes data reading stream, but the data is not polling to clients
+	// until Start is called
+	rpc ReadData (google.protobuf.Empty) returns (stream Data) {}
+	rpc ReadEvents (google.protobuf.Empty) returns (stream Event) {}
+
+	// Enable of disable data polling to clients
+	// (has no effect if ReadData was not called yet)
+	rpc Start (google.protobuf.Empty) returns (google.protobuf.Empty) {}
+	rpc Stop (google.protobuf.Empty) returns (google.protobuf.Empty) {}
+}
+
+enum ActivePedal {
+	Throttle = 0;
+	Brake = 1;
+}
+
+message ActivePedalProfile {
+	ActivePedal pedal = 1;
+	repeated Common.Point points = 2;
+}
+
+message Button {
+	bool isPressed = 1;
+}
+
+message RotaryButton {
+	bool isPressed = 1;
+	double rotation = 2;
+}
+
+message RotaryTiltButton {
+	bool isPressed = 1;
+	double rotation = 2;
+	double degrees = 3;
+}
+
+message Data {
+	double wheelRotation = 1;
+	double throttlePedal = 2;
+	double brakePedal = 3;
+	double activeThrottlePedal = 4;
+	double activeBrakePedal = 5;
+	Button topLeftButton1 = 6;
+	Button topLeftButton2 = 7;
+	Button topLeftButton3 = 8;
+	Button topRightButton1 = 9;
+	Button topRightButton2 = 10;
+	Button topRightButton3 = 11;
+	Button bottomLeftButton1 = 12;
+	Button bottomLeftButton2 = 13;
+	Button bottomRightButton1 = 14;
+	Button bottomRightButton2 = 15;
+	Button leftPaddleShifter = 16;
+	Button rightPaddleShifter = 17;
+	RotaryButton rotaryButton = 18;
+	RotaryTiltButton rotaryTiltButton = 19;
+}
+
+message ConnectionStatus {
+	bool isBaseConnected = 1;
+	bool isWheelConnected = 2;
+	bool arePedalsConnected = 3;
+	bool areActivePedalsConnected = 4;
+}
+
+message Event {
+	oneof value {
+		ConnectionStatus connectionStatus = 1;
+	}
+}
