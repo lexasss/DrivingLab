@@ -9,11 +9,9 @@ class Mouse : PointingDevice
 
     public Mouse() : base()
     {
-        var mouse = new SharpDX.DirectInput.Mouse(_directInput);
-        mouse.Properties.BufferSize = 128;
-        mouse.Acquire();
-
-        _mouse = mouse;
+        _mouse = new SharpDX.DirectInput.Mouse(_directInput);
+        _mouse.Properties.BufferSize = 128;
+        _mouse.Acquire();
     }
 
     #region
@@ -50,6 +48,11 @@ class Mouse : PointingDevice
                     }
             }
         }
+    }
+
+    protected override void Close()
+    {
+        _mouse.Unacquire();
     }
 
     #endregion

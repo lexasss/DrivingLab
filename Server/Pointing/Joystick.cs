@@ -1,4 +1,5 @@
 ﻿using SharpDX.DirectInput;
+using System.Xml.Linq;
 using Proto = global::Pointing;
 
 namespace Server.Pointing;
@@ -7,22 +8,15 @@ class Joystick : PointingDevice
 {
     public override DeviceType Type => DeviceType.Joystick;
 
+    public Joystick() : base() { }
+
     public Joystick(string name) : base()
     {
         if (string.IsNullOrEmpty(name))
             return;
 
         var devices = ListDevices(DeviceType.Joystick);
-        var selectedDevice = devices.FirstOrDefault(device => device.ProductName.Equals(name)) ?? devices.FirstOrDefault();
-
-        if (selectedDevice != null)
-        {
-            var joystick = new SharpDX.DirectInput.Joystick(_directInput, selectedDevice.InstanceGuid);
-            joystick.Properties.BufferSize = 128;
-            joystick.Acquire();
-
-            _joystick = joystick;
-        }
+        Create(devices, name);
     }
 
     #region Internal
@@ -144,6 +138,25 @@ class Joystick : PointingDevice
                     }*/
                 }
             }
+        }
+    }
+
+    protected override void Close()
+    {
+        _joystick?.Unacquire();
+    }
+
+    protected void Create(DeviceInstance[] devices, string name)
+    {
+        var selectedDevice = devices.FirstOrDefault(device => device.ProductName.Equals(name));
+
+        if (selectedDevice != null)
+        {
+            var joystick = new SharpDX.DirectInput.Joystick(_directInput, selectedDevice.InstanceGuid);
+            joystick.Properties.BufferSize = 128;
+            joystick.Acquire();
+
+            _joystick = joystick;
         }
     }
 

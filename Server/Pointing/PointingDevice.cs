@@ -90,6 +90,7 @@ abstract class PointingDevice : IDisposable
     protected Common.Vector torque = Common.Vector.Empty;
 
     protected abstract void Step(); // this should update _x, _y and _buttons
+    protected abstract void Close(); // this should call Unaquire()
 
     protected void OnDisconnected()
     {
