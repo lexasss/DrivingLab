@@ -8,7 +8,7 @@ import "google/protobuf/empty.proto";
 service Dispatcher {
 	rpc IsAvailable (google.protobuf.Empty) returns (Common.Bool) {}
 
-	rpc GetConnectionAvailable (google.protobuf.Empty) returns (ConnectionStatus) {}
+	rpc GetConnectionStatus (google.protobuf.Empty) returns (ConnectionStatus) {}
 	rpc SetActivePedalProfile (ActivePedalProfile) returns (google.protobuf.Empty) {}
 
 	rpc SetLogFileName (Common.String) returns (Common.Bool) {}

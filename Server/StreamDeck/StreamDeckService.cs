@@ -11,6 +11,7 @@ namespace Server.StreamDeck;
 internal class StreamDeckService : Proto.Dispatcher.DispatcherBase, IFileService
 {
     public string StorageFolder { get; } = "deck";
+
     public bool IsAvailable() => StreamDeckSharp.StreamDeck
         .EnumerateDevices()
         .Any();
@@ -42,14 +43,14 @@ internal class StreamDeckService : Proto.Dispatcher.DispatcherBase, IFileService
         Empty request,
         ServerCallContext context)
     {
-        return Task.FromResult(new Common.Bool { Value = IsAvailable() });
+        return Common.Bool.From(IsAvailable());
     }
 
     public override Task<Common.Bool> IsConnected(
         Empty request,
         ServerCallContext context)
     {
-        return Task.FromResult(new Common.Bool { Value = _isConnected });
+        return Common.Bool.From(_isConnected);
     }
 
     public override async Task<Common.UploadResult> UploadFile(
@@ -89,7 +90,7 @@ internal class StreamDeckService : Proto.Dispatcher.DispatcherBase, IFileService
             _deck?.SetBrightness(brightness);
             _logger.LogInformation("Brightness set to {brightness}", brightness);
         }
-        return Task.FromResult(new Empty());
+        return Common.Constants.Empty;
     }
 
     public override Task<Common.Bool> SetKey(
@@ -97,7 +98,7 @@ internal class StreamDeckService : Proto.Dispatcher.DispatcherBase, IFileService
         ServerCallContext context)
     {
         if (_deck == null || !_isConnected)
-            return Task.FromResult(new Common.Bool() { Value = false });
+            return Common.Bool.False;
 
         bool result = false;
 
@@ -114,7 +115,9 @@ internal class StreamDeckService : Proto.Dispatcher.DispatcherBase, IFileService
                 var image = new Image<Rgba32>(
                     _deck.Keys.Area.Width,
                     _deck.Keys.Area.Height,
-                    Color.FromRgb(color.R, color.G, color.B).ToPixel<Rgba32>());
+                    Color.FromRgb(color.R, color.G, color.B)
+                         .ToPixel<Rgba32>()
+                );
                 _deck.DrawFullScreenBitmap(image);
                 _logger.LogInformation("All keys set to {color}", color);
                 result = true;
@@ -167,7 +170,7 @@ internal class StreamDeckService : Proto.Dispatcher.DispatcherBase, IFileService
                 request.FileNameOrColor);
         }
 
-        return Task.FromResult(new Common.Bool() { Value = result });
+        return Common.Bool.From(result);
     }
 
     public override async Task ReadEvents(
@@ -210,7 +213,9 @@ internal class StreamDeckService : Proto.Dispatcher.DispatcherBase, IFileService
                     _logger.LogInformation(_isConnected
                         ? "Stream Deck connected"
                         : "Stream Deck disconnected");
-                    _events.Enqueue(new Proto.Event() { IsConnected = _isConnected });
+                    _events.Enqueue(new Proto.Event() {
+                        IsConnected = _isConnected
+                    });
                 }
             };
             _deck.KeyStateChanged += (s, e) =>
@@ -227,7 +232,9 @@ internal class StreamDeckService : Proto.Dispatcher.DispatcherBase, IFileService
 
             _isConnected = true;
 
-            _events.Enqueue(new Proto.Event() { IsConnected = _isConnected });
+            _events.Enqueue(new Proto.Event() {
+                IsConnected = _isConnected
+            });
 
             _logger.LogInformation("Found stream deck {sn}: {row}x{col}",
                 _deck.GetSerialNumber(),
@@ -243,6 +250,8 @@ internal class StreamDeckService : Proto.Dispatcher.DispatcherBase, IFileService
 
     private static OmbColor FromRGB(string rgb)
     {
+        // black color means "not a valid color"
+
         if (rgb == null)
             return OmbColor.Black;
 

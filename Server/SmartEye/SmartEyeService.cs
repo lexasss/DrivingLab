@@ -1,12 +1,13 @@
 ﻿using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Microsoft.Extensions.Logging;
-using Server.Tools;
 using Proto = global::SmartEye;
 
 namespace Server.SmartEye;
 
-internal class StreamDeckService : Proto.Dispatcher.DispatcherBase, ITelemetryService
+internal class StreamDeckService :
+    Proto.Dispatcher.DispatcherBase,
+    ITelemetryService
 {
     public bool IsAvailable() => _seClient != null;
 
@@ -52,22 +53,30 @@ internal class StreamDeckService : Proto.Dispatcher.DispatcherBase, ITelemetrySe
         GC.SuppressFinalize(this);
     }
 
-    public override Task<Common.Bool> IsAvailable (Empty request, ServerCallContext context)
+    public override Task<Common.Bool> IsAvailable(
+        Empty request,
+        ServerCallContext context)
     {
-        return Task.FromResult(new Common.Bool { Value = IsAvailable() });
+        return Common.Bool.From(IsAvailable());
     }
 
-    public override Task<Common.Bool> IsConnected(Empty request, ServerCallContext context)
+    public override Task<Common.Bool> IsConnected(
+        Empty request,
+        ServerCallContext context)
     {
-        return Task.FromResult(new Common.Bool { Value = _isConnected });
+        return Common.Bool.From(_isConnected);
     }
 
-    public override async Task<Common.Bool> Configure(Proto.Configuration request, ServerCallContext context)
+    public override async Task<Common.Bool> Configure(
+        Proto.Configuration request,
+        ServerCallContext context)
     {
         if (!_isConnected && _seClient != null)
         {
-            SmartEyeTools.Options.Instance.IntersectionSource = (SmartEyeTools.IntersectionSource)request.IntersectionSource;
-            SmartEyeTools.Options.Instance.IntersectionSourceFiltered = request.UseFilteredData;
+            SmartEyeTools.Options.Instance.IntersectionSource =
+                (SmartEyeTools.IntersectionSource)request.IntersectionSource;
+            SmartEyeTools.Options.Instance.IntersectionSourceFiltered =
+                request.UseFilteredData;
 
             _planeMappingMode = request.PlaneMappingMode;
 
@@ -87,57 +96,47 @@ internal class StreamDeckService : Proto.Dispatcher.DispatcherBase, ITelemetrySe
             }
         }
 
-        return new Common.Bool() { Value = _isConnected };
+        return new Common.Bool(_isConnected);
     }
 
-    public override Task<Empty> Start(Empty request, ServerCallContext context)
+    public override Task<Empty> Start(
+        Empty request,
+        ServerCallContext context)
     {
         if (!_isSending)
         {
             _logger.LogInformation("Data streaming: started");
             _isSending = true;
         }
-        return Task.FromResult(new Empty());
+        return Common.Constants.Empty;
     }
 
-    public override Task<Empty> Stop(Empty request, ServerCallContext context)
+    public override Task<Empty> Stop(
+        Empty request,
+        ServerCallContext context)
     {
         if (_isSending)
         {
             _logger.LogInformation("Data streaming: stopped");
             _isSending = false;
         }
-        return Task.FromResult(new Empty());
+        return Common.Constants.Empty;
     }
 
-    public override Task<Common.Bool> SetLogFileName(Common.String request, ServerCallContext context)
+    public override Task<Common.Bool> SetLogFileName(
+        Common.String request,
+        ServerCallContext context)
     {
-        return TelemetryService.SetLogFileName(request.Value, _fileLogger, _logger);
+        return Tools.TelemetryService.SetLogFileName(
+            request.Value,
+            _fileLogger,
+            _logger);
     }
 
-    /*
-    public override async Task ReadData(Empty request, IServerStreamWriter<Proto.Sample> responseStream, ServerCallContext context)
-    {
-        if (_isReading)
-            return;
-
-        _logger.LogInformation("Data reading: start");
-        _isReading = true;
-
-        await foreach (var data in _channel.Reader.ReadAllAsync(context.CancellationToken))
-        {
-            if (_isSending)
-            {
-                await responseStream.WriteAsync(data);
-                _fileLogger.Add(data.ToStringArray());
-            }
-        }
-
-        _logger.LogInformation("Data reading: stop");
-        _isReading = false;
-    }*/
-
-    public override async Task ReadEvents(Empty request, IServerStreamWriter<Proto.Event> responseStream, ServerCallContext context)
+    public override async Task ReadEvents(
+        Empty request,
+        IServerStreamWriter<Proto.Event> responseStream,
+        ServerCallContext context)
     {
         while (_isActive && !context.CancellationToken.IsCancellationRequested)
         {
@@ -166,7 +165,7 @@ internal class StreamDeckService : Proto.Dispatcher.DispatcherBase, ITelemetrySe
     Proto.PlaneMappingMode _planeMappingMode;
 
     string? _currentIntersectionName = null;
-    HashSet<string> _currentIntersectionNames = new();
+    HashSet<string> _currentIntersectionNames = [];
 
     private void Client_Sample(object? sender, SmartEyeTools.Data.Sample e)
     {
@@ -189,12 +188,19 @@ internal class StreamDeckService : Proto.Dispatcher.DispatcherBase, ITelemetrySe
     private void HandleClosestIntersection(SmartEyeTools.Data.Sample sample)
     {
         var seClientOptions = SmartEyeTools.Options.Instance;
-        var intersectionSource = (seClientOptions.IntersectionSource, seClientOptions.IntersectionSourceFiltered) switch
+        var source = seClientOptions.IntersectionSource;
+        var isFiltered = seClientOptions.IntersectionSourceFiltered;
+        
+        var intersectionSource = (source, isFiltered) switch
         {
-            (SmartEyeTools.IntersectionSource.Gaze, false) => sample.ClosestWorldIntersection,
-            (SmartEyeTools.IntersectionSource.Gaze, true) => sample.FilteredClosestWorldIntersection,
-            (SmartEyeTools.IntersectionSource.AI, false) => sample.EstimatedClosestWorldIntersection,
-            (SmartEyeTools.IntersectionSource.AI, true) => sample.FilteredEstimatedClosestWorldIntersection,
+            (SmartEyeTools.IntersectionSource.Gaze, false) => 
+                sample.ClosestWorldIntersection,
+            (SmartEyeTools.IntersectionSource.Gaze, true) =>
+                sample.FilteredClosestWorldIntersection,
+            (SmartEyeTools.IntersectionSource.AI, false) =>
+                sample.EstimatedClosestWorldIntersection,
+            (SmartEyeTools.IntersectionSource.AI, true) =>
+                sample.FilteredEstimatedClosestWorldIntersection,
             _ => throw new Exception($"This intersection source is not implemented")
         };
 
@@ -239,12 +245,19 @@ internal class StreamDeckService : Proto.Dispatcher.DispatcherBase, ITelemetrySe
     private void HandleAllIntersections(SmartEyeTools.Data.Sample sample)
     {
         var seClientOptions = SmartEyeTools.Options.Instance;
-        var intersectionSources = (seClientOptions.IntersectionSource, seClientOptions.IntersectionSourceFiltered) switch
+        var source = seClientOptions.IntersectionSource;
+        var isFiltered = seClientOptions.IntersectionSourceFiltered;
+
+        var intersectionSources = (source, isFiltered) switch
         {
-            (SmartEyeTools.IntersectionSource.Gaze, false) => sample.AllWorldIntersections,
-            (SmartEyeTools.IntersectionSource.Gaze, true) => sample.FilteredAllWorldIntersections,
-            (SmartEyeTools.IntersectionSource.AI, false) => sample.EstimatedAllWorldIntersections,
-            (SmartEyeTools.IntersectionSource.AI, true) => sample.FilteredEstimatedAllWorldIntersections,
+            (SmartEyeTools.IntersectionSource.Gaze, false) =>
+                sample.AllWorldIntersections,
+            (SmartEyeTools.IntersectionSource.Gaze, true) =>
+                sample.FilteredAllWorldIntersections,
+            (SmartEyeTools.IntersectionSource.AI, false) =>
+                sample.EstimatedAllWorldIntersections,
+            (SmartEyeTools.IntersectionSource.AI, true) =>
+                sample.FilteredEstimatedAllWorldIntersections,
             _ => throw new Exception($"This intersection source is not implemented")
         };
 
@@ -257,21 +270,23 @@ internal class StreamDeckService : Proto.Dispatcher.DispatcherBase, ITelemetrySe
                 activePlanes.Add(intersectionName);
             }
 
-            var ints = new Proto.Intersections();
-            ints.Items.AddRange(intersections.Select(i => new Proto.Intersection
-            {
-                Name = _currentIntersectionName,
-                GazePoint = new Common.Vector()
+            var grpcIntersections = new Proto.Intersections();
+            grpcIntersections.Items.AddRange(
+                intersections.Select(i => new Proto.Intersection
                 {
-                    X = i.ObjectPoint.X,
-                    Y = i.ObjectPoint.Y,
-                    Z = i.ObjectPoint.Z
-                }
-            }));
+                    Name = _currentIntersectionName,
+                    GazePoint = new Common.Vector()
+                    {
+                        X = i.ObjectPoint.X,
+                        Y = i.ObjectPoint.Y,
+                        Z = i.ObjectPoint.Z
+                    }
+                })
+            );
 
             _events.Enqueue(new Proto.Event()
             {
-                Intersections = ints
+                Intersections = grpcIntersections
             });
         }
 

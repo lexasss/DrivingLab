@@ -23,7 +23,11 @@ internal sealed class FileLogger : IDisposable
             var filePath = filename;
             if (!Path.IsPathRooted(filePath))
             {
-                filePath = Path.Combine(AppContext.BaseDirectory, DATA_FOLDER, filename);
+                filePath = Path.Combine(
+                    AppContext.BaseDirectory,
+                    DATA_FOLDER,
+                    filename
+                );
             }
 
             var folder = Path.GetDirectoryName(filePath);
@@ -42,7 +46,7 @@ internal sealed class FileLogger : IDisposable
 
                 _writer = new StreamWriter(
                     stream,
-                    new UTF8Encoding(encoderShouldEmitUTF8Identifier: false))
+                    new UTF8Encoding(false))
                 {
                     AutoFlush = true
                 };

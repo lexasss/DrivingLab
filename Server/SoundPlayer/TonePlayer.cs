@@ -4,7 +4,6 @@ using Proto = global::SoundPlayer;
 
 namespace Server.SoundPlayer;
 
-[System.Diagnostics.CodeAnalysis.SuppressMessage("Interoperability", "CA1416:Validate platform compatibility")]
 public class TonePlayer : IDisposable
 {
     public double MaxFrequency { get; set; } = 1000;

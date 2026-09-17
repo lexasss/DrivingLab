@@ -16,16 +16,19 @@ internal class TelemetryService
                 logger.LogInformation("Logging disabled");
                 fileLogger.SetFileName(string.Empty);
             }
-            return Task.FromResult(new Common.Bool { Value = false });
+
+            return Common.Bool.False;
         }
         else
         {
             var result = fileLogger.SetFileName(filename);
+
             if (result)
                 logger.LogInformation("Logging to {filename}", filename);
             else
                 logger.LogWarning("Cannot log to {filename}", filename);
-            return Task.FromResult(new Common.Bool { Value = result });
+
+            return Common.Bool.From(result);
         }
     }
 }

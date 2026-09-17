@@ -43,7 +43,8 @@ abstract class PointingDevice : IDisposable
 
         foreach (var type in types)
         {
-            foreach (var deviceInstance in _directInput.GetDevices(type, DeviceEnumerationFlags.AttachedOnly))
+            var attachedDevices = _directInput.GetDevices(type, DeviceEnumerationFlags.AttachedOnly);
+            foreach (var deviceInstance in attachedDevices)
             {
                 devices.Add(deviceInstance);
             }
@@ -52,10 +53,10 @@ abstract class PointingDevice : IDisposable
         return devices.ToArray();
     }
 
-    public static bool Has(DeviceType type)
-    {
-        return _directInput.GetDevices(type, DeviceEnumerationFlags.AllDevices).Count > 0;
-    }
+    public static bool Has(DeviceType type) =>
+        _directInput
+            .GetDevices(type, DeviceEnumerationFlags.AttachedOnly)
+            .Count > 0;
 
     // Internal
 
@@ -111,7 +112,9 @@ abstract class PointingDevice : IDisposable
     {
         var data = new Proto.Data
         {
-            Point = new Common.Vector() { X = _x, Y = _y, Z = _z },
+            Point = new Common.Vector() {
+                X = _x, Y = _y, Z = _z
+            },
             Rotation = rotation,
             /* JOYSTICK_DATA
             Velocity = velocity,

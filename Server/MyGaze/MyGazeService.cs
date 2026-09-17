@@ -7,7 +7,9 @@ using Proto = global::Gaze;
 
 namespace Server.MyGaze;
 
-internal class MyGazeService : Proto.Dispatcher.DispatcherBase, ITelemetryService
+internal class MyGazeService :
+    Proto.Dispatcher.DispatcherBase,
+    ITelemetryService
 {
     public bool IsAvailable() => _myGaze != null;
 
@@ -43,37 +45,50 @@ internal class MyGazeService : Proto.Dispatcher.DispatcherBase, ITelemetryServic
         GC.SuppressFinalize(this);
     }
 
-    public override Task<Common.Bool> IsAvailable(Empty request, ServerCallContext context)
+    public override Task<Common.Bool> IsAvailable(
+        Empty request,
+        ServerCallContext context)
     {
-        return Task.FromResult(new Common.Bool() { Value = IsAvailable() });
+        return Common.Bool.From(IsAvailable());
     }
 
-    public override Task<Empty> Start(Empty request, ServerCallContext context)
+    public override Task<Empty> Start(
+        Empty request,
+        ServerCallContext context)
     {
         if (!_isSending)
         {
             _logger.LogInformation("Data streaming: started");
             _isSending = true;
         }
-        return Task.FromResult(new Empty());
+
+        return Common.Constants.Empty;
     }
 
-    public override Task<Empty> Stop(Empty request, ServerCallContext context)
+    public override Task<Empty> Stop(
+        Empty request,
+        ServerCallContext context)
     {
         if (_isSending)
         {
             _logger.LogInformation("Data streaming: stopped");
             _isSending = false;
         }
-        return Task.FromResult(new Empty());
+
+        return Common.Constants.Empty;
     }
 
-    public override Task<Common.Bool> SetLogFileName(Common.String request, ServerCallContext context)
+    public override Task<Common.Bool> SetLogFileName(
+        Common.String request,
+        ServerCallContext context)
     {
         return Tools.TelemetryService.SetLogFileName(request.Value, _fileLogger, _logger);
     }
 
-    public override async Task ReadData(Empty request, IServerStreamWriter<Proto.Sample> responseStream, ServerCallContext context)
+    public override async Task ReadData(
+        Empty request,
+        IServerStreamWriter<Proto.Sample> responseStream,
+        ServerCallContext context)
     {
         if (_myGaze == null || _isReading)
             return;
@@ -109,7 +124,10 @@ internal class MyGazeService : Proto.Dispatcher.DispatcherBase, ITelemetryServic
         }
     }
 
-    public override async Task ReadEvents(Empty request, IServerStreamWriter<Proto.Event> responseStream, ServerCallContext context)
+    public override async Task ReadEvents(
+        Empty request,
+        IServerStreamWriter<Proto.Event> responseStream,
+        ServerCallContext context)
     {
         while (_isActive && !context.CancellationToken.IsCancellationRequested)
         {

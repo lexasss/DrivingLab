@@ -1,4 +1,6 @@
-﻿namespace Common;
+﻿using Google.Protobuf.WellKnownTypes;
+
+namespace Common;
 
 public enum Ports
 {
@@ -17,6 +19,42 @@ public enum Ports
 public static class Constants
 {
     public const int FILE_CHUNK_SIZE = 64 * 1024;
+
+    public static Task<Empty> Empty { get; } =
+        Task.FromResult(new Empty());
+}
+
+public partial class Bool
+{
+    public static Task<Bool> True { get; } = Task.FromResult(new Bool()
+    {
+        Value = true
+    });
+    public static Task<Bool> False { get; } = Task.FromResult(new Bool()
+    {
+        Value = false
+    });
+    public static Task<Bool> From(bool value) =>
+        Task.FromResult(new Bool() {
+            Value = value
+        });
+    public Bool(bool value)
+    {
+        Value = value;
+    }
+}
+
+public partial class String
+{
+    public static Task<String> Empty { get; } = Task.FromResult(new String()
+    {
+        Value = string.Empty
+    });
+    public static Task<String> From(string value) =>
+        Task.FromResult(new String()
+        {
+            Value = value
+        });
 }
 
 public partial class Vector

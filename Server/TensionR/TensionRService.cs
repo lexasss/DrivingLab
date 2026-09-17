@@ -6,7 +6,9 @@ using Proto = global::TensionR;
 
 namespace Server.TensionR;
 
-internal class TensionRService : Proto.Dispatcher.DispatcherBase, ITelemetryService
+internal class TensionRService :
+    Proto.Dispatcher.DispatcherBase,
+    ITelemetryService
 {
     public bool IsAvailable() => true;
 
@@ -14,15 +16,8 @@ internal class TensionRService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
     {
         _logger = loggerFactory.CreateLogger("BELT");
 
-        try
-        {
-            _logger.LogInformation("Running");
-            _isActive = true;
-        }
-        catch (Exception)
-        {
-            _logger.LogError("Cannot start the service");
-        }
+        _logger.LogInformation("Running");
+        _isActive = true;
     }
 
     public void Dispose()
@@ -38,30 +33,40 @@ internal class TensionRService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
         GC.SuppressFinalize(this);
     }
 
-    public override Task<Common.Bool> IsAvailable(Empty request, ServerCallContext context)
+    public override Task<Common.Bool> IsAvailable(
+        Empty request,
+        ServerCallContext context)
     {
-        return Task.FromResult(new Common.Bool() { Value = IsAvailable() });
+        return Common.Bool.From(IsAvailable());
     }
 
-    public override Task<Common.Bool> IsConnected(Empty request, ServerCallContext context)
+    public override Task<Common.Bool> IsConnected(
+        Empty request,
+        ServerCallContext context)
     {
-        return Task.FromResult(new Common.Bool() { Value = _belt?.IsConnected ?? false });
+        return Common.Bool.From(_belt?.IsConnected ?? false);
     }
 
-    public override Task<Common.Bool> IsEnabled(Empty request, ServerCallContext context)
+    public override Task<Common.Bool> IsEnabled(
+        Empty request,
+        ServerCallContext context)
     {
-        return Task.FromResult(new Common.Bool() { Value = _isEnabled });
+        return Common.Bool.From(_isEnabled);
     }
 
-    public override Task<Common.Bool> IsCalibrated(Empty request, ServerCallContext context)
+    public override Task<Common.Bool> IsCalibrated(
+        Empty request,
+        ServerCallContext context)
     {
-        return Task.FromResult(new Common.Bool() { Value = _isCalibrated });
+        return Common.Bool.From(_isCalibrated);
     }
 
-    public override Task<Common.Bool> Connect(Common.String request, ServerCallContext context)
+    public override Task<Common.Bool> Connect(
+        Common.String request,
+        ServerCallContext context)
     {
         if (_belt != null)
-            return Task.FromResult(new Common.Bool() { Value = false });
+            return Common.Bool.False;
 
         bool isConnected = false;
 
@@ -86,15 +91,22 @@ internal class TensionRService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
             _events.Enqueue(new Proto.Event() { IsConnected = true });
         }
 
-        return Task.FromResult(new Common.Bool() { Value = isConnected });
+        return Common.Bool.From(isConnected);
     }
 
-    public override Task<Common.Bool> SetLogFileName(Common.String request, ServerCallContext context)
+    public override Task<Common.Bool> SetLogFileName(
+        Common.String request,
+        ServerCallContext context)
     {
-        return Tools.TelemetryService.SetLogFileName(request.Value, _fileLogger, _logger);
+        return Tools.TelemetryService.SetLogFileName(
+            request.Value,
+            _fileLogger,
+            _logger);
     }
 
-    public override Task<Empty> Start(Empty request, ServerCallContext context)
+    public override Task<Empty> Start(
+        Empty request,
+        ServerCallContext context)
     {
         if (_belt != null && !_isEnabled && !_isCalibrating)
         {
@@ -103,12 +115,16 @@ internal class TensionRService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
             _logger.LogInformation("Activated");
             _isEnabled = true;
 
-            _events.Enqueue(new Proto.Event() { IsEnabled = _isEnabled });
+            _events.Enqueue(new Proto.Event() {
+                IsEnabled = _isEnabled
+            });
         }
-        return Task.FromResult(new Empty());
+        return Common.Constants.Empty;
     }
 
-    public override Task<Empty> Stop(Empty request, ServerCallContext context)
+    public override Task<Empty> Stop(
+        Empty request,
+        ServerCallContext context)
     {
         if (_belt != null && _isEnabled && !_isCalibrating)
         {
@@ -119,10 +135,12 @@ internal class TensionRService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
 
             _events.Enqueue(new Proto.Event() { IsEnabled = _isEnabled });
         }
-        return Task.FromResult(new Empty());
+        return Common.Constants.Empty;
     }
 
-    public override Task<Empty> Calibrate(Empty request, ServerCallContext context)
+    public override Task<Empty> Calibrate(
+        Empty request,
+        ServerCallContext context)
     {
         if (_belt != null && _isEnabled && !_isCalibrating)
         {
@@ -133,25 +151,35 @@ internal class TensionRService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
             _logger.LogInformation("Calibrating");
         }
 
-        return Task.FromResult(new Empty());
+        return Common.Constants.Empty;
     }
 
-    public override Task<Empty> SetTension(Proto.Tension request, ServerCallContext context)
+    public override Task<Empty> SetTension(
+        Proto.Tension request,
+        ServerCallContext context)
     {
         if (_belt != null && _isEnabled && _isCalibrated)
         {
-            _belt.Comm.SetTension(request.Value, request.Side switch {
-                Proto.Side.Left => API.Side.Left,
-                Proto.Side.Right => API.Side.Right,
-                _ => API.Side.Both,
-            });
-            _logger.LogInformation("Tension {value} ({side})", request.Value, request.Side);
+            _belt.Comm.SetTension(
+                request.Value,
+                request.Side switch {
+                    Proto.Side.Left => API.Side.Left,
+                    Proto.Side.Right => API.Side.Right,
+                    _ => API.Side.Both,
+                }
+            );
+            _logger.LogInformation("Tension {value} ({side})",
+                request.Value,
+                request.Side);
         }
 
-        return Task.FromResult(new Empty());
+        return Common.Constants.Empty;
     }
 
-    public override async Task ReadEvents(Empty request, IServerStreamWriter<Proto.Event> responseStream, ServerCallContext context)
+    public override async Task ReadEvents(
+        Empty request,
+        IServerStreamWriter<Proto.Event> responseStream,
+        ServerCallContext context)
     {
         while (_isActive && !context.CancellationToken.IsCancellationRequested)
         {
@@ -199,12 +227,17 @@ internal class TensionRService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
 
             _logger.LogInformation($"Calibrated");
 
-            _events.Enqueue(new Proto.Event() { IsCalibrated = true });
+            _events.Enqueue(new Proto.Event() {
+                IsCalibrated = true
+            });
         }
 
-        _fileLogger.Add("SND", e.State, e.Packets
-            .SelectMany(p => p.ToBytes())
-            .Select(b => $"{b:x2}"));
+        _fileLogger.Add("SND",
+            e.State,
+            e.Packets
+             .SelectMany(p => p.ToBytes())
+             .Select(b => $"{b:x2}")
+        );
     }
 
     private void Belt_DataReceived(object? sender, API.In.Packet e)
@@ -214,8 +247,10 @@ internal class TensionRService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
             _logger.LogError("Error: {ex}", error.ToString());
         }
 
-        _fileLogger.Add("RCV", e.ToBytes()
-            .Select(b => $"{b:x2}"));
+        _fileLogger.Add("RCV",
+            e.ToBytes()
+             .Select(b => $"{b:x2}")
+        );
     }
 
     #endregion

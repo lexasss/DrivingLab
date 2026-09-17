@@ -20,7 +20,10 @@ internal class ScreenEnumerator
         var screens = new List<Screen>();
         var id = 0;
 
-        EnumDisplayMonitors(IntPtr.Zero, IntPtr.Zero, (monitor, _, _, _) =>
+        EnumDisplayMonitors(
+            IntPtr.Zero,
+            IntPtr.Zero,
+            (monitor, _, _, _) =>
             {
                 var info = new MONITORINFOEX
                 {
@@ -34,7 +37,9 @@ internal class ScreenEnumerator
 
                     screens.Add(new Screen(
                         Id: id++,
-                        Name: model != null ? $"{model} ({info.szDevice})" : info.szDevice,
+                        Name: model != null
+                            ? $"{model} ({info.szDevice})"
+                            : info.szDevice,
                         X: bounds.Left,
                         Y: bounds.Top,
                         Width: bounds.Right - bounds.Left,
@@ -62,7 +67,9 @@ internal class ScreenEnumerator
     {
         static string? Decode(ushort[] chars)
         {
-            return chars == null ? null : new string(chars
+            return chars == null
+                ? null
+                : new string(chars
                     .TakeWhile(c => c != 0)
                     .Select(c => (char)c)
                     .ToArray());
@@ -155,8 +162,12 @@ internal class ScreenEnumerator
 
             if (err == ERROR_SUCCESS)
             {
-                string devicePath = targetName.monitorDevicePath[4..].Replace('#', '\\');  // remove \\.\ from the path start
-                return monitors.FirstOrDefault(m => devicePath.StartsWith(m.DeviceID, StringComparison.OrdinalIgnoreCase));
+                string devicePath = targetName
+                    .monitorDevicePath[4..]
+                    .Replace('#', '\\');  // remove \\.\ from the path start
+                return monitors.FirstOrDefault(m => 
+                    devicePath.StartsWith(m.DeviceID, StringComparison.OrdinalIgnoreCase)
+                );
             }
         }
 

@@ -51,7 +51,9 @@ internal class LeapM: IDisposable
         _scale = UH_SCALE;
     }
 
-    public void SetProximityBox(Common.Vector? corner1 = null, Common.Vector? corner2 = null)
+    public void SetProximityBox(
+        Common.Vector? corner1 = null,
+        Common.Vector? corner2 = null)
     {
         if (corner1 == null || corner2 == null)
         {
@@ -60,7 +62,9 @@ internal class LeapM: IDisposable
         }
     }
 
-    public void SetTransform(Common.Vector? translation = null, Common.Vector? scale = null)
+    public void SetTransform(
+        Common.Vector? translation = null,
+        Common.Vector? scale = null)
     {
         _translation = translation ?? Common.Vector.ZEROS;
         _scale = scale ?? Common.Vector.ONES;
@@ -71,12 +75,24 @@ internal class LeapM: IDisposable
     const int LEAP_TO_UH_X = 0;   // depends on the device: the palm center point may a bit offset from the very center
     const int LEAP_TO_UH_Y = -121;  // negative because of -1 for Y scale
 
-    readonly static Common.Vector CLOSE_CORNER_1 = new() { X = -40, Y = 50, Z = -40 };
-    readonly static Common.Vector CLOSE_CORNER_2 = new() { X = 40, Y = 400, Z = 40 };
-    readonly static Common.Vector UH_CORNER_1 = new() { X = -40, Y = 50, Z = 80 };
-    readonly static Common.Vector UH_CORNER_2 = new() { X = 40, Y = 400, Z = 160 };
-    readonly static Common.Vector UH_TRANSLATION = new() { X = LEAP_TO_UH_X, Y = LEAP_TO_UH_Y, Z = 0 };
-    readonly static Common.Vector UH_SCALE = new() { X = 0.001, Y = -0.001, Z = 0.001 };
+    readonly static Common.Vector CLOSE_CORNER_1 = new() {
+        X = -40, Y = 50, Z = -40
+    };
+    readonly static Common.Vector CLOSE_CORNER_2 = new() {
+        X = 40, Y = 400, Z = 40
+    };
+    readonly static Common.Vector UH_CORNER_1 = new() {
+        X = -40, Y = 50, Z = 80
+    };
+    readonly static Common.Vector UH_CORNER_2 = new() {
+        X = 40, Y = 400, Z = 160
+    };
+    readonly static Common.Vector UH_TRANSLATION = new() {
+        X = LEAP_TO_UH_X, Y = LEAP_TO_UH_Y, Z = 0
+    };
+    readonly static Common.Vector UH_SCALE = new() {
+        X = 0.001, Y = -0.001, Z = 0.001
+    };
 
     readonly ILogger _logger;
 
@@ -88,7 +104,6 @@ internal class LeapM: IDisposable
     Common.Vector _proximityCorner2 = CLOSE_CORNER_2;
     Common.Vector _translation = Common.Vector.ZEROS;
     Common.Vector _scale = Common.Vector.ONES;
-
 
     private void PrintDeviceInfo(Device device)
     {

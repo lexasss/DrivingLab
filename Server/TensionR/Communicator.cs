@@ -176,7 +176,10 @@ internal class Communicator : IDisposable
     int _leftTension = 0;
     int _rightTension = 0;
 
-    private static Out.Packet[] GetPackets(BeltControl control, Side side = Side.Both, int step = 0)
+    private static Out.Packet[] GetPackets(
+        BeltControl control,
+        Side side = Side.Both,
+        int step = 0)
     {
         if (control == BeltControl.Off)
             return side switch

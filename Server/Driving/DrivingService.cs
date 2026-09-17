@@ -8,7 +8,9 @@ using Proto = global::Driving;
 
 namespace Server.Driving;
 
-internal class DrivingService : Proto.Dispatcher.DispatcherBase, ITelemetryService
+internal class DrivingService :
+    Proto.Dispatcher.DispatcherBase,
+    ITelemetryService
 {
     public bool IsAvailable() => true;
 
@@ -27,8 +29,10 @@ internal class DrivingService : Proto.Dispatcher.DispatcherBase, ITelemetryServi
                 _wheel = wheel;
                 _wheel.Data += Wheel_Data;
                 _wheel.Disconnected += Wheel_Disconnected;
+
                 _connectionStatus.IsWheelConnected = true;
                 _connectionStatus.IsBaseConnected = true;
+
                 _logger.LogInformation("Wheel connected");
             }
             else
@@ -45,7 +49,9 @@ internal class DrivingService : Proto.Dispatcher.DispatcherBase, ITelemetryServi
                 _pedals = pedals;
                 _pedals.Data += Pedals_Data;
                 _pedals.Disconnected += Pedals_Disconnected;
+
                 _connectionStatus.ArePedalsConnected = true;
+
                 _logger.LogInformation("Pedals connected");
             }
             else
@@ -62,7 +68,9 @@ internal class DrivingService : Proto.Dispatcher.DispatcherBase, ITelemetryServi
                 _activePedals = activePedals;
                 _activePedals.Data += ActivePedals_Data;
                 _activePedals.Disconnected += ActivePedals_Disconnected;
+
                 _connectionStatus.AreActivePedalsConnected = true;
+
                 _logger.LogInformation("Active pedals connected");
             }
 
@@ -93,19 +101,26 @@ internal class DrivingService : Proto.Dispatcher.DispatcherBase, ITelemetryServi
         GC.SuppressFinalize(this);
     }
 
-    public override Task<Common.Bool> IsAvailable(Empty request, ServerCallContext context)
+    public override Task<Common.Bool> IsAvailable(
+        Empty request,
+        ServerCallContext context)
     {
-        return Task.FromResult(new Common.Bool() { Value = IsAvailable() });
+        return Common.Bool.From(IsAvailable());
     }
 
-    public override Task<Proto.ConnectionStatus> GetConnectionAvailable(Empty request, ServerCallContext context)
+    public override Task<Proto.ConnectionStatus> GetConnectionStatus(
+        Empty request,
+        ServerCallContext context)
     {
         return Task.FromResult(_connectionStatus);
     }
 
-    public override Task<Empty> SetActivePedalProfile(Proto.ActivePedalProfile request, ServerCallContext context)
+    public override Task<Empty> SetActivePedalProfile(
+        Proto.ActivePedalProfile request,
+        ServerCallContext context)
     {
-        return Task.FromResult(new Empty());
+        // TODO
+        return Common.Constants.Empty;
     }
 
     public override Task<Empty> Start(Empty request, ServerCallContext context)
@@ -119,7 +134,7 @@ internal class DrivingService : Proto.Dispatcher.DispatcherBase, ITelemetryServi
             _logger.LogInformation("Data streaming: started");
             _isSending = true;
         }
-        return Task.FromResult(new Empty());
+        return Common.Constants.Empty;
     }
 
     public override Task<Empty> Stop(Empty request, ServerCallContext context)
@@ -129,10 +144,12 @@ internal class DrivingService : Proto.Dispatcher.DispatcherBase, ITelemetryServi
             _logger.LogInformation("Data streaming: stopped");
             _isSending = false;
         }
-        return Task.FromResult(new Empty());
+        return Common.Constants.Empty;
     }
 
-    public override Task<Common.Bool> SetLogFileName(Common.String request, ServerCallContext context)
+    public override Task<Common.Bool> SetLogFileName(
+        Common.String request,
+        ServerCallContext context)
     {
         _wheel?.Reset();
         _pedals?.Reset();
@@ -141,7 +158,10 @@ internal class DrivingService : Proto.Dispatcher.DispatcherBase, ITelemetryServi
         return Tools.TelemetryService.SetLogFileName(request.Value, _fileLogger, _logger);
     }
 
-    public override async Task ReadData(Empty request, IServerStreamWriter<Proto.Data> responseStream, ServerCallContext context)
+    public override async Task ReadData(
+        Empty request,
+        IServerStreamWriter<Proto.Data> responseStream,
+        ServerCallContext context)
     {
         if (_isReading)
             return;
@@ -160,7 +180,8 @@ internal class DrivingService : Proto.Dispatcher.DispatcherBase, ITelemetryServi
                 }
             }
         }
-        catch (Exception) { }
+        catch (Exception)
+        { }
         finally
         {
             _logger.LogInformation("Data reading: stopped");
@@ -168,7 +189,10 @@ internal class DrivingService : Proto.Dispatcher.DispatcherBase, ITelemetryServi
         }
     }
 
-    public override async Task ReadEvents(Empty request, IServerStreamWriter<Proto.Event> responseStream, ServerCallContext context)
+    public override async Task ReadEvents(
+        Empty request,
+        IServerStreamWriter<Proto.Event> responseStream,
+        ServerCallContext context)
     {
         while (_isActive && !context.CancellationToken.IsCancellationRequested)
         {
@@ -204,7 +228,6 @@ internal class DrivingService : Proto.Dispatcher.DispatcherBase, ITelemetryServi
         ArePedalsConnected = false,
         AreActivePedalsConnected = false
     };
-
 
     // Event handlers
 

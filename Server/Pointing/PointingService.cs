@@ -47,20 +47,19 @@ internal class PointingService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
         GC.SuppressFinalize(this);
     }
 
-    public override Task<Common.Bool> IsAvailable(Empty request, ServerCallContext context)
+    public override Task<Common.Bool> IsAvailable(
+        Empty request,
+        ServerCallContext context)
     {
-        return Task.FromResult(new Common.Bool() { Value = IsAvailable() });
+        return Common.Bool.From(IsAvailable());
     }
 
-    public override Task<Proto.Devices> GetDevices(Proto.DeviceRequest request, ServerCallContext context)
+    public override Task<Proto.Devices> GetDevices(
+        Proto.DeviceRequest request,
+        ServerCallContext context)
     {
-        var devices = PointingDevice.ListDevices(request.Type switch
-        {
-            Proto.DeviceType.Mouse => DeviceType.Mouse,
-            Proto.DeviceType.Joystick => DeviceType.Joystick,
-            Proto.DeviceType.Gamepad => DeviceType.Gamepad,
-            _ => throw new NotImplementedException()
-        });
+        var type = ToDirectInputType(request.Type);
+        var devices = PointingDevice.ListDevices(type);
 
         var result = new Proto.Devices();
         foreach (var device in devices)
@@ -69,7 +68,7 @@ internal class PointingService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
             {
                 Type = request.Type,
                 Name = device.ProductName.Equals(request.Type.ToString())
-                    ? string.Empty
+                    ? string.Empty          // Mouse will be simply "Mouse", so lets not have it as a name, only as a type
                     : device.ProductName
             });
         }
@@ -77,17 +76,13 @@ internal class PointingService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
         return Task.FromResult(result);
     }
 
-    public override Task<Common.Bool> SetPointingDevice(Proto.Device request, ServerCallContext context)
+    public override Task<Common.Bool> SetPointingDevice(
+        Proto.Device request,
+        ServerCallContext context)
     {
-        var type = request.Type switch
-        {
-            Proto.DeviceType.Mouse => DeviceType.Mouse,
-            Proto.DeviceType.Joystick => DeviceType.Joystick,
-            Proto.DeviceType.Gamepad => DeviceType.Gamepad,
-            _ => throw new NotImplementedException()
-        };
-
+        var type = ToDirectInputType(request.Type);
         var result = PointingDevice.Has(type);
+
         if (result)
         {
             _device?.Dispose();
@@ -102,10 +97,12 @@ internal class PointingService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
             _device.Disconnected += Device_Disconnected;
         }
 
-        return Task.FromResult(new Common.Bool() { Value = result });
+        return Common.Bool.From(result);
     }
 
-    public override Task<Empty> Start(Empty request, ServerCallContext context)
+    public override Task<Empty> Start(
+        Empty request,
+        ServerCallContext context)
     {
         if (!_isSending)
         {
@@ -113,26 +110,35 @@ internal class PointingService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
             _logger.LogInformation("Data streaming: started");
             _isSending = true;
         }
-        return Task.FromResult(new Empty());
+
+        return Common.Constants.Empty;
     }
 
-    public override Task<Empty> Stop(Empty request, ServerCallContext context)
+    public override Task<Empty> Stop(
+        Empty request,
+        ServerCallContext context)
     {
         if (_isSending)
         {
             _logger.LogInformation("Data streaming: stopped");
             _isSending = false;
         }
-        return Task.FromResult(new Empty());
+
+        return Common.Constants.Empty;
     }
 
-    public override Task<Common.Bool> SetLogFileName(Common.String request, ServerCallContext context)
+    public override Task<Common.Bool> SetLogFileName(
+        Common.String request,
+        ServerCallContext context)
     {
         _device?.Reset();
         return Tools.TelemetryService.SetLogFileName(request.Value, _fileLogger, _logger);
     }
 
-    public override async Task ReadData(Empty request, IServerStreamWriter<Proto.Data> responseStream, ServerCallContext context)
+    public override async Task ReadData(
+        Empty request,
+        IServerStreamWriter<Proto.Data> responseStream,
+        ServerCallContext context)
     {
         if (_isReading)
             return;
@@ -159,7 +165,10 @@ internal class PointingService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
         }
     }
 
-    public override async Task ReadEvents(Empty request, IServerStreamWriter<Proto.Event> responseStream, ServerCallContext context)
+    public override async Task ReadEvents(
+        Empty request,
+        IServerStreamWriter<Proto.Event> responseStream,
+        ServerCallContext context)
     {
         while (_isActive && !context.CancellationToken.IsCancellationRequested)
         {
@@ -186,6 +195,15 @@ internal class PointingService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
     bool _isReading = false;
     bool _isSending = false;
 
+    private DeviceType ToDirectInputType(Proto.DeviceType type) =>
+        type switch
+        {
+            Proto.DeviceType.Mouse => DeviceType.Mouse,
+            Proto.DeviceType.Joystick => DeviceType.Joystick,
+            Proto.DeviceType.Gamepad => DeviceType.Gamepad,
+            _ => throw new NotImplementedException()
+        };
+
     // Event handlers
 
     private void Device_Data(object? sender, Proto.Data data)
@@ -195,7 +213,9 @@ internal class PointingService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
 
     private void Device_Disconnected(object? sender, EventArgs e)
     {
-        _events.Enqueue(new Proto.Event() { IsConnected = false });
+        _events.Enqueue(new Proto.Event() {
+            IsConnected = false
+        });
     }
 
     #endregion

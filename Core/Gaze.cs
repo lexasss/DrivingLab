@@ -16,4 +16,22 @@ public partial class Sample
         CamYR.ToString(),
         ValidEye.ToString()
     ];
+    public string[] ToStringArray(int decimals)
+    {
+        string format = $"F{decimals}";
+        return [
+            Timestamp.ToString(),
+            EyeX.ToString(format),
+            EyeY.ToString(format),
+            EyeXL.ToString(format),
+            EyeYL.ToString(format),
+            EyeXR.ToString(format),
+            EyeYR.ToString(format),
+            CamXL.ToString(format),
+            CamYL.ToString(format),
+            CamXR.ToString(format),
+            CamYR.ToString(format),
+            ValidEye.ToString()
+        ];
+    }
 }

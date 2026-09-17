@@ -1,4 +1,6 @@
-﻿using System.Runtime.InteropServices;
+﻿using System.IO;
+using System.Runtime.InteropServices;
+using System.Windows.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Interop;
@@ -9,8 +11,10 @@ namespace Server.Screen;
 
 internal sealed class MediaWindow
 {
-    public static string[] SupportedImageFormats { get; } = [".png", ".jpg", ".jpeg"];
-    public static string[] SupportedVideoFormats { get; } = [".mp4", ".avi", ".wmv"];
+    public static string[] SupportedImageFormats { get; } = 
+        [".png", ".jpg", ".jpeg"];
+    public static string[] SupportedVideoFormats { get; } =
+        [".mp4", ".avi", ".wmv"];
 
     public string FileName { get; private set; } = string.Empty;
     public string Id { get; }
@@ -23,12 +27,16 @@ internal sealed class MediaWindow
         Id = Guid.NewGuid().ToString();
     }
 
-    public void Show(string filename, Common.Point location, Common.Size? size, int? duration)
+    public void Show(
+        string filename,
+        Common.Point location,
+        Common.Size? size,
+        int? duration)
     {
         if (_thread != null)
             return;
 
-        FileName = System.IO.Path.GetFileNameWithoutExtension(filename);
+        FileName = Path.GetFileNameWithoutExtension(filename);
 
         _thread = new Thread(() =>
         {
@@ -66,7 +74,7 @@ internal sealed class MediaWindow
             Shown?.Invoke(this, true);
 
             // Keep the WPF dispatcher alive.
-            System.Windows.Threading.Dispatcher.Run();
+            Dispatcher.Run();
         });
 
         _thread.SetApartmentState(ApartmentState.STA);
@@ -88,7 +96,7 @@ internal sealed class MediaWindow
                 {
                     Hidden?.Invoke(this, Id);
                 }
-                System.Windows.Threading.Dispatcher.CurrentDispatcher.InvokeShutdown();
+                Dispatcher.CurrentDispatcher.InvokeShutdown();
             });
         }
 
@@ -102,18 +110,24 @@ internal sealed class MediaWindow
     Window? _window;
     CancellationTokenSource? _cancellationTokenSource;
 
-    private object? CreateMedia(string filename, ref double width, ref double height)
+    private object? CreateMedia(
+        string filename,
+        ref double width,
+        ref double height)
     {
         object? result = null;
 
-        Stretch stretch = width > 0 && height > 0 ? Stretch.Fill : Stretch.Uniform;
+        Stretch stretch = width > 0 && height > 0
+            ? Stretch.Fill
+            : Stretch.Uniform;
 
-        var ext = System.IO.Path.GetExtension(filename)?.ToLower() ?? string.Empty;
+        var ext = Path.GetExtension(filename)?.ToLower() ?? string.Empty;
         if (SupportedImageFormats.Contains(ext))
         {
+            var source = new Uri(filename, UriKind.Absolute);
             var image = new Image
             {
-                Source = new BitmapImage(new Uri(filename, UriKind.Absolute)),
+                Source = new BitmapImage(source),
                 Stretch = stretch,
                 HorizontalAlignment = HorizontalAlignment.Left,
                 VerticalAlignment = VerticalAlignment.Top,
@@ -170,7 +184,11 @@ internal sealed class MediaWindow
         return result;
     }
 
-    private static Window CreateWindow(object content, Common.Point location, double width, double height)
+    private static Window CreateWindow(
+        object content,
+        Common.Point location,
+        double width,
+        double height)
     {
         SizeToContent sizeToContent = (width, height) switch
         {

@@ -41,7 +41,9 @@ internal class Belt : IDisposable
 
         _comm.Request += (s, e) =>
         {
-            byte[] bytes = e.Packets.SelectMany(p => p.ToBytes()).ToArray();
+            byte[] bytes = e.Packets
+                .SelectMany(p => p.ToBytes())
+                .ToArray();
 
             if (IsConnected)
                 _port.Write(bytes, 0, bytes.Length);

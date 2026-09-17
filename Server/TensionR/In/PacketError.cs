@@ -12,7 +12,11 @@ internal class PacketError : Packet
 
     public override string ToString()
     {
-        return string.Join(' ', Values.Take(Count).Select(x => $"{x:X2}"));
+        return string.Join(' ',
+            Values
+                .Take(Count)
+                .Select(x => $"{x:X2}")
+        );
     }
 
     public static new PacketError FromContent(byte[] input)

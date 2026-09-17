@@ -8,7 +8,9 @@ using Proto = global::SoundPlayer;
 namespace Server.SoundPlayer;
 
 [System.Diagnostics.CodeAnalysis.SuppressMessage("Interoperability", "CA1416:Validate platform compatibility")]
-public class SoundPlayerService : Proto.Dispatcher.DispatcherBase, IFileService
+public class SoundPlayerService :
+    Proto.Dispatcher.DispatcherBase,
+    IFileService
 {
     public string StorageFolder { get; } = "sounds";
     public bool IsAvailable() => true;
@@ -44,23 +46,33 @@ public class SoundPlayerService : Proto.Dispatcher.DispatcherBase, IFileService
         GC.SuppressFinalize(this);
     }
 
-    public override Task<Common.Bool> IsAvailable(Empty request, ServerCallContext context)
+    public override Task<Common.Bool> IsAvailable(
+        Empty request,
+        ServerCallContext context)
     {
-        return Task.FromResult(new Common.Bool { Value = true });
+        return Common.Bool.True;
     }
 
-    public override async Task<Proto.Devices> GetDevices(Empty request, ServerCallContext context)
+    public override async Task<Proto.Devices> GetDevices(
+        Empty request,
+        ServerCallContext context)
     {
         var result = new Proto.Devices();
         var devices = await GetSoundDevices();
         foreach (var device in devices)
         {
-            result.Items.Add(new Proto.Device { Id = device.Id, Name = device.Name });
+            result.Items.Add(new Proto.Device {
+                Id = device.Id,
+                Name = device.Name
+            });
         }
         return result;
     }
 
-    public override async Task ReadEvents(Empty request, IServerStreamWriter<Proto.Event> responseStream, ServerCallContext context)
+    public override async Task ReadEvents(
+        Empty request,
+        IServerStreamWriter<Proto.Event> responseStream,
+        ServerCallContext context)
     {
         while (_isActive && !context.CancellationToken.IsCancellationRequested)
         {
@@ -74,7 +86,9 @@ public class SoundPlayerService : Proto.Dispatcher.DispatcherBase, IFileService
         }
     }
 
-    public override Task<Common.Bool> Play(Proto.SoundDescription request, ServerCallContext context)
+    public override Task<Common.Bool> Play(
+        Proto.SoundDescription request,
+        ServerCallContext context)
     {
         bool result = false;
 
@@ -98,10 +112,12 @@ public class SoundPlayerService : Proto.Dispatcher.DispatcherBase, IFileService
             _logger.LogWarning("Unsupported sound type");
         }
 
-        return Task.FromResult(new Common.Bool { Value = result });
+        return Common.Bool.From(result);
     }
 
-    public override Task<Empty> Stop(Empty request, ServerCallContext context)
+    public override Task<Empty> Stop(
+        Empty request,
+        ServerCallContext context)
     {
         _tonePlayer?.Stop();
         _tonePlayer?.Dispose();
@@ -114,14 +130,19 @@ public class SoundPlayerService : Proto.Dispatcher.DispatcherBase, IFileService
         _soundPlayer = null;
 
         _logger.LogInformation("Stopping playback");
-        return Task.FromResult(new Empty());
+
+        return Common.Constants.Empty;
     }
 
     public override async Task<Common.UploadResult> UploadFile(
         IAsyncStreamReader<Common.UploadRequest> requestStream,
         ServerCallContext context)
     {
-        return await Tools.FileService.UploadFile(requestStream, context, StorageFolder, _logger);
+        return await Tools.FileService.UploadFile(
+            requestStream,
+            context,
+            StorageFolder,
+            _logger);
     }
 
     #region Internal
@@ -133,7 +154,7 @@ public class SoundPlayerService : Proto.Dispatcher.DispatcherBase, IFileService
         public override string ToString() => name;
     }
 
-    static string[] _supportedAudioFormats = [".wav"];
+    static readonly string[] _supportedAudioFormats = [".wav"];
 
     readonly ILogger _logger;
     readonly Queue<Proto.Event> _events = [];
@@ -148,10 +169,14 @@ public class SoundPlayerService : Proto.Dispatcher.DispatcherBase, IFileService
     {
         var devices = await Task.Run(() => {
             var enumerator = new MMDeviceEnumerator();
-            return enumerator.EnumerateAudioEndPoints(DataFlow.Render, DeviceState.Active);
+            return enumerator.EnumerateAudioEndPoints(
+                DataFlow.Render,
+                DeviceState.Active);
         });
 
-        return devices.Select(device => new SoundDevice(device.ID, device.FriendlyName)).ToArray();
+        return devices
+            .Select(device => new SoundDevice(device.ID, device.FriendlyName))
+            .ToArray();
     }
 
     private static MMDevice? GetDevice(string id)
@@ -167,24 +192,28 @@ public class SoundPlayerService : Proto.Dispatcher.DispatcherBase, IFileService
     {
         var device = GetDevice(deviceId);
         var soundPlayer = new WasapiPlayerBuilder()
-            .WithDevice(device)          // default: system default render device
-            .WithEventSync()             // default: event sync (vs WithPollingSync)
-            .WithLatency(50)             // default: 200ms
-            .WithLowLatency()            // try IAudioClient3 shared-mode low latency
+            .WithDevice(device)
+            .WithEventSync()
+            .WithLatency(50)
+            .WithLowLatency()
             .WithCategory(AudioStreamCategory.Media)
-            .WithRawMode()               // bypass system audio enhancements
+            .WithRawMode()
             .Build();
 
         soundPlayer.PlaybackStopped += (sender, e) =>
         {
             _logger.LogInformation("Playback finished");
-            _events.Enqueue(new Proto.Event { IsPlaybackFinished = true });
+            _events.Enqueue(new Proto.Event {
+                IsPlaybackFinished = true
+            });
         };
 
         return soundPlayer;
     }
 
-    private TonePlayer PlayTone(WasapiPlayer soundPlayer, Proto.ToneDescription tone)
+    private TonePlayer PlayTone(
+        WasapiPlayer soundPlayer,
+        Proto.ToneDescription tone)
     {
         var tonePlayer = new TonePlayer(
             soundPlayer,
@@ -205,7 +234,9 @@ public class SoundPlayerService : Proto.Dispatcher.DispatcherBase, IFileService
                 tonePlayer.Stop();
 
                 _logger.LogInformation("Tone finished");
-                _events.Enqueue(new Proto.Event { IsPlaybackFinished = true });
+                _events.Enqueue(new Proto.Event {
+                    IsPlaybackFinished = true
+                });
             });
         }
 
@@ -213,9 +244,14 @@ public class SoundPlayerService : Proto.Dispatcher.DispatcherBase, IFileService
         return tonePlayer;
     }
 
-    private AudioFileReader? PlayFile(WasapiPlayer soundPlayer, string filename)
+    private AudioFileReader? PlayFile(
+        WasapiPlayer soundPlayer,
+        string filename)
     {
-        string? filePath = Tools.FileService.FileNameToPath(filename, StorageFolder, _logger);
+        string? filePath = Tools.FileService.FileNameToPath(
+            filename,
+            StorageFolder,
+            _logger);
 
         if (string.IsNullOrEmpty(filePath))
             return null;

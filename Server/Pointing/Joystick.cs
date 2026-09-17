@@ -95,10 +95,14 @@ class Joystick : PointingDevice
                                 Value = (double)data.Value / 0xFFFF,
                                 Type = data.Offset switch
                                 {
-                                    JoystickOffset.Sliders0 or JoystickOffset.Sliders1 => Proto.SliderType.General,
-                                    JoystickOffset.VelocitySliders0 or JoystickOffset.VelocitySliders1 => Proto.SliderType.Velocity,
-                                    JoystickOffset.AccelerationSliders0 or JoystickOffset.AccelerationSliders1 => Proto.SliderType.Acceleration,
-                                    JoystickOffset.ForceSliders0 or JoystickOffset.ForceSliders1 => Proto.SliderType.Force,
+                                    JoystickOffset.Sliders0 or JoystickOffset.Sliders1 =>
+                                        Proto.SliderType.General,
+                                    JoystickOffset.VelocitySliders0 or JoystickOffset.VelocitySliders1 =>
+                                        Proto.SliderType.Velocity,
+                                    JoystickOffset.AccelerationSliders0 or JoystickOffset.AccelerationSliders1 =>
+                                        Proto.SliderType.Acceleration,
+                                    JoystickOffset.ForceSliders0 or JoystickOffset.ForceSliders1 =>
+                                        Proto.SliderType.Force,
                                     _ => throw new NotImplementedException()
                                 }
                             });
@@ -106,46 +110,67 @@ class Joystick : PointingDevice
                     }
                     else if (name.StartsWith("Rotation"))
                     {
-                        if (data.Offset == JoystickOffset.RotationX) rotation.X = (double)(data.Value - 0x8000) / 0x8000;
-                        if (data.Offset == JoystickOffset.RotationY) rotation.Y = (double)(data.Value - 0x8000) / 0x8000;
-                        if (data.Offset == JoystickOffset.RotationZ) rotation.Z = (double)(data.Value - 0x8000) / 0x8000;
+                        if (data.Offset == JoystickOffset.RotationX)
+                            rotation.X = (double)(data.Value - 0x8000) / 0x8000;
+                        if (data.Offset == JoystickOffset.RotationY)
+                            rotation.Y = (double)(data.Value - 0x8000) / 0x8000;
+                        if (data.Offset == JoystickOffset.RotationZ)
+                            rotation.Z = (double)(data.Value - 0x8000) / 0x8000;
                     }
                     /* JOYSTICK_DATA
                     else if (name.StartsWith("Velocity"))
                     {
-                        if (data.Offset == JoystickOffset.VelocityX) velocity.X = data.Value;
-                        if (data.Offset == JoystickOffset.VelocityY) velocity.Y = data.Value;
-                        if (data.Offset == JoystickOffset.VelocityZ) velocity.Z = data.Value;
+                        if (data.Offset == JoystickOffset.VelocityX)
+                            velocity.X = data.Value;
+                        if (data.Offset == JoystickOffset.VelocityY)
+                            velocity.Y = data.Value;
+                        if (data.Offset == JoystickOffset.VelocityZ)
+                            velocity.Z = data.Value;
                     }
                     else if (name.StartsWith("AngularVelocity"))
                     {
-                        if (data.Offset == JoystickOffset.AngularVelocityX) angularVelocity.X = data.Value;
-                        if (data.Offset == JoystickOffset.AngularVelocityY) angularVelocity.Y = data.Value;
-                        if (data.Offset == JoystickOffset.AngularVelocityZ) angularVelocity.Z = data.Value;
+                        if (data.Offset == JoystickOffset.AngularVelocityX)
+                            angularVelocity.X = data.Value;
+                        if (data.Offset == JoystickOffset.AngularVelocityY)
+                            angularVelocity.Y = data.Value;
+                        if (data.Offset == JoystickOffset.AngularVelocityZ)
+                            angularVelocity.Z = data.Value;
                     }
                     else if (name.StartsWith("Acceleration"))
                     {
-                        if (data.Offset == JoystickOffset.AccelerationX) acceleration.X = data.Value;
-                        if (data.Offset == JoystickOffset.AccelerationY) acceleration.Y = data.Value;
-                        if (data.Offset == JoystickOffset.AccelerationZ) acceleration.Z = data.Value;
+                        if (data.Offset == JoystickOffset.AccelerationX)
+                            acceleration.X = data.Value;
+                        if (data.Offset == JoystickOffset.AccelerationY)
+                            acceleration.Y = data.Value;
+                        if (data.Offset == JoystickOffset.AccelerationZ)
+                            acceleration.Z = data.Value;
                     }
                     else if (name.StartsWith("AngularAcceleration"))
                     {
-                        if (data.Offset == JoystickOffset.AngularAccelerationX) angularAcceleration.X = data.Value;
-                        if (data.Offset == JoystickOffset.AngularAccelerationY) angularAcceleration.Y = data.Value;
-                        if (data.Offset == JoystickOffset.AngularAccelerationZ) angularAcceleration.Z = data.Value;
+                        if (data.Offset == JoystickOffset.AngularAccelerationX)
+                            angularAcceleration.X = data.Value;
+                        if (data.Offset == JoystickOffset.AngularAccelerationY)
+                            angularAcceleration.Y = data.Value;
+                        if (data.Offset == JoystickOffset.AngularAccelerationZ)
+                            angularAcceleration.Z = data.Value;
                     }
                     else if (name.StartsWith("Force"))
                     {
-                        if (data.Offset == JoystickOffset.ForceX) force.X = data.Value;
-                        if (data.Offset == JoystickOffset.ForceY) force.Y = data.Value;
-                        if (data.Offset == JoystickOffset.ForceZ) force.Z = data.Value;
+                        if (data.Offset == JoystickOffset.ForceX)
+                            force.X = data.Value;
+                        if (data.Offset == JoystickOffset.ForceY)
+                            force.Y = data.Value;
+                        if (data.Offset == JoystickOffset.ForceZ)
+                            force.Z = data.Value;
                     }
                     else if (name.StartsWith("Torque"))
                     {
-                        if (data.Offset == JoystickOffset.TorqueX) torque.X = data.Value;
-                        if (data.Offset == JoystickOffset.TorqueY) torque.Y = data.Value;
-                        if (data.Offset == JoystickOffset.TorqueZ) torque.Z = data.Value;
+                        if (data.Offset == JoystickOffset.TorqueX)
+                            torque.X = data.Value;
+                        if (data.Offset == JoystickOffset.TorqueY)
+                            torque.Y = data.Value;
+                        if (data.Offset == JoystickOffset.TorqueZ)
+                            torque.Z = data.Value;
                     }*/
                 }
             }
@@ -157,19 +182,28 @@ class Joystick : PointingDevice
         _joystick?.Unacquire();
     }
 
-    protected void Create(DeviceInstance[] devices, string name, NameComparisionOption comparisionOption)
+    protected void Create(
+        DeviceInstance[] devices,
+        string name,
+        NameComparisionOption comparisionOption)
     {
         var selectedDevice = devices.FirstOrDefault(device => comparisionOption switch
         {
-            NameComparisionOption.Equals => device.ProductName.Equals(name, StringComparison.OrdinalIgnoreCase),
-            NameComparisionOption.StartsWith => device.ProductName.StartsWith(name, StringComparison.OrdinalIgnoreCase),
-            NameComparisionOption.Contains => device.ProductName.Contains(name, StringComparison.OrdinalIgnoreCase),
+            NameComparisionOption.Equals =>
+                device.ProductName.Equals(name, StringComparison.OrdinalIgnoreCase),
+            NameComparisionOption.StartsWith =>
+                device.ProductName.StartsWith(name, StringComparison.OrdinalIgnoreCase),
+            NameComparisionOption.Contains =>
+                device.ProductName.Contains(name, StringComparison.OrdinalIgnoreCase),
             _ => throw new NotImplementedException()
         });
 
         if (selectedDevice != null)
         {
-            var joystick = new SharpDX.DirectInput.Joystick(_directInput, selectedDevice.InstanceGuid);
+            var joystick = new SharpDX.DirectInput.Joystick(
+                _directInput,
+                selectedDevice.InstanceGuid
+            );
             joystick.Properties.BufferSize = 128;
             joystick.Acquire();
 

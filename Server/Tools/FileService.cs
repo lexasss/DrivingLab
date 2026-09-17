@@ -35,7 +35,10 @@ internal class FileService
         string filePath = filename;
         if (!Path.IsPathRooted(filePath))
         {
-            filePath = Path.Combine(AppContext.BaseDirectory, folder, filePath);
+            filePath = Path.Combine(
+                AppContext.BaseDirectory,
+                folder,
+                filePath);
         }
 
         if (!File.Exists(filePath))
@@ -129,7 +132,10 @@ internal class FileService
                                 "Invalid file name."));
                     }
 
-                    var filePath = Path.Combine(AppContext.BaseDirectory, folder, fileName);
+                    var filePath = Path.Combine(
+                        AppContext.BaseDirectory,
+                        folder,
+                        fileName);
                     output = new FileStream(
                         filePath,
                         FileMode.CreateNew,

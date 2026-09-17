@@ -8,13 +8,13 @@ internal class Packet : API.Packet
     // Packet 2
     public PacketPart PartId = PacketPart.First;
     // Block 3
-    public byte Code1 = OperationCode.Off;   // off
+    public byte Code1 = OperationCode.Off;
     // Block 4-5
     public ushort Value1 = 0;
     // Packet 6
     public byte Code2 = OperationCode.Off;
     // Packet 7-8
-    public ushort Value2 = 0;   // off
+    public ushort Value2 = 0;
 
     public byte[] ToBytes()
     {
@@ -32,33 +32,57 @@ internal class Packet : API.Packet
         return result.ToArray();
     }
 
-    public static readonly Packet LeftOff = new(Motor.Left, PacketAndPartId.Off);
-    public static readonly Packet LeftStart1 = new(Motor.Left, PacketAndPartId.Start1);
-    public static readonly Packet LeftStart2_1 = new(Motor.Left, PacketAndPartId.Start2_1);
-    public static readonly Packet LeftStart2_2 = new(Motor.Left, PacketAndPartId.Start2_2);
-    public static readonly Packet LeftStart3_1 = new(Motor.Left, PacketAndPartId.Start3_1);
-    public static readonly Packet LeftStart3_2 = new(Motor.Left, PacketAndPartId.Start3_2);
-    public static readonly Packet LeftStop1 = new(Motor.Left, PacketAndPartId.Stop1);
-    public static readonly Packet LeftStop2 = new(Motor.Left, PacketAndPartId.Stop2);
-    public static readonly Packet LeftStop3_1 = new(Motor.Left, PacketAndPartId.Stop3_1);
-    public static readonly Packet LeftStop3_2 = new(Motor.Left, PacketAndPartId.Stop3_2);
+    public static readonly Packet LeftOff =
+        new(Motor.Left, PacketAndPartId.Off);
+    public static readonly Packet LeftStart1 =
+        new(Motor.Left, PacketAndPartId.Start1);
+    public static readonly Packet LeftStart2_1 =
+        new(Motor.Left, PacketAndPartId.Start2_1);
+    public static readonly Packet LeftStart2_2 =
+        new(Motor.Left, PacketAndPartId.Start2_2);
+    public static readonly Packet LeftStart3_1 =
+        new(Motor.Left, PacketAndPartId.Start3_1);
+    public static readonly Packet LeftStart3_2 =
+        new(Motor.Left, PacketAndPartId.Start3_2);
+    public static readonly Packet LeftStop1 =
+        new(Motor.Left, PacketAndPartId.Stop1);
+    public static readonly Packet LeftStop2 =
+        new(Motor.Left, PacketAndPartId.Stop2);
+    public static readonly Packet LeftStop3_1 =
+        new(Motor.Left, PacketAndPartId.Stop3_1);
+    public static readonly Packet LeftStop3_2 =
+        new(Motor.Left, PacketAndPartId.Stop3_2);
 
-    public static readonly Packet RightOff = new(Motor.Right, PacketAndPartId.Off);
-    public static readonly Packet RightStart1 = new(Motor.Right, PacketAndPartId.Start1);
-    public static readonly Packet RightStart2_1 = new(Motor.Right, PacketAndPartId.Start2_1);
-    public static readonly Packet RightStart2_2 = new(Motor.Right, PacketAndPartId.Start2_2);
-    public static readonly Packet RightStart3_1 = new(Motor.Right, PacketAndPartId.Start3_1);
-    public static readonly Packet RightStart3_2 = new(Motor.Right, PacketAndPartId.Start3_2);
-    public static readonly Packet RightStop1 = new(Motor.Right, PacketAndPartId.Stop1);
-    public static readonly Packet RightStop2 = new(Motor.Right, PacketAndPartId.Stop2);
-    public static readonly Packet RightStop3_1 = new(Motor.Right, PacketAndPartId.Stop3_1);
-    public static readonly Packet RightStop3_2 = new(Motor.Right, PacketAndPartId.Stop3_2);
+    public static readonly Packet RightOff =
+        new(Motor.Right, PacketAndPartId.Off);
+    public static readonly Packet RightStart1 =
+        new(Motor.Right, PacketAndPartId.Start1);
+    public static readonly Packet RightStart2_1 =
+        new(Motor.Right, PacketAndPartId.Start2_1);
+    public static readonly Packet RightStart2_2 =
+        new(Motor.Right, PacketAndPartId.Start2_2);
+    public static readonly Packet RightStart3_1 =
+        new(Motor.Right, PacketAndPartId.Start3_1);
+    public static readonly Packet RightStart3_2 =
+        new(Motor.Right, PacketAndPartId.Start3_2);
+    public static readonly Packet RightStop1 =
+        new(Motor.Right, PacketAndPartId.Stop1);
+    public static readonly Packet RightStop2 =
+        new(Motor.Right, PacketAndPartId.Stop2);
+    public static readonly Packet RightStop3_1 =
+        new(Motor.Right, PacketAndPartId.Stop3_1);
+    public static readonly Packet RightStop3_2 =
+        new(Motor.Right, PacketAndPartId.Stop3_2);
 
-    public static Packet LeftCalibration(int step) => new(Motor.Left, PacketAndPartId.Calibration, step);
-    public static Packet RightCalibration(int step) => new(Motor.Right, PacketAndPartId.Calibration, step);
+    public static Packet LeftCalibration(int step) =>
+        new(Motor.Left, PacketAndPartId.Calibration, step);
+    public static Packet RightCalibration(int step) =>
+        new(Motor.Right, PacketAndPartId.Calibration, step);
 
-    public static Packet LeftTension(int step) => new(Motor.Left, PacketAndPartId.Tension, step);
-    public static Packet RightTension(int step) => new(Motor.Right, PacketAndPartId.Tension, step);
+    public static Packet LeftTension(int step) =>
+        new(Motor.Left, PacketAndPartId.Tension, step);
+    public static Packet RightTension(int step) =>
+        new(Motor.Right, PacketAndPartId.Tension, step);
 
     #region Internal
 
@@ -165,12 +189,18 @@ internal class Packet : API.Packet
 
     private static ushort StepToTension(int step)
     {
-        return (ushort)Math.Clamp(TENSION_MIN + step * TENSION_STEP, TENSION_MIN, TENSION_MAX);
+        return (ushort)Math.Clamp(
+            TENSION_MIN + step * TENSION_STEP,
+            TENSION_MIN,
+            TENSION_MAX);
     }
 
     private static ushort StepToCalibration(int step)
     {
-        return (ushort)Math.Clamp(CALIBRATION_MIN + step * CALIBRATION_STEP, CALIBRATION_MIN, CALIBRATION_MAX);
+        return (ushort)Math.Clamp(
+            CALIBRATION_MIN + step * CALIBRATION_STEP,
+            CALIBRATION_MIN,
+            CALIBRATION_MAX);
     }
 
     #endregion

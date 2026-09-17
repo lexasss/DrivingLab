@@ -6,7 +6,9 @@ using Proto = global::LeapMotion;
 
 namespace Server.LeapMotion;
 
-internal class LeapMotionService : Proto.Dispatcher.DispatcherBase, ITelemetryService
+internal class LeapMotionService :
+    Proto.Dispatcher.DispatcherBase,
+    ITelemetryService
 {
     public bool IsAvailable() => _leap != null;
 
@@ -22,17 +24,23 @@ internal class LeapMotionService : Proto.Dispatcher.DispatcherBase, ITelemetrySe
             _leap.ConnectionChanged += (s, e) =>
             {
                 _isConnected = e;
-                _events.Enqueue(new Proto.Event() { IsConnected = _isConnected });
+                _events.Enqueue(new Proto.Event() {
+                    IsConnected = _isConnected
+                });
             };
             _leap.HandVisibilityChanged += (s, e) =>
             {
                 _isHandVisible = e;
-                _events.Enqueue(new Proto.Event() { IsHandVisible = _isHandVisible });
+                _events.Enqueue(new Proto.Event() {
+                    IsHandVisible = _isHandVisible
+                });
             };
             _leap.HandProximityChanged += (s, e) =>
             {
                 _isHandClose = e;
-                _events.Enqueue(new Proto.Event() { IsHandClose = _isHandClose });
+                _events.Enqueue(new Proto.Event() {
+                    IsHandClose = _isHandClose
+                });
             };
             _leap.HandLocationChanged += (s, e) =>
             {
@@ -63,14 +71,18 @@ internal class LeapMotionService : Proto.Dispatcher.DispatcherBase, ITelemetrySe
         GC.SuppressFinalize(this);
     }
 
-    public override Task<Common.Bool> IsAvailable (Empty request, ServerCallContext context)
+    public override Task<Common.Bool> IsAvailable(
+        Empty request,
+        ServerCallContext context)
     {
-        return Task.FromResult(new Common.Bool { Value = IsAvailable() });
+        return Common.Bool.From(IsAvailable());
     }
 
-    public override Task<Common.Bool> IsConnected(Empty request, ServerCallContext context)
+    public override Task<Common.Bool> IsConnected(
+        Empty request,
+        ServerCallContext context)
     {
-        return Task.FromResult(new Common.Bool { Value = _isConnected });
+        return Common.Bool.From(_isConnected);
     }
 
     public override Task<Empty> Configure(Proto.Configuration request, ServerCallContext context)
@@ -97,35 +109,47 @@ internal class LeapMotionService : Proto.Dispatcher.DispatcherBase, ITelemetrySe
         }
 
         _logger.LogInformation("Configured as '{type}'", request.Config);
-        return Task.FromResult(new Empty());
+
+        return Common.Constants.Empty;
     }
 
-    public override Task<Empty> Start(Empty request, ServerCallContext context)
+    public override Task<Empty> Start(
+        Empty request,
+        ServerCallContext context)
     {
         if (!_isSending)
         {
             _logger.LogInformation("Data streaming: started");
             _isSending = true;
         }
-        return Task.FromResult(new Empty());
+
+        return Common.Constants.Empty;
     }
 
-    public override Task<Empty> Stop(Empty request, ServerCallContext context)
+    public override Task<Empty> Stop(
+        Empty request,
+        ServerCallContext context)
     {
         if (_isSending)
         {
             _logger.LogInformation("Data streaming: stopped");
             _isSending = false;
         }
-        return Task.FromResult(new Empty());
+
+        return Common.Constants.Empty;
     }
 
-    public override Task<Common.Bool> SetLogFileName(Common.String request, ServerCallContext context)
+    public override Task<Common.Bool> SetLogFileName(
+        Common.String request,
+        ServerCallContext context)
     {
         return Tools.TelemetryService.SetLogFileName(request.Value, _fileLogger, _logger);
     }
 
-    public override async Task ReadData(Empty request, IServerStreamWriter<Proto.Sample> responseStream, ServerCallContext context)
+    public override async Task ReadData(
+        Empty request,
+        IServerStreamWriter<Proto.Sample> responseStream,
+        ServerCallContext context)
     {
         if (_isReading)
             return;
@@ -144,7 +168,8 @@ internal class LeapMotionService : Proto.Dispatcher.DispatcherBase, ITelemetrySe
                 }
             }
         }
-        catch (Exception) { }
+        catch (Exception)
+        { }
         finally
         {
             _logger.LogInformation("Data reading: stopped");
@@ -152,7 +177,10 @@ internal class LeapMotionService : Proto.Dispatcher.DispatcherBase, ITelemetrySe
         }
     }
 
-    public override async Task ReadEvents(Empty request, IServerStreamWriter<Proto.Event> responseStream, ServerCallContext context)
+    public override async Task ReadEvents(
+        Empty request,
+        IServerStreamWriter<Proto.Event> responseStream,
+        ServerCallContext context)
     {
         while (_isActive && !context.CancellationToken.IsCancellationRequested)
         {
@@ -174,7 +202,8 @@ internal class LeapMotionService : Proto.Dispatcher.DispatcherBase, ITelemetrySe
     readonly LeapM? _leap;
     readonly Queue<Proto.Event> _events = [];
     readonly Tools.FileLogger _fileLogger = new();
-    readonly Channel<Proto.Sample> _channel = System.Threading.Channels.Channel.CreateUnbounded<Proto.Sample>();
+    readonly Channel<Proto.Sample> _channel = 
+        System.Threading.Channels.Channel.CreateUnbounded<Proto.Sample>();
 
     bool _isActive = false;
     bool _isReading = false;

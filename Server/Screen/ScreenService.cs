@@ -6,7 +6,9 @@ using Proto = global::Screen;
 
 namespace Server.Screen;
 
-public class ScreenService : Proto.Dispatcher.DispatcherBase, IFileService
+public class ScreenService :
+    Proto.Dispatcher.DispatcherBase,
+    IFileService
 {
     public string StorageFolder { get; } = "media";
     public bool IsAvailable() => true;
@@ -46,12 +48,16 @@ public class ScreenService : Proto.Dispatcher.DispatcherBase, IFileService
         GC.SuppressFinalize(this);
     }
 
-    public override Task<Common.Bool> IsAvailable(Empty request, ServerCallContext context)
+    public override Task<Common.Bool> IsAvailable(
+        Empty request,
+        ServerCallContext context)
     {
-        return Task.FromResult(new Common.Bool { Value = true });
+        return Common.Bool.True;
     }
 
-    public override async Task<Proto.Screens> GetScreens(Empty request, ServerCallContext context)
+    public override async Task<Proto.Screens> GetScreens(
+        Empty request,
+        ServerCallContext context)
     {
         var result = new Proto.Screens();
 
@@ -85,18 +91,24 @@ public class ScreenService : Proto.Dispatcher.DispatcherBase, IFileService
         }
     }
 
-    public override Task<Common.String> Show(Proto.Media request, ServerCallContext context)
+    public override Task<Common.String> Show(
+        Proto.Media request,
+        ServerCallContext context)
     {
-        string? filePath = Tools.FileService.FileNameToPath(request.FileName, StorageFolder, _logger);
+        string? filePath = Tools.FileService.FileNameToPath(
+            request.FileName,
+            StorageFolder,
+            _logger);
 
         if (string.IsNullOrEmpty(filePath))
-            return Task.FromResult(new Common.String { Value = string.Empty });
+            return Common.String.Empty;
 
         string id = string.Empty;
 
         try
         {
-            var screen = _screens.FirstOrDefault(s => s.Id == request.ScreenId) ?? _screens.First();
+            var screen = _screens.FirstOrDefault(s => s.Id == request.ScreenId)
+                ?? _screens.First();
 
             var mediaWindow = _pool.Obtain();
             mediaWindow.Shown += MediaWindow_Shown;
@@ -104,7 +116,8 @@ public class ScreenService : Proto.Dispatcher.DispatcherBase, IFileService
 
             id = mediaWindow.Id;
 
-            mediaWindow.Show(filePath,
+            mediaWindow.Show(
+                filePath,
                 new Common.Point {
                     X = screen.Origin.X + request.Location.X,
                     Y = screen.Origin.Y + request.Location.Y
@@ -118,7 +131,7 @@ public class ScreenService : Proto.Dispatcher.DispatcherBase, IFileService
                 request.FileName, ex.Message);
         }
 
-        return Task.FromResult(new Common.String { Value = id });
+        return Common.String.From(id);
     }
 
     public override Task<Empty> Close(Common.String request, ServerCallContext context)
@@ -130,21 +143,26 @@ public class ScreenService : Proto.Dispatcher.DispatcherBase, IFileService
             _logger.LogInformation("Closing the media {name}", mediaWindow.FileName);
         }
 
-        return Task.FromResult(new Empty());
+        return Common.Constants.Empty;
     }
 
     public override async Task<Common.UploadResult> UploadFile(
         IAsyncStreamReader<Common.UploadRequest> requestStream,
         ServerCallContext context)
     {
-        return await Tools.FileService.UploadFile(requestStream, context, StorageFolder, _logger);
+        return await Tools.FileService.UploadFile(
+            requestStream,
+            context,
+            StorageFolder,
+            _logger);
     }
 
     #region Internal
 
     readonly string[] _supportedMediaFormats = [
-        .. MediaWindow.SupportedImageFormats,
-        .. MediaWindow.SupportedVideoFormats];
+        ..MediaWindow.SupportedImageFormats,
+        ..MediaWindow.SupportedVideoFormats
+    ];
 
     readonly ILogger _logger;
     readonly Queue<Proto.Event> _events = [];
@@ -162,8 +180,14 @@ public class ScreenService : Proto.Dispatcher.DispatcherBase, IFileService
             {
                 Id = screen.Id,
                 Name = screen.Name,
-                Origin = new Common.Point { X = screen.X, Y = screen.Y },
-                Size = new Common.Size { Width = screen.Width, Height = screen.Height }
+                Origin = new Common.Point {
+                    X = screen.X,
+                    Y = screen.Y
+                },
+                Size = new Common.Size {
+                    Width = screen.Width,
+                    Height = screen.Height
+                }
             });
     }
 
@@ -189,7 +213,9 @@ public class ScreenService : Proto.Dispatcher.DispatcherBase, IFileService
         {
             _logger.LogInformation("Image {name} was hidden", value.FileName);
             _media.Remove(mediaId);
-            _events.Enqueue(new Proto.Event { HiddenMediaId = mediaId });
+            _events.Enqueue(new Proto.Event {
+                HiddenMediaId = mediaId
+            });
         }
     }
 
