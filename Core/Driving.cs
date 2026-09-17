@@ -33,7 +33,7 @@ public partial class RotaryTiltButton
     ];
 }
 
-public partial class Data
+public partial class Data : Common.ILoggable
 {
     public string[] ToStringArray() => [
         WheelRotation.ToString(),

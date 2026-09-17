@@ -12,6 +12,9 @@ service Dispatcher {
 	rpc SetLogFileName (Common.String) returns (Common.Bool) {}
 	rpc Configure (Configuration) returns (Common.Bool) {}
 
+	// Initializes data reading stream, but the data is not polling to clients
+	// until Start is called
+	rpc ReadData (google.protobuf.Empty) returns (stream Common.Vector) {}
 	rpc ReadEvents (google.protobuf.Empty) returns (stream Event) {}
 
 	// Enable of disable data streaming to a log file

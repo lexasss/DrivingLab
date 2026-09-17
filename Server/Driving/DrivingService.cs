@@ -2,8 +2,6 @@ using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Microsoft.Extensions.Logging;
 using SharpDX.DirectInput;
-using System.Threading.Channels;
-using Channel = System.Threading.Channels.Channel;
 using Proto = global::Driving;
 
 namespace Server.Driving;
@@ -75,7 +73,8 @@ internal class DrivingService :
             }
 
             _logger.LogInformation("Running");
-            _isActive = true;
+
+            _baseService = new(_logger);
         }
         catch (Exception)
         {
@@ -85,18 +84,15 @@ internal class DrivingService :
 
     public void Dispose()
     {
-        _isActive = false;
-
         _wheel?.Dispose();
         _pedals?.Dispose();
         _activePedals?.Dispose();
 
+        _baseService?.Dispose();
+
         _wheel = null;
         _pedals = null;
         _activePedals = null;
-
-        _fileLogger.Dispose();
-        _logger.LogInformation("Disposed");
 
         GC.SuppressFinalize(this);
     }
@@ -125,25 +121,20 @@ internal class DrivingService :
 
     public override Task<Empty> Start(Empty request, ServerCallContext context)
     {
-        if (!_isSending)
+        if (_baseService?.IsSending == false)
         {
             _wheel?.Reset();
             _pedals?.Reset();
             _activePedals?.Reset();
 
-            _logger.LogInformation("Data streaming: started");
-            _isSending = true;
+            _baseService.Start();
         }
         return Common.Constants.Empty;
     }
 
     public override Task<Empty> Stop(Empty request, ServerCallContext context)
     {
-        if (_isSending)
-        {
-            _logger.LogInformation("Data streaming: stopped");
-            _isSending = false;
-        }
+        _baseService?.Stop();
         return Common.Constants.Empty;
     }
 
@@ -151,11 +142,14 @@ internal class DrivingService :
         Common.String request,
         ServerCallContext context)
     {
+        if (_baseService == null)
+            return Common.Bool.False;
+
         _wheel?.Reset();
         _pedals?.Reset();
         _activePedals?.Reset();
 
-        return Tools.TelemetryService.SetLogFileName(request.Value, _fileLogger, _logger);
+        return _baseService.SetLogFileName(request.Value);
     }
 
     public override async Task ReadData(
@@ -163,30 +157,10 @@ internal class DrivingService :
         IServerStreamWriter<Proto.Data> responseStream,
         ServerCallContext context)
     {
-        if (_isReading)
+        if (_baseService == null)
             return;
 
-        _logger.LogInformation("Data reading: started");
-        _isReading = true;
-
-        try
-        {
-            await foreach (var data in _channel.Reader.ReadAllAsync(context.CancellationToken))
-            {
-                if (_isSending)
-                {
-                    await responseStream.WriteAsync(data);
-                    _fileLogger.Add(data.ToStringArray());
-                }
-            }
-        }
-        catch (Exception)
-        { }
-        finally
-        {
-            _logger.LogInformation("Data reading: stopped");
-            _isReading = false;
-        }
+        await _baseService.ReadData(request, responseStream, context, 3);
     }
 
     public override async Task ReadEvents(
@@ -194,33 +168,22 @@ internal class DrivingService :
         IServerStreamWriter<Proto.Event> responseStream,
         ServerCallContext context)
     {
-        while (_isActive && !context.CancellationToken.IsCancellationRequested)
-        {
-            await Task.Delay(5);
+        if (_baseService == null)
+            return;
 
-            if (_events.Count > 0)
-            {
-                var evt = _events.Dequeue();
-                await responseStream.WriteAsync(evt);
-            }
-        }
+        await _baseService.ReadEvents(request, responseStream, context);
     }
 
     #region Internal
 
     readonly ILogger _logger;
-    readonly Queue<Proto.Event> _events = [];
-    readonly Channel<Proto.Data> _channel = Channel.CreateUnbounded<Proto.Data>();
-    readonly Tools.FileLogger _fileLogger = new();
+    readonly Tools.TelemetryService<Proto.Data, Proto.Event>? _baseService;
     readonly Proto.Data _data = new();
 
     Pointing.PointingDevice? _wheel;
     Pointing.PointingDevice? _pedals;
     Pointing.PointingDevice? _activePedals;
 
-    bool _isActive = false;
-    bool _isReading = false;
-    bool _isSending = false;
 
     Proto.ConnectionStatus _connectionStatus = new() {
         IsBaseConnected = false,
@@ -234,40 +197,46 @@ internal class DrivingService :
     private void Wheel_Data(object? sender, global::Pointing.Data data)
     {
         _data.WheelRotation = data.Point.X;
-        _channel.Writer.TryWrite(_data);
+        _baseService?.Publish(_data);
     }
 
     private void Wheel_Disconnected(object? sender, EventArgs e)
     {
         _connectionStatus.IsBaseConnected = false;
         _connectionStatus.IsWheelConnected = false;
-        _events.Enqueue(new Proto.Event() { ConnectionStatus = _connectionStatus });
+        _baseService?.Publish(new Proto.Event() {
+            ConnectionStatus = _connectionStatus
+        });
     }
 
     private void Pedals_Data(object? sender, global::Pointing.Data data)
     {
         _data.BrakePedal = data.Rotation.Y;
         _data.ThrottlePedal = data.Rotation.Z;
-        _channel.Writer.TryWrite(_data);
+        _baseService?.Publish(_data);
     }
 
     private void Pedals_Disconnected(object? sender, EventArgs e)
     {
         _connectionStatus.ArePedalsConnected = false;
-        _events.Enqueue(new Proto.Event() { ConnectionStatus = _connectionStatus });
+        _baseService?.Publish(new Proto.Event() {
+            ConnectionStatus = _connectionStatus
+        });
     }
 
     private void ActivePedals_Data(object? sender, global::Pointing.Data data)
     {
         _data.ActiveBrakePedal = data.Rotation.Y;
         _data.ActiveThrottlePedal = data.Rotation.Z;
-        _channel.Writer.TryWrite(_data);
+        _baseService?.Publish(_data);
     }
 
     private void ActivePedals_Disconnected(object? sender, EventArgs e)
     {
         _connectionStatus.AreActivePedalsConnected = false;
-        _events.Enqueue(new Proto.Event() { ConnectionStatus = _connectionStatus });
+        _baseService?.Publish(new Proto.Event() {
+            ConnectionStatus = _connectionStatus
+        });
     }
 
     #endregion

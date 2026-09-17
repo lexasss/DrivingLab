@@ -1,6 +1,6 @@
 ﻿namespace LeapMotion;
 
-public partial class Sample
+public partial class Sample : Common.ILoggable
 {
     public string[] ToStringArray() => [
         ..Palm.ToStringArray(),

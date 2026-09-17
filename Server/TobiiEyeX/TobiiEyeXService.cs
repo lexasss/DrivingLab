@@ -1,8 +1,6 @@
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Microsoft.Extensions.Logging;
-using System.Threading.Channels;
-using Channel = System.Threading.Channels.Channel;
 using EyeXCore = Tobii.Gaze.Core;
 using Proto = global::Gaze;
 
@@ -24,17 +22,18 @@ internal class TobiiEyeXService :
 
             if (_eyeX.IsValid)
             {
-                _isActive = true;
-
                 _eyeX.Tracker?.GazeData += EyeX_GazeData;
                 _eyeX.PosStream?.Next += EyeX_Pos;
                 _eyeX.GazeStream?.Next += EyeX_Gaze;
 
-                _logger.LogInformation("Running");
+                _baseService = new(_logger);
             }
             else
             {
+                _eyeX.Dispose();
                 _eyeX = null;
+
+                throw new Exception();
             }
         }
         catch (Exception)
@@ -45,13 +44,10 @@ internal class TobiiEyeXService :
 
     public void Dispose()
     {
-        _isActive = false;
-
         _eyeX?.Dispose();
-        _eyeX = null;
+        _baseService?.Dispose();
 
-        _fileLogger.Dispose();
-        _logger.LogInformation("Disposed");
+        _eyeX = null;
 
         GC.SuppressFinalize(this);
     }
@@ -67,11 +63,7 @@ internal class TobiiEyeXService :
         Empty request,
         ServerCallContext context)
     {
-        if (!_isSending)
-        {
-            _logger.LogInformation("Data streaming: started");
-            _isSending = true;
-        }
+        _baseService?.Start();
         return Common.Constants.Empty;
     }
 
@@ -79,11 +71,7 @@ internal class TobiiEyeXService :
         Empty request,
         ServerCallContext context)
     {
-        if (_isSending)
-        {
-            _logger.LogInformation("Data streaming: stopped");
-            _isSending = false;
-        }
+        _baseService?.Stop();
         return Common.Constants.Empty;
     }
 
@@ -91,10 +79,10 @@ internal class TobiiEyeXService :
         Common.String request,
         ServerCallContext context)
     {
-        return Tools.TelemetryService.SetLogFileName(
-            request.Value,
-            _fileLogger,
-            _logger);
+        if (_baseService == null)
+            return Common.Bool.False;
+
+        return _baseService.SetLogFileName(request.Value);
     }
 
     public override async Task ReadData(
@@ -102,32 +90,14 @@ internal class TobiiEyeXService :
         IServerStreamWriter<Proto.Sample> responseStream,
         ServerCallContext context)
     {
-        if (_eyeX == null || _isReading)
+        if (_eyeX == null || _baseService == null)
             return;
 
         _eyeX.Tracker?.StartTracking();
-        _logger.LogInformation("Data reading: start");
-        _isReading = true;
 
-        try
-        {
-            await foreach (var data in _channel.Reader.ReadAllAsync(context.CancellationToken))
-            {
-                if (_isSending)
-                {
-                    await responseStream.WriteAsync(data);
-                    _fileLogger.Add(data.ToStringArray());
-                }
-            }
-        }
-        catch (Exception)
-        { }
-        finally
-        {
-            _eyeX.Tracker?.StopTracking();
-            _logger.LogInformation("Data reading: stop");
-            _isReading = false;
-        }
+        await _baseService.ReadData(request, responseStream, context, 3);
+
+        _eyeX.Tracker?.StopTracking();
     }
 
     public override async Task ReadEvents(
@@ -135,16 +105,10 @@ internal class TobiiEyeXService :
         IServerStreamWriter<Proto.Event> responseStream,
         ServerCallContext context)
     {
-        while (_isActive && !context.CancellationToken.IsCancellationRequested)
-        {
-            await Task.Delay(5);
+        if (_baseService == null)
+            return;
 
-            if (_events.Count > 0)
-            {
-                var evt = _events.Dequeue();
-                await responseStream.WriteAsync(evt);
-            }
-        }
+        await _baseService.ReadEvents(request, responseStream, context);
     }
 
 
@@ -156,16 +120,10 @@ internal class TobiiEyeXService :
         GetSystemMetrics(SystemMetric.SM_CYSCREEN);
 
     readonly ILogger _logger;
-    readonly Queue<Proto.Event> _events = [];
-    readonly Channel<Proto.Sample> _channel = Channel.CreateUnbounded<Proto.Sample>();
-    readonly Tools.FileLogger _fileLogger = new();
+    readonly Tools.TelemetryService<Proto.Sample, Proto.Event>? _baseService;
     readonly Proto.Sample _sample = new();
 
     EyeX? _eyeX;
-
-    bool _isActive = false;
-    bool _isReading = false;
-    bool _isSending = false;
 
     // Event handlers
 
@@ -257,7 +215,7 @@ internal class TobiiEyeXService :
             }
         }
 
-        _channel.Writer.TryWrite(_sample);
+        _baseService?.Publish(_sample);
     }
 
     #endregion

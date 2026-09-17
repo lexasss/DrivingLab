@@ -16,19 +16,16 @@ internal class TensionRService :
     {
         _logger = loggerFactory.CreateLogger("BELT");
 
-        _logger.LogInformation("Running");
-        _isActive = true;
+        _baseService = new(_logger);
     }
 
     public void Dispose()
     {
-        _isActive = false;
-
         _belt?.Dispose();
-        _belt = null;
-
+        _baseService?.Dispose();
         _fileLogger.Dispose();
-        _logger.LogInformation("Disposed");
+
+        _belt = null;
 
         GC.SuppressFinalize(this);
     }
@@ -82,13 +79,15 @@ internal class TensionRService :
         }
         else
         {
-            _logger.LogInformation($"Connected to {request.Value}");
+            _logger.LogInformation("Connected to {name}", request.Value);
 
             _belt.Error += Belt_Error;
             _belt.RequestSent += Belt_RequestSent;
             _belt.DataReceived += Belt_DataReceived;
 
-            _events.Enqueue(new Proto.Event() { IsConnected = true });
+            _baseService.Publish(new Proto.Event() {
+                IsConnected = true
+            });
         }
 
         return Common.Bool.From(isConnected);
@@ -98,7 +97,7 @@ internal class TensionRService :
         Common.String request,
         ServerCallContext context)
     {
-        return Tools.TelemetryService.SetLogFileName(
+        return Tools.TelemetryHelper.SetLogFileName(
             request.Value,
             _fileLogger,
             _logger);
@@ -115,7 +114,7 @@ internal class TensionRService :
             _logger.LogInformation("Activated");
             _isEnabled = true;
 
-            _events.Enqueue(new Proto.Event() {
+            _baseService.Publish(new Proto.Event() {
                 IsEnabled = _isEnabled
             });
         }
@@ -133,7 +132,9 @@ internal class TensionRService :
             _logger.LogInformation("Deactivated");
             _isEnabled = false;
 
-            _events.Enqueue(new Proto.Event() { IsEnabled = _isEnabled });
+            _baseService.Publish(new Proto.Event() {
+                IsEnabled = _isEnabled
+            });
         }
         return Common.Constants.Empty;
     }
@@ -181,16 +182,10 @@ internal class TensionRService :
         IServerStreamWriter<Proto.Event> responseStream,
         ServerCallContext context)
     {
-        while (_isActive && !context.CancellationToken.IsCancellationRequested)
-        {
-            await Task.Delay(5);
+        if (_baseService == null)
+            return;
 
-            if (_events.Count > 0)
-            {
-                var evt = _events.Dequeue();
-                await responseStream.WriteAsync(evt);
-            }
-        }
+        await _baseService.ReadEvents(request, responseStream, context);
 
         _isEnabled = false;
         _isCalibrating = false;
@@ -203,12 +198,11 @@ internal class TensionRService :
     #region Internal
 
     readonly ILogger _logger;
-    readonly Queue<Proto.Event> _events = [];
+    readonly Tools.Service<Proto.Event> _baseService;
     readonly Tools.FileLogger _fileLogger = new();
 
     API.Belt? _belt;
 
-    bool _isActive = false;
     bool _isEnabled = false;
     bool _isCalibrating = false;
     bool _isCalibrated = false;
@@ -227,7 +221,7 @@ internal class TensionRService :
 
             _logger.LogInformation($"Calibrated");
 
-            _events.Enqueue(new Proto.Event() {
+            _baseService.Publish(new Proto.Event() {
                 IsCalibrated = true
             });
         }

@@ -31,9 +31,7 @@ internal class StreamDeckService :
                 }
             };*/
 
-            _isActive = true;
-
-            _logger.LogInformation("Running");
+            _baseService = new(_logger);
         }
         catch (Exception ex)
         {
@@ -43,12 +41,8 @@ internal class StreamDeckService :
 
     public void Dispose()
     {
-        _isActive = false;
-
         _seClient?.Dispose();
-        _fileLogger.Dispose();
-
-        _logger.LogInformation("Disposed");
+        _baseService?.Dispose();
 
         GC.SuppressFinalize(this);
     }
@@ -103,11 +97,7 @@ internal class StreamDeckService :
         Empty request,
         ServerCallContext context)
     {
-        if (!_isSending)
-        {
-            _logger.LogInformation("Data streaming: started");
-            _isSending = true;
-        }
+        _baseService?.Start();
         return Common.Constants.Empty;
     }
 
@@ -115,11 +105,7 @@ internal class StreamDeckService :
         Empty request,
         ServerCallContext context)
     {
-        if (_isSending)
-        {
-            _logger.LogInformation("Data streaming: stopped");
-            _isSending = false;
-        }
+        _baseService?.Stop();
         return Common.Constants.Empty;
     }
 
@@ -127,10 +113,21 @@ internal class StreamDeckService :
         Common.String request,
         ServerCallContext context)
     {
-        return Tools.TelemetryService.SetLogFileName(
-            request.Value,
-            _fileLogger,
-            _logger);
+        if (_baseService == null)
+            return Common.Bool.False;
+
+        return _baseService.SetLogFileName(request.Value);
+    }
+
+    public override async Task ReadData(
+        Empty request,
+        IServerStreamWriter<Common.Vector> responseStream,
+        ServerCallContext context)
+    {
+        if (_baseService == null)
+            return;
+
+        await _baseService.ReadData(request, responseStream, context, 3);
     }
 
     public override async Task ReadEvents(
@@ -138,16 +135,10 @@ internal class StreamDeckService :
         IServerStreamWriter<Proto.Event> responseStream,
         ServerCallContext context)
     {
-        while (_isActive && !context.CancellationToken.IsCancellationRequested)
-        {
-            await Task.Delay(5);
+        if (_baseService == null)
+            return;
 
-            if (_events.Count > 0)
-            {
-                var evt = _events.Dequeue();
-                await responseStream.WriteAsync(evt);
-            }
-        }
+        await _baseService.ReadEvents(request, responseStream, context);
     }
 
     #region Internal
@@ -156,14 +147,11 @@ internal class StreamDeckService :
 
     readonly ILogger _logger;
     readonly SmartEyeTools.Client? _seClient;
-    readonly Queue<Proto.Event> _events = [];
-    readonly Tools.FileLogger _fileLogger = new();
+    readonly Tools.TelemetryService<Common.Vector, Proto.Event>? _baseService;
 
-    bool _isActive = false;
-    bool _isSending = false;
     bool _isConnected = false;
-    Proto.PlaneMappingMode _planeMappingMode;
 
+    Proto.PlaneMappingMode _planeMappingMode;
     string? _currentIntersectionName = null;
     HashSet<string> _currentIntersectionNames = [];
 
@@ -173,7 +161,12 @@ internal class StreamDeckService :
 
         if (e.GazeDirection is SmartEyeTools.Vector3D gd)
         {
-            _fileLogger.Add(gd.X, gd.Y, gd.Z);
+            _baseService?.Publish(new Common.Vector()
+            {
+                X = gd.X,
+                Y = gd.Y,
+                Z = gd.Z
+            });
         }
     }
 
@@ -213,7 +206,7 @@ internal class StreamDeckService :
                 _logger.LogInformation("Plane {planeName}", intersection.ObjectName.AsString);
             }
 
-            _events.Enqueue(new Proto.Event()
+            _baseService?.Publish(new Proto.Event()
             {
                 Intersection = new Proto.Intersection
                 {
@@ -231,7 +224,7 @@ internal class StreamDeckService :
         {
             _currentIntersectionName = null;
 
-            _events.Enqueue(new Proto.Event()
+            _baseService?.Publish(new Proto.Event()
             {
                 Intersection = new Proto.Intersection
                 {
@@ -284,7 +277,7 @@ internal class StreamDeckService :
                 })
             );
 
-            _events.Enqueue(new Proto.Event()
+            _baseService?.Publish(new Proto.Event()
             {
                 Intersections = grpcIntersections
             });

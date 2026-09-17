@@ -1,7 +1,6 @@
 ﻿using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Microsoft.Extensions.Logging;
-using System.Threading.Channels;
 using Proto = global::LeapMotion;
 
 namespace Server.LeapMotion;
@@ -24,32 +23,32 @@ internal class LeapMotionService :
             _leap.ConnectionChanged += (s, e) =>
             {
                 _isConnected = e;
-                _events.Enqueue(new Proto.Event() {
+                _baseService?.Publish(new Proto.Event() {
                     IsConnected = _isConnected
                 });
             };
             _leap.HandVisibilityChanged += (s, e) =>
             {
                 _isHandVisible = e;
-                _events.Enqueue(new Proto.Event() {
+                _baseService?.Publish(new Proto.Event() {
                     IsHandVisible = _isHandVisible
                 });
             };
             _leap.HandProximityChanged += (s, e) =>
             {
                 _isHandClose = e;
-                _events.Enqueue(new Proto.Event() {
+                _baseService?.Publish(new Proto.Event() {
                     IsHandClose = _isHandClose
                 });
             };
             _leap.HandLocationChanged += (s, e) =>
             {
-                _channel.Writer.TryWrite(e);
+                _baseService?.Publish(e);
             };
 
             _leap.Run();
 
-            _isActive = true;
+            _baseService = new(_logger);
 
             _logger.LogInformation("Running");
         }
@@ -61,12 +60,8 @@ internal class LeapMotionService :
 
     public void Dispose()
     {
-        _isActive = false;
-
         _leap?.Dispose();
-        _fileLogger.Dispose();
-
-        _logger.LogInformation("Disposed");
+        _baseService?.Dispose();
 
         GC.SuppressFinalize(this);
     }
@@ -117,12 +112,7 @@ internal class LeapMotionService :
         Empty request,
         ServerCallContext context)
     {
-        if (!_isSending)
-        {
-            _logger.LogInformation("Data streaming: started");
-            _isSending = true;
-        }
-
+        _baseService?.Start();
         return Common.Constants.Empty;
     }
 
@@ -130,12 +120,7 @@ internal class LeapMotionService :
         Empty request,
         ServerCallContext context)
     {
-        if (_isSending)
-        {
-            _logger.LogInformation("Data streaming: stopped");
-            _isSending = false;
-        }
-
+        _baseService?.Stop();
         return Common.Constants.Empty;
     }
 
@@ -143,7 +128,10 @@ internal class LeapMotionService :
         Common.String request,
         ServerCallContext context)
     {
-        return Tools.TelemetryService.SetLogFileName(request.Value, _fileLogger, _logger);
+        if (_baseService == null)
+            return Common.Bool.False;
+
+        return _baseService.SetLogFileName(request.Value);
     }
 
     public override async Task ReadData(
@@ -151,30 +139,10 @@ internal class LeapMotionService :
         IServerStreamWriter<Proto.Sample> responseStream,
         ServerCallContext context)
     {
-        if (_isReading)
+        if (_baseService == null)
             return;
 
-        _logger.LogInformation("Data reading: started");
-        _isReading = true;
-
-        try
-        {
-            await foreach (var data in _channel.Reader.ReadAllAsync(context.CancellationToken))
-            {
-                if (_isSending)
-                {
-                    await responseStream.WriteAsync(data);
-                    _fileLogger.Add(data.ToStringArray(1));
-                }
-            }
-        }
-        catch (Exception)
-        { }
-        finally
-        {
-            _logger.LogInformation("Data reading: stopped");
-            _isReading = false;
-        }
+        await _baseService.ReadData(request, responseStream, context, 1);
     }
 
     public override async Task ReadEvents(
@@ -182,16 +150,10 @@ internal class LeapMotionService :
         IServerStreamWriter<Proto.Event> responseStream,
         ServerCallContext context)
     {
-        while (_isActive && !context.CancellationToken.IsCancellationRequested)
-        {
-            await Task.Delay(5);
+        if (_baseService == null)
+            return;
 
-            if (_events.Count > 0)
-            {
-                var evt = _events.Dequeue();
-                await responseStream.WriteAsync(evt);
-            }
-        }
+        await _baseService.ReadEvents(request, responseStream, context);
     }
 
     #region Internal
@@ -200,14 +162,8 @@ internal class LeapMotionService :
 
     readonly ILogger _logger;
     readonly LeapM? _leap;
-    readonly Queue<Proto.Event> _events = [];
-    readonly Tools.FileLogger _fileLogger = new();
-    readonly Channel<Proto.Sample> _channel = 
-        System.Threading.Channels.Channel.CreateUnbounded<Proto.Sample>();
+    readonly Tools.TelemetryService<Proto.Sample, Proto.Event>? _baseService;
 
-    bool _isActive = false;
-    bool _isReading = false;
-    bool _isSending = false;
     bool _isConnected = false;
 
     bool _isHandClose = false;

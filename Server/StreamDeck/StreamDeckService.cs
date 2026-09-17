@@ -19,22 +19,26 @@ internal class StreamDeckService : Proto.Dispatcher.DispatcherBase, IFileService
     public StreamDeckService(ILoggerFactory loggerFactory) : base()
     {
         _logger = loggerFactory.CreateLogger("DECK");
-        _isActive = true;
 
         if (IsAvailable())
-            Connect();
+        {
+            if (Connect())
+            {
+                _baseService = new(_logger);
+            }
+        }
         else
+        {
             _logger.LogWarning("Found no Stream Deck devices");
+        }
     }
 
     public void Dispose()
     {
-        _isActive = false;
         _isConnected = false;
 
         _deck?.Dispose();
-
-        _logger.LogInformation("Disposed");
+        _baseService?.Dispose();
 
         GC.SuppressFinalize(this);
     }
@@ -57,7 +61,7 @@ internal class StreamDeckService : Proto.Dispatcher.DispatcherBase, IFileService
         IAsyncStreamReader<Common.UploadRequest> requestStream,
         ServerCallContext context)
     {
-        return await Tools.FileService.UploadFile(
+        return await Tools.FileHelper.UploadFile(
             requestStream,
             context,
             StorageFolder,
@@ -102,7 +106,7 @@ internal class StreamDeckService : Proto.Dispatcher.DispatcherBase, IFileService
 
         bool result = false;
 
-        string? filePath = Tools.FileService.FileNameToPath(
+        string? filePath = Tools.FileHelper.FileNameToPath(
             request.FileNameOrColor,
             StorageFolder,
             null);
@@ -178,29 +182,22 @@ internal class StreamDeckService : Proto.Dispatcher.DispatcherBase, IFileService
         IServerStreamWriter<Proto.Event> responseStream,
         ServerCallContext context)
     {
-        while (_isActive && !context.CancellationToken.IsCancellationRequested)
-        {
-            await Task.Delay(5);
+        if (_baseService == null)
+            return;
 
-            if (_events.Count > 0)
-            {
-                var evt = _events.Dequeue();
-                await responseStream.WriteAsync(evt);
-            }
-        }
+        await _baseService.ReadEvents(request, responseStream, context);
     }
 
     #region Internal
 
     readonly ILogger _logger;
-    readonly Queue<Proto.Event> _events = [];
+    readonly Tools.Service<Proto.Event>? _baseService;
 
     IMacroBoard? _deck;
 
-    bool _isActive = false;
     bool _isConnected = false;
 
-    private void Connect()
+    private bool Connect()
     {
         try
         {
@@ -208,19 +205,19 @@ internal class StreamDeckService : Proto.Dispatcher.DispatcherBase, IFileService
             _deck.ConnectionStateChanged += (s, e) =>
             {
                 _isConnected = e.NewConnectionState;
-                if (_isActive)
+                if (_baseService?.IsActive == true)
                 {
                     _logger.LogInformation(_isConnected
                         ? "Stream Deck connected"
                         : "Stream Deck disconnected");
-                    _events.Enqueue(new Proto.Event() {
+                    _baseService.Publish(new Proto.Event() {
                         IsConnected = _isConnected
                     });
                 }
             };
             _deck.KeyStateChanged += (s, e) =>
             {
-                _events.Enqueue(new Proto.Event()
+                _baseService?.Publish(new Proto.Event()
                 {
                     Key = new Proto.KeyState()
                     {
@@ -232,20 +229,19 @@ internal class StreamDeckService : Proto.Dispatcher.DispatcherBase, IFileService
 
             _isConnected = true;
 
-            _events.Enqueue(new Proto.Event() {
-                IsConnected = _isConnected
-            });
-
-            _logger.LogInformation("Found stream deck {sn}: {row}x{col}",
+            _logger.LogInformation("Found Stream Deck {sn}: {row}x{col}",
                 _deck.GetSerialNumber(),
                 _deck.Keys.CountY,
                 _deck.Keys.CountX);
-            _logger.LogInformation("Running");
+
+            return true;
         }
         catch (Exception ex)
         {
             _logger.LogError("Cannot start the service ({ex})", ex.Message);
         }
+
+        return false;
     }
 
     private static OmbColor FromRGB(string rgb)

@@ -24,24 +24,21 @@ public class SoundPlayerService :
             _logger.LogInformation("Found sound device {name}", device.Name);
         }
 
-        Tools.FileService.ListFiles(
+        Tools.FileHelper.ListFiles(
             StorageFolder,
             _supportedAudioFormats,
             _logger
         );
 
-        _logger.LogInformation("Running");
+        _baseService = new(_logger);
     }
 
     public void Dispose()
     {
-        _isActive = false;
-
         _tonePlayer?.Dispose();
         _audioFile?.Dispose();
         _soundPlayer?.Dispose();
-
-        _logger.LogInformation("Disposed");
+        _baseService?.Dispose();
 
         GC.SuppressFinalize(this);
     }
@@ -74,16 +71,10 @@ public class SoundPlayerService :
         IServerStreamWriter<Proto.Event> responseStream,
         ServerCallContext context)
     {
-        while (_isActive && !context.CancellationToken.IsCancellationRequested)
-        {
-            await Task.Delay(5);
+        if (_baseService == null)
+            return;
 
-            if (_events.Count > 0)
-            {
-                var evt = _events.Dequeue();
-                await responseStream.WriteAsync(evt);
-            }
-        }
+        await _baseService.ReadEvents(request, responseStream, context);
     }
 
     public override Task<Common.Bool> Play(
@@ -122,6 +113,7 @@ public class SoundPlayerService :
         _tonePlayer?.Stop();
         _tonePlayer?.Dispose();
         _tonePlayer = null;
+
         _audioFile?.Dispose();
         _audioFile = null;
 
@@ -138,7 +130,7 @@ public class SoundPlayerService :
         IAsyncStreamReader<Common.UploadRequest> requestStream,
         ServerCallContext context)
     {
-        return await Tools.FileService.UploadFile(
+        return await Tools.FileHelper.UploadFile(
             requestStream,
             context,
             StorageFolder,
@@ -157,9 +149,7 @@ public class SoundPlayerService :
     static readonly string[] _supportedAudioFormats = [".wav"];
 
     readonly ILogger _logger;
-    readonly Queue<Proto.Event> _events = [];
-
-    bool _isActive = true;
+    readonly Tools.Service<Proto.Event> _baseService;
 
     WasapiPlayer? _soundPlayer;
     TonePlayer? _tonePlayer;
@@ -203,7 +193,7 @@ public class SoundPlayerService :
         soundPlayer.PlaybackStopped += (sender, e) =>
         {
             _logger.LogInformation("Playback finished");
-            _events.Enqueue(new Proto.Event {
+            _baseService.Publish(new Proto.Event {
                 IsPlaybackFinished = true
             });
         };
@@ -234,7 +224,7 @@ public class SoundPlayerService :
                 tonePlayer.Stop();
 
                 _logger.LogInformation("Tone finished");
-                _events.Enqueue(new Proto.Event {
+                _baseService.Publish(new Proto.Event {
                     IsPlaybackFinished = true
                 });
             });
@@ -248,7 +238,7 @@ public class SoundPlayerService :
         WasapiPlayer soundPlayer,
         string filename)
     {
-        string? filePath = Tools.FileService.FileNameToPath(
+        string? filePath = Tools.FileHelper.FileNameToPath(
             filename,
             StorageFolder,
             _logger);

@@ -16,6 +16,12 @@ public enum Ports
     Driving = 30059,
 }
 
+public interface ILoggable
+{
+    string[] ToStringArray();
+    string[] ToStringArray(int decimals);
+}
+
 public static class Constants
 {
     public const int FILE_CHUNK_SIZE = 64 * 1024;
@@ -26,14 +32,16 @@ public static class Constants
 
 public partial class Bool
 {
-    public static Task<Bool> True { get; } = Task.FromResult(new Bool()
-    {
-        Value = true
-    });
-    public static Task<Bool> False { get; } = Task.FromResult(new Bool()
-    {
-        Value = false
-    });
+    public static Task<Bool> True { get; } = 
+        Task.FromResult(new Bool()
+        {
+            Value = true
+        });
+    public static Task<Bool> False { get; } =
+        Task.FromResult(new Bool()
+        {
+            Value = false
+        });
     public static Task<Bool> From(bool value) =>
         Task.FromResult(new Bool() {
             Value = value
@@ -46,10 +54,11 @@ public partial class Bool
 
 public partial class String
 {
-    public static Task<String> Empty { get; } = Task.FromResult(new String()
-    {
-        Value = string.Empty
-    });
+    public static Task<String> Empty { get; } =
+        Task.FromResult(new String()
+        {
+            Value = string.Empty
+        });
     public static Task<String> From(string value) =>
         Task.FromResult(new String()
         {
@@ -57,11 +66,26 @@ public partial class String
         });
 }
 
-public partial class Vector
+public partial class Vector : ILoggable
 {
-    public readonly static Vector ZEROS = new() { X = 0, Y = 0, Z = 0 };
-    public readonly static Vector ONES = new() { X = 1, Y = 1, Z = 1 };
-    public static Vector Empty => new() { X = 0, Y = 0, Z = 0 };
+    public readonly static Vector ZEROS = new()
+    {
+        X = 0,
+        Y = 0,
+        Z = 0
+    };
+    public readonly static Vector ONES = new()
+    {
+        X = 1,
+        Y = 1,
+        Z = 1
+    };
+    public static Vector Empty => new()
+    {
+        X = 0,
+        Y = 0,
+        Z = 0
+    };
     public void Deconstruct(out double x, out double y, out double z)
     {
         x = X;
@@ -80,9 +104,13 @@ public partial class Vector
     ];
 }
 
-public partial class Point
+public partial class Point : ILoggable
 {
-    public readonly static Point ZEROS = new() { X = 0, Y = 0 };
+    public readonly static Point ZEROS = new()
+    {
+        X = 0,
+        Y = 0
+    };
     public void Deconstruct(out double x, out double y)
     {
         x = X;
@@ -98,7 +126,7 @@ public partial class Point
     ];
 }
 
-public partial class Size
+public partial class Size : ILoggable
 {
     public void Deconstruct(out double width, out double height)
     {

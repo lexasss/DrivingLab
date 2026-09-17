@@ -1,8 +1,6 @@
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Microsoft.Extensions.Logging;
-using System.Threading.Channels;
-using Channel = System.Threading.Channels.Channel;
 using Proto = global::Gaze;
 
 namespace Server.MyGaze;
@@ -23,8 +21,7 @@ internal class MyGazeService :
             _myGaze.Event += MyGaze_Event;
             _myGaze.Sample += MyGaze_Sample;
 
-            _logger.LogInformation("Running");
-            _isActive = true;
+            _baseService = new(_logger);
         }
         catch (Exception)
         {
@@ -34,13 +31,10 @@ internal class MyGazeService :
 
     public void Dispose()
     {
-        _isActive = false;
-
         _myGaze?.Dispose();
-        _myGaze = null;
+        _baseService?.Dispose();
 
-        _fileLogger.Dispose();
-        _logger.LogInformation("Disposed");
+        _myGaze = null;
 
         GC.SuppressFinalize(this);
     }
@@ -56,12 +50,7 @@ internal class MyGazeService :
         Empty request,
         ServerCallContext context)
     {
-        if (!_isSending)
-        {
-            _logger.LogInformation("Data streaming: started");
-            _isSending = true;
-        }
-
+        _baseService?.Start();
         return Common.Constants.Empty;
     }
 
@@ -69,12 +58,7 @@ internal class MyGazeService :
         Empty request,
         ServerCallContext context)
     {
-        if (_isSending)
-        {
-            _logger.LogInformation("Data streaming: stopped");
-            _isSending = false;
-        }
-
+        _baseService?.Stop();
         return Common.Constants.Empty;
     }
 
@@ -82,7 +66,10 @@ internal class MyGazeService :
         Common.String request,
         ServerCallContext context)
     {
-        return Tools.TelemetryService.SetLogFileName(request.Value, _fileLogger, _logger);
+        if (_baseService == null)
+            return Common.Bool.False;
+
+        return _baseService.SetLogFileName(request.Value);
     }
 
     public override async Task ReadData(
@@ -90,38 +77,19 @@ internal class MyGazeService :
         IServerStreamWriter<Proto.Sample> responseStream,
         ServerCallContext context)
     {
-        if (_myGaze == null || _isReading)
+        if (_myGaze == null || _baseService == null)
             return;
 
         _myGaze.Start();
         if (!_myGaze.IsTracking)
         {
-            _logger.LogError("Data reading: failed");
+            _logger.LogError("Failed to start tracking");
             return;
         }
 
-        _logger.LogInformation("Data reading: started");
-        _isReading = true;
+        await _baseService.ReadData(request, responseStream, context, 2);
 
-        try
-        {
-            await foreach (var data in _channel.Reader.ReadAllAsync(context.CancellationToken))
-            {
-                if (_isSending)
-                {
-                    await responseStream.WriteAsync(data);
-                    _fileLogger.Add(data.ToStringArray());
-                }
-            }
-        }
-        catch (Exception)
-        { }
-        finally
-        {
-            _myGaze?.Stop();
-            _logger.LogInformation("Data reading: stopped");
-            _isReading = false;
-        }
+        _myGaze.Stop();
     }
 
     public override async Task ReadEvents(
@@ -129,30 +97,18 @@ internal class MyGazeService :
         IServerStreamWriter<Proto.Event> responseStream,
         ServerCallContext context)
     {
-        while (_isActive && !context.CancellationToken.IsCancellationRequested)
-        {
-            await Task.Delay(5);
+        if (_baseService == null)
+            return;
 
-            if (_events.Count > 0)
-            {
-                var evt = _events.Dequeue();
-                await responseStream.WriteAsync(evt);
-            }
-        }
+        await _baseService.ReadEvents(request, responseStream, context);
     }
 
     #region Internal
 
     readonly ILogger _logger;
-    readonly Queue<Proto.Event> _events = [];
-    readonly Channel<Proto.Sample> _channel = Channel.CreateUnbounded<Proto.Sample>();
-    readonly Tools.FileLogger _fileLogger = new();
+    readonly Tools.TelemetryService<Proto.Sample, Proto.Event>? _baseService;
 
     MyGaze? _myGaze;
-
-    bool _isActive = false;
-    bool _isReading = false;
-    bool _isSending = false;
 
     // Event handlers
 
@@ -202,7 +158,7 @@ internal class MyGazeService :
             data.EyeY = 0;
         }
 
-        _channel.Writer.TryWrite(data);
+        _baseService?.Publish(data);
     }
 
     #endregion

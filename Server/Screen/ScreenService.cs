@@ -25,25 +25,23 @@ public class ScreenService :
                 screen.Name, screen.Origin.X, screen.Origin.Y, screen.Size.Width, screen.Size.Height);
         }
 
-        Tools.FileService.ListFiles(
+        Tools.FileHelper.ListFiles(
             StorageFolder,
             _supportedMediaFormats,
             _logger
         );
 
-        _logger.LogInformation("Running");
+        _baseService = new(_logger);
     }
 
     public void Dispose()
     {
-        _isActive = false;
-
         foreach (var media in _media.Values)
         {
             media.Close();
         }
 
-        _logger.LogInformation("Disposed");
+        _baseService.Dispose();
 
         GC.SuppressFinalize(this);
     }
@@ -79,23 +77,14 @@ public class ScreenService :
         IServerStreamWriter<Proto.Event> responseStream,
         ServerCallContext context)
     {
-        while (_isActive && !context.CancellationToken.IsCancellationRequested)
-        {
-            await Task.Delay(5);
-
-            if (_events.Count > 0)
-            {
-                var evt = _events.Dequeue();
-                await responseStream.WriteAsync(evt);
-            }
-        }
+        await _baseService.ReadEvents(request, responseStream, context);
     }
 
     public override Task<Common.String> Show(
         Proto.Media request,
         ServerCallContext context)
     {
-        string? filePath = Tools.FileService.FileNameToPath(
+        string? filePath = Tools.FileHelper.FileNameToPath(
             request.FileName,
             StorageFolder,
             _logger);
@@ -150,7 +139,7 @@ public class ScreenService :
         IAsyncStreamReader<Common.UploadRequest> requestStream,
         ServerCallContext context)
     {
-        return await Tools.FileService.UploadFile(
+        return await Tools.FileHelper.UploadFile(
             requestStream,
             context,
             StorageFolder,
@@ -165,12 +154,10 @@ public class ScreenService :
     ];
 
     readonly ILogger _logger;
-    readonly Queue<Proto.Event> _events = [];
+    readonly Tools.Service<Proto.Event> _baseService;
     readonly List<Proto.Screen> _screens = [];
     readonly Dictionary<string, MediaWindow> _media = [];
     readonly WindowPool _pool = new();
-
-    bool _isActive = true;
 
     private void UpdateScreenList()
     {
@@ -213,7 +200,7 @@ public class ScreenService :
         {
             _logger.LogInformation("Image {name} was hidden", value.FileName);
             _media.Remove(mediaId);
-            _events.Enqueue(new Proto.Event {
+            _baseService.Publish(new Proto.Event {
                 HiddenMediaId = mediaId
             });
         }

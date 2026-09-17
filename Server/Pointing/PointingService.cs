@@ -2,8 +2,6 @@ using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Microsoft.Extensions.Logging;
 using SharpDX.DirectInput;
-using System.Threading.Channels;
-using Channel = System.Threading.Channels.Channel;
 using Proto = global::Pointing;
 
 namespace Server.Pointing;
@@ -25,8 +23,7 @@ internal class PointingService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
             foreach (var device in PointingDevice.ListDevices(DeviceType.Gamepad))
                 _logger.LogInformation("Found a gamepad {device}", device.ProductName);
 
-            _logger.LogInformation("Running");
-            _isActive = true;
+            _baseService = new(_logger);
         }
         catch (Exception)
         {
@@ -36,13 +33,10 @@ internal class PointingService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
 
     public void Dispose()
     {
-        _isActive = false;
-
         _device?.Dispose();
-        _device = null;
+        _baseService?.Dispose();
 
-        _fileLogger.Dispose();
-        _logger.LogInformation("Disposed");
+        _device = null;
 
         GC.SuppressFinalize(this);
     }
@@ -104,13 +98,11 @@ internal class PointingService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
         Empty request,
         ServerCallContext context)
     {
-        if (!_isSending)
+        if (_baseService?.IsSending == false)
         {
             _device?.Reset();
-            _logger.LogInformation("Data streaming: started");
-            _isSending = true;
+            _baseService.Start();
         }
-
         return Common.Constants.Empty;
     }
 
@@ -118,12 +110,7 @@ internal class PointingService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
         Empty request,
         ServerCallContext context)
     {
-        if (_isSending)
-        {
-            _logger.LogInformation("Data streaming: stopped");
-            _isSending = false;
-        }
-
+        _baseService?.Stop();
         return Common.Constants.Empty;
     }
 
@@ -131,8 +118,12 @@ internal class PointingService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
         Common.String request,
         ServerCallContext context)
     {
+        if (_baseService == null)
+            return Common.Bool.False;
+
         _device?.Reset();
-        return Tools.TelemetryService.SetLogFileName(request.Value, _fileLogger, _logger);
+
+        return _baseService.SetLogFileName(request.Value);
     }
 
     public override async Task ReadData(
@@ -140,29 +131,10 @@ internal class PointingService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
         IServerStreamWriter<Proto.Data> responseStream,
         ServerCallContext context)
     {
-        if (_isReading)
+        if (_baseService == null)
             return;
 
-        _logger.LogInformation("Data reading: started");
-        _isReading = true;
-
-        try
-        {
-            await foreach (var data in _channel.Reader.ReadAllAsync(context.CancellationToken))
-            {
-                if (_isSending)
-                {
-                    await responseStream.WriteAsync(data);
-                    _fileLogger.Add(data.ToStringArray());
-                }
-            }
-        }
-        catch (Exception) { }
-        finally
-        {
-            _logger.LogInformation("Data reading: stopped");
-            _isReading = false;
-        }
+        await _baseService.ReadData(request, responseStream, context, 3);
     }
 
     public override async Task ReadEvents(
@@ -170,30 +142,18 @@ internal class PointingService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
         IServerStreamWriter<Proto.Event> responseStream,
         ServerCallContext context)
     {
-        while (_isActive && !context.CancellationToken.IsCancellationRequested)
-        {
-            await Task.Delay(5);
+        if (_baseService == null)
+            return;
 
-            if (_events.Count > 0)
-            {
-                var evt = _events.Dequeue();
-                await responseStream.WriteAsync(evt);
-            }
-        }
+        await _baseService.ReadEvents(request, responseStream, context);
     }
 
     #region Internal
 
     readonly ILogger _logger;
-    readonly Queue<Proto.Event> _events = [];
-    readonly Channel<Proto.Data> _channel = Channel.CreateUnbounded<Proto.Data>();
-    readonly Tools.FileLogger _fileLogger = new();
+    readonly Tools.TelemetryService<Proto.Data, Proto.Event>? _baseService;
 
     PointingDevice? _device;
-
-    bool _isActive = false;
-    bool _isReading = false;
-    bool _isSending = false;
 
     private DeviceType ToDirectInputType(Proto.DeviceType type) =>
         type switch
@@ -208,12 +168,12 @@ internal class PointingService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
 
     private void Device_Data(object? sender, Proto.Data data)
     {
-        _channel.Writer.TryWrite(data);
+        _baseService?.Publish(data);
     }
 
     private void Device_Disconnected(object? sender, EventArgs e)
     {
-        _events.Enqueue(new Proto.Event() {
+        _baseService?.Publish(new Proto.Event() {
             IsConnected = false
         });
     }

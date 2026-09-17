@@ -1,6 +1,6 @@
 ﻿namespace Gaze;
 
-public partial class Sample
+public partial class Sample : Common.ILoggable
 {
     public string[] ToStringArray() => [
         Timestamp.ToString(),

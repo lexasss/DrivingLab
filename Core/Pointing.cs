@@ -60,7 +60,7 @@ public partial class PointOfView
     ];
 }
 
-public partial class Data
+public partial class Data : Common.ILoggable
 {
     public string[] ToStringArray() => [
         ..Point.ToStringArray(),

@@ -4,7 +4,7 @@ using System.IO;
 
 namespace Server.Tools;
 
-internal class FileService
+internal class FileHelper
 {
     public static async Task<Common.UploadResult> UploadFile(
         IAsyncStreamReader<Common.UploadRequest> requestStream,

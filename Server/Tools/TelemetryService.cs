@@ -1,34 +1,91 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Google.Protobuf.WellKnownTypes;
+using Grpc.Core;
+using Microsoft.Extensions.Logging;
+using System.Threading.Channels;
+using Channel = System.Threading.Channels.Channel;
 
 namespace Server.Tools;
 
-internal class TelemetryService
+internal class TelemetryService<T, U> : Service<U>
+    where T : Common.ILoggable
 {
-    public static Task<Common.Bool> SetLogFileName(
-        string filename,
-        FileLogger fileLogger,
-        ILogger logger)
+    public bool IsSending { get; private set; } = false;
+
+    public TelemetryService(ILogger logger) : base(logger) { }
+
+    public void Publish(T data)
     {
-        if (string.IsNullOrEmpty(filename))
+        _channel.Writer.TryWrite(data);
+    }
+
+    public void Start()
+    {
+        if (!IsSending)
         {
-            if (fileLogger.IsLogging)
-            {
-                logger.LogInformation("Logging disabled");
-                fileLogger.SetFileName(string.Empty);
-            }
-
-            return Common.Bool.False;
-        }
-        else
-        {
-            var result = fileLogger.SetFileName(filename);
-
-            if (result)
-                logger.LogInformation("Logging to {filename}", filename);
-            else
-                logger.LogWarning("Cannot log to {filename}", filename);
-
-            return Common.Bool.From(result);
+            _logger.LogInformation("Data streaming: started");
+            IsSending = true;
         }
     }
+
+    public void Stop()
+    {
+        if (IsSending)
+        {
+            _logger.LogInformation("Data streaming: stopped");
+            IsSending = false;
+        }
+    }
+
+    public Task<Common.Bool> SetLogFileName(string name)
+    {
+        return TelemetryHelper.SetLogFileName(name, _fileLogger, _logger);
+    }
+
+    public async Task ReadData(
+        Empty request,
+        IServerStreamWriter<T> responseStream,
+        ServerCallContext context,
+        int loggingDecimals)
+    {
+        if (_isReading)
+            return;
+
+        _logger.LogInformation("Data reading: started");
+        _isReading = true;
+
+        try
+        {
+            await foreach (var data in _channel.Reader.ReadAllAsync(context.CancellationToken))
+            {
+                if (IsSending)
+                {
+                    await responseStream.WriteAsync(data);
+                    _fileLogger.Add(data.ToStringArray(loggingDecimals));
+                }
+            }
+        }
+        catch (Exception)
+        { }
+        finally
+        {
+            _logger.LogInformation("Data reading: stopped");
+            _isReading = false;
+        }
+    }
+
+    public override void Dispose()
+    {
+        _fileLogger.Dispose();
+
+        base.Dispose();
+    }
+
+    #region Internal
+
+    readonly Channel<T> _channel = Channel.CreateUnbounded<T>();
+    readonly FileLogger _fileLogger = new();
+
+    bool _isReading = false;
+
+    #endregion
 }
