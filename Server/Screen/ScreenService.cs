@@ -153,6 +153,15 @@ public class ScreenService :
         ..MediaWindow.SupportedVideoFormats
     ];
 
+    readonly Dictionary<(string, int?), string> _knownScreens = new()
+    {
+        { ("NV Surround", null), "Main" },
+        { ("WIMAXIT", 0), "Left mirror" },
+        { ("WIMAXIT", null), "Right mirror" },
+        { ("12.3FHD", null), "Rear view" },
+        { ("L29w-30", null), "Dashboard" },
+    };
+
     readonly ILogger _logger;
     readonly Tools.Service<Proto.Event> _baseService;
     readonly List<Proto.Screen> _screens = [];
@@ -163,19 +172,45 @@ public class ScreenService :
     {
         _screens.Clear();
         foreach (var screen in ScreenEnumerator.EnumerateScreens())
+        {
             _screens.Add(new Proto.Screen
             {
                 Id = screen.Id,
-                Name = screen.Name,
-                Origin = new Common.Point {
+                Name = ToKnownScreenName(screen),
+                Origin = new Common.Point
+                {
                     X = screen.X,
                     Y = screen.Y
                 },
-                Size = new Common.Size {
+                Size = new Common.Size
+                {
                     Width = screen.Width,
                     Height = screen.Height
                 }
             });
+        }
+    }
+
+    private string ToKnownScreenName(Screen screen)
+    {
+        var sameNameScreens = _knownScreens.Where(kv => kv.Key.Item1 == screen.Name);
+
+        if (sameNameScreens.Count() == 1)
+        {
+            return sameNameScreens.First().Value;
+        }
+        else if (sameNameScreens.Count() > 1)
+        {
+            foreach (var kv in sameNameScreens)
+            {
+                if (kv.Key.Item2 == screen.X || kv.Key.Item2 == null)
+                {
+                    return kv.Value;
+                }
+            }
+        }
+
+        return screen.Name;
     }
 
     private void MediaWindow_Shown(object? sender, bool success)

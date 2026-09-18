@@ -6,6 +6,7 @@ namespace Server.Screen;
 internal record Screen(
     int Id,
     string Name,
+    string Device,
     int X,
     int Y,
     int Width,
@@ -37,9 +38,8 @@ internal class ScreenEnumerator
 
                     screens.Add(new Screen(
                         Id: id++,
-                        Name: model != null
-                            ? $"{model} ({info.szDevice})"
-                            : info.szDevice,
+                        Name: model ?? info.szDevice,
+                        Device: info.szDevice,
                         X: bounds.Left,
                         Y: bounds.Top,
                         Width: bounds.Right - bounds.Left,
