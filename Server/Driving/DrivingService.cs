@@ -60,8 +60,8 @@ internal class DrivingService :
             }
 
             var activePedals = new Pointing.Joystick(
-                "Simucube Pedal",
-                DeviceType.Supplemental,
+                "SC-Link",
+                DeviceType.FirstPerson,
                 Pointing.Joystick.NameComparisionOption.StartsWith);
             if (activePedals.IsCreated)
             {
@@ -249,8 +249,8 @@ internal class DrivingService :
 
     private void ActivePedals_Data(object? sender, global::Pointing.Data data)
     {
-        _data.ActiveBrakePedal = data.Rotation.Y;
-        _data.ActiveThrottlePedal = data.Rotation.Z;
+        _data.ActiveBrakePedal = data.Rotation.Z;
+        _data.ActiveThrottlePedal = data.Rotation.X;
         _baseService?.Publish(_data);
     }
 
