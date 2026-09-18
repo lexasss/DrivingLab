@@ -18,66 +18,26 @@ internal class DrivingService :
 
         try
         {
-            var wheelBase = new Pointing.Joystick(
-                "Simucube 2 Pro", 
+            _wheelBase = Create(
+                "Simucube 2 Pro",
                 DeviceType.FirstPerson,
-                Pointing.Joystick.NameComparisionOption.StartsWith);
-            if (wheelBase.IsCreated)
-            {
-                _wheelBase = wheelBase;
-                _wheelBase.Data += WheelBase_Data;
-                _wheelBase.Disconnected += WheelBase_Disconnected;
-
-                _connectionStatus.IsWheelConnected = true;
-                _connectionStatus.IsBaseConnected = true;
-
-                _logger.LogInformation("Wheel and its base connected");
-            }
-            else
-            {
-                _logger.LogWarning("Failed to connect to the wheel and its base");
-                wheelBase.Dispose();
-            }
-
-            var pedals = new Pointing.Joystick(
+                WheelBase_Data,
+                WheelBase_Disconnected);
+            _pedals = Create(
                 "Meca",
                 DeviceType.Supplemental,
-                Pointing.Joystick.NameComparisionOption.StartsWith);
-            if (pedals.IsCreated)
-            {
-                _pedals = pedals;
-                _pedals.Data += Pedals_Data;
-                _pedals.Disconnected += Pedals_Disconnected;
-
-                _connectionStatus.ArePedalsConnected = true;
-
-                _logger.LogInformation("Pedals connected");
-            }
-            else
-            {
-                _logger.LogWarning("Failed to connect to the pedals");
-                pedals.Dispose();
-            }
-
-            var activePedals = new Pointing.Joystick(
+                Pedals_Data,
+                Pedals_Disconnected);
+            _activePedals = Create(
                 "SC-Link",
                 DeviceType.FirstPerson,
-                Pointing.Joystick.NameComparisionOption.StartsWith);
-            if (activePedals.IsCreated)
-            {
-                _activePedals = activePedals;
-                _activePedals.Data += ActivePedals_Data;
-                _activePedals.Disconnected += ActivePedals_Disconnected;
+                ActivePedals_Data,
+                ActivePedals_Disconnected);
 
-                _connectionStatus.AreActivePedalsConnected = true;
-
-                _logger.LogInformation("Active pedals connected");
-            }
-            else
-            {
-                _logger.LogWarning("Failed to connect to the active pedals");
-                activePedals.Dispose();
-            }
+            _connectionStatus.IsWheelConnected = _wheelBase != null;
+            _connectionStatus.IsBaseConnected = _wheelBase != null;
+            _connectionStatus.ArePedalsConnected = _pedals != null;
+            _connectionStatus.AreActivePedalsConnected = _activePedals != null;
 
             _logger.LogInformation("Running");
 
@@ -214,6 +174,33 @@ internal class DrivingService :
         ArePedalsConnected = false,
         AreActivePedalsConnected = false
     };
+
+    private Pointing.Joystick? Create(
+        string name,
+        DeviceType type,
+        EventHandler<global::Pointing.Data> dataHandler,
+        EventHandler disconnectionHandler)
+    {
+        Pointing.Joystick? result = null;
+        var controller = new Pointing.Joystick(
+            name, type,
+            Pointing.Joystick.NameComparisionOption.StartsWith);
+        if (controller.IsCreated)
+        {
+            result = controller;
+            result.Data += dataHandler;
+            result.Disconnected += disconnectionHandler;
+
+            _logger.LogInformation("{name} connected", name);
+        }
+        else
+        {
+            _logger.LogWarning("Failed to connect to {name}", name);
+            controller.Dispose();
+        }
+
+        return result;
+    }
 
     // Event handlers
 
