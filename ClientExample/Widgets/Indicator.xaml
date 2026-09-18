@@ -14,11 +14,15 @@
               Height="12"
               VerticalAlignment="Center">
             <Ellipse Fill="#FFC12323"
+                     Stroke="{Binding Stroke, ElementName=root}"
+                     StrokeThickness="{Binding StrokeThickness, ElementName=root}"
                      Visibility="{Binding IsOn,
                                           ElementName=root,
                                           Converter={x:Static conv:BooleanToVisibilityConverter.NotCollapsedInstance}}"/>
 
             <Ellipse Fill="#FF4FCC2D"
+                     Stroke="{Binding Stroke, ElementName=root}"
+                     StrokeThickness="{Binding StrokeThickness, ElementName=root}"
                      Visibility="{Binding IsOn,
                                           ElementName=root,
                                           Converter={x:Static conv:BooleanToVisibilityConverter.CollapsedInstance}}"/>

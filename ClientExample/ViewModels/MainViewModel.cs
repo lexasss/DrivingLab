@@ -7,7 +7,8 @@ public partial class MainViewModel(
     ScreenViewModel screenVm,
     PointingViewModel pointingVm,
     TensionRViewModel tensionRVm,
-    StreamDeckViewModel streamDeckVm)
+    StreamDeckViewModel streamDeckVm,
+    DrivingViewModel drivingVm)
 {
     public LeapMotionViewModel LeapMotion { get; } = leapMotionVm;
     public SmartEyeViewModel SmartEye { get; } = smartEyeVm;
@@ -16,4 +17,5 @@ public partial class MainViewModel(
     public PointingViewModel Pointing { get; } = pointingVm;
     public TensionRViewModel TensionR { get; } = tensionRVm;
     public StreamDeckViewModel StreamDeck { get; } = streamDeckVm;
+    public DrivingViewModel Driving { get; } = drivingVm;
 }

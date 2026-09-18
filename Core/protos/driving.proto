@@ -45,8 +45,9 @@ message RotaryButton {
 
 message RotaryTiltButton {
 	bool isPressed = 1;
-	double rotation = 2;
-	double degrees = 3;
+	bool isTilted = 2;
+	double rotation = 3;
+	double degrees = 4;
 }
 
 message Data {

@@ -47,6 +47,7 @@ public partial class App : Application
         services.AddSingleton<PointingClient>();
         services.AddSingleton<TensionRClient>();
         services.AddSingleton<StreamDeckClient>();
+        services.AddSingleton<DrivingClient>();
 
         services.AddTransient<LeapMotionViewModel>();
         services.AddTransient<SmartEyeViewModel>();
@@ -55,6 +56,7 @@ public partial class App : Application
         services.AddTransient<PointingViewModel>();
         services.AddTransient<TensionRViewModel>();
         services.AddTransient<StreamDeckViewModel>();
+        services.AddTransient<DrivingViewModel>();
 
         services.AddTransient<MainViewModel>();
         services.AddTransient<MainWindow>();

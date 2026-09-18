@@ -64,6 +64,10 @@ public partial class String
         {
             Value = value
         });
+    public String(string value)
+    {
+        Value = value;
+    }
 }
 
 public partial class Vector : ILoggable

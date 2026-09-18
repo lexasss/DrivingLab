@@ -18,24 +18,24 @@ internal class DrivingService :
 
         try
         {
-            var wheel = new Pointing.Joystick(
+            var wheelBase = new Pointing.Joystick(
                 "Simucube 2 Pro", 
                 DeviceType.FirstPerson,
                 Pointing.Joystick.NameComparisionOption.StartsWith);
-            if (wheel.IsCreated)
+            if (wheelBase.IsCreated)
             {
-                _wheel = wheel;
-                _wheel.Data += Wheel_Data;
-                _wheel.Disconnected += Wheel_Disconnected;
+                _wheelBase = wheelBase;
+                _wheelBase.Data += WheelBase_Data;
+                _wheelBase.Disconnected += WheelBase_Disconnected;
 
                 _connectionStatus.IsWheelConnected = true;
                 _connectionStatus.IsBaseConnected = true;
 
-                _logger.LogInformation("Wheel connected");
+                _logger.LogInformation("Wheel and its base connected");
             }
             else
             {
-                wheel.Dispose();
+                wheelBase.Dispose();
             }
 
             var pedals = new Pointing.Joystick(
@@ -84,13 +84,13 @@ internal class DrivingService :
 
     public void Dispose()
     {
-        _wheel?.Dispose();
+        _wheelBase?.Dispose();
         _pedals?.Dispose();
         _activePedals?.Dispose();
 
         _baseService?.Dispose();
 
-        _wheel = null;
+        _wheelBase = null;
         _pedals = null;
         _activePedals = null;
 
@@ -123,7 +123,7 @@ internal class DrivingService :
     {
         if (_baseService?.IsSending == false)
         {
-            _wheel?.Reset();
+            _wheelBase?.Reset();
             _pedals?.Reset();
             _activePedals?.Reset();
 
@@ -145,7 +145,7 @@ internal class DrivingService :
         if (_baseService == null)
             return Common.Bool.False;
 
-        _wheel?.Reset();
+        _wheelBase?.Reset();
         _pedals?.Reset();
         _activePedals?.Reset();
 
@@ -180,7 +180,7 @@ internal class DrivingService :
     readonly Tools.TelemetryService<Proto.Data, Proto.Event>? _baseService;
     readonly Proto.Data _data = new();
 
-    Pointing.PointingDevice? _wheel;
+    Pointing.PointingDevice? _wheelBase;
     Pointing.PointingDevice? _pedals;
     Pointing.PointingDevice? _activePedals;
 
@@ -194,13 +194,13 @@ internal class DrivingService :
 
     // Event handlers
 
-    private void Wheel_Data(object? sender, global::Pointing.Data data)
+    private void WheelBase_Data(object? sender, global::Pointing.Data data)
     {
         _data.WheelRotation = data.Point.X;
         _baseService?.Publish(_data);
     }
 
-    private void Wheel_Disconnected(object? sender, EventArgs e)
+    private void WheelBase_Disconnected(object? sender, EventArgs e)
     {
         _connectionStatus.IsBaseConnected = false;
         _connectionStatus.IsWheelConnected = false;

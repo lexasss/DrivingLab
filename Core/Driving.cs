@@ -23,11 +23,13 @@ public partial class RotaryTiltButton
 {
     public string[] ToStringArray() => [
         IsPressed ? "1" : "0",
+        IsTilted ? "1" : "0",
         Rotation.ToString(),
         Degrees.ToString(),
     ];
     public string[] ToStringArray(int decimals) => [
         IsPressed ? "1" : "0",
+        IsTilted ? "1" : "0",
         Rotation.ToString($"F{decimals}"),
         Degrees.ToString($"F{decimals}"),
     ];

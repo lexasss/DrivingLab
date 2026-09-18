@@ -1,5 +1,6 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 
 namespace ClientExample.Widgets;
 
@@ -35,4 +36,30 @@ public partial class Indicator : UserControl
             typeof(string),
             typeof(Indicator),
             new PropertyMetadata(string.Empty));
+
+    public Brush Stroke
+    {
+        get => (Brush)GetValue(StrokeProperty);
+        set => SetValue(StrokeProperty, value);
+    }
+
+    public static readonly DependencyProperty StrokeProperty =
+        DependencyProperty.Register(
+            nameof(Stroke),
+            typeof(Brush),
+            typeof(Indicator),
+            new PropertyMetadata(Brushes.Gray));
+
+    public double StrokeThickness
+    {
+        get => (double)GetValue(StrokeThicknessProperty);
+        set => SetValue(StrokeThicknessProperty, value);
+    }
+
+    public static readonly DependencyProperty StrokeThicknessProperty =
+        DependencyProperty.Register(
+            nameof(StrokeThickness),
+            typeof(double),
+            typeof(Indicator),
+            new PropertyMetadata(0.0));
 }

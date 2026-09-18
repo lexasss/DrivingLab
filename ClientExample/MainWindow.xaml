@@ -9,10 +9,10 @@
         mc:Ignorable="d"
         Style="{StaticResource MaterialDesignWindow}"
         Title="Driving Lab Client Example"
-        Height="900"
+        Height="916"
         Width="816"
-        MinHeight="380"
-        MinWidth="320">
+        MinHeight="458"
+        MinWidth="204">
 
     <UniformGrid Columns="4">
         <widgets:LeapMotion DataContext="{Binding LeapMotion}"/>
@@ -22,5 +22,6 @@
         <widgets:Pointing DataContext="{Binding Pointing}"/>
         <widgets:TensionR DataContext="{Binding TensionR}"/>
         <widgets:StreamDeck DataContext="{Binding StreamDeck}"/>
+        <widgets:Driving DataContext="{Binding Driving}"/>
     </UniformGrid>
 </Window>

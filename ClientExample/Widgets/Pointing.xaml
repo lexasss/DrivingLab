@@ -18,6 +18,16 @@
     
     <Border Style="{StaticResource Card}">
         <StackPanel>
+            <StackPanel.Resources>
+                <Style TargetType="Slider" BasedOn="{StaticResource MaterialDesign3.MaterialDesignSlider}">
+                    <Setter Property="Maximum" Value="1.0"/>
+                    <Setter Property="TickFrequency" Value="0.001"/>
+                    <Setter Property="SmallChange" Value="0.001"/>
+                    <Setter Property="Foreground" Value="#FF5E6CB7"/>
+                    <Setter Property="IsHitTestVisible" Value="False"/>
+                </Style>
+            </StackPanel.Resources>
+            
             <Label Style="{StaticResource Device}"
                    Content="Pointing"/>
             <StackPanel Margin="4">
@@ -105,15 +115,9 @@
                         <UniformGrid Columns="2" Height="60">
                             <Slider Value="{Binding Sliders[0].Value}"
                                     Orientation="Vertical"
-                                    Maximum="1.0"
-                                    SmallChange="0.001"
-                                    TickFrequency="0.001"
                                     Margin="4"/>
                             <Slider Value="{Binding Sliders[1].Value}"
                                     Orientation="Vertical"
-                                    Maximum="1.0"
-                                    SmallChange="0.001"
-                                    TickFrequency="0.001"
                                     Margin="4"/>
                         </UniformGrid>
                     </StackPanel>

@@ -35,7 +35,7 @@ public partial class PointingViewModel : ObservableObject
     public ObservableCollection<ButtonState> Buttons { get; } =
         new(Enumerable.Range(0, 18).Select(_ => new ButtonState()));
     public ObservableCollection<SliderState> Sliders { get; } =
-        new(Enumerable.Range(0, 18).Select(_ => new SliderState()));
+        new(Enumerable.Range(0, 2).Select(_ => new SliderState()));
     [ObservableProperty]
     public partial double PointOfView { get; set; } = double.NaN;
     [ObservableProperty]

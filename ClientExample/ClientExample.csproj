@@ -33,6 +33,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Update="Widgets\Driving.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Update="Widgets\Pointing.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
