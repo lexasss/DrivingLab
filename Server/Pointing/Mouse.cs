@@ -3,7 +3,7 @@ using Proto = global::Pointing;
 
 namespace Server.Pointing;
 
-class Mouse : PointingDevice
+class Mouse : Controller
 {
     public override DeviceType Type => DeviceType.Mouse;
     public override bool IsCreated => true;

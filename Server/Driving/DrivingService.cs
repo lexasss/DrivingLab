@@ -35,6 +35,7 @@ internal class DrivingService :
             }
             else
             {
+                _logger.LogWarning("Failed to connect to the wheel and its base");
                 wheelBase.Dispose();
             }
 
@@ -54,6 +55,7 @@ internal class DrivingService :
             }
             else
             {
+                _logger.LogWarning("Failed to connect to the pedals");
                 pedals.Dispose();
             }
 
@@ -70,6 +72,11 @@ internal class DrivingService :
                 _connectionStatus.AreActivePedalsConnected = true;
 
                 _logger.LogInformation("Active pedals connected");
+            }
+            else
+            {
+                _logger.LogWarning("Failed to connect to the active pedals");
+                activePedals.Dispose();
             }
 
             _logger.LogInformation("Running");
@@ -178,11 +185,27 @@ internal class DrivingService :
 
     readonly ILogger _logger;
     readonly Tools.TelemetryService<Proto.Data, Proto.Event>? _baseService;
-    readonly Proto.Data _data = new();
+    readonly Proto.Data _data = new()
+    {
+        TopLeftButton1 = new Proto.Button(),
+        TopLeftButton2 = new Proto.Button(),
+        TopLeftButton3 = new Proto.Button(),
+        TopRightButton1 = new Proto.Button(),
+        TopRightButton2 = new Proto.Button(),
+        TopRightButton3 = new Proto.Button(),
+        BottomLeftButton1 = new Proto.Button(),
+        BottomLeftButton2 = new Proto.Button(),
+        BottomRightButton1 = new Proto.Button(),
+        BottomRightButton2 = new Proto.Button(),
+        LeftPaddleShifter = new Proto.Button(),
+        RightPaddleShifter = new Proto.Button(),
+        RotaryButton = new Proto.RotaryButton(),
+        RotaryTiltButton = new Proto.RotaryTiltButton(),
+    };
 
-    Pointing.PointingDevice? _wheelBase;
-    Pointing.PointingDevice? _pedals;
-    Pointing.PointingDevice? _activePedals;
+    Pointing.Controller? _wheelBase;
+    Pointing.Controller? _pedals;
+    Pointing.Controller? _activePedals;
 
 
     Proto.ConnectionStatus _connectionStatus = new() {

@@ -3,7 +3,7 @@ using Proto = global::Pointing;
 
 namespace Server.Pointing;
 
-abstract class PointingDevice : IDisposable
+abstract class Controller : IDisposable
 {
     public abstract DeviceType Type { get; }
     public abstract bool IsCreated { get; }
@@ -11,9 +11,9 @@ abstract class PointingDevice : IDisposable
     public event EventHandler<Proto.Data>? Data;
     public event EventHandler? Disconnected;
 
-    public PointingDevice()
+    public Controller()
     {
-        _timer.Interval = 20;
+        _timer.Interval = SAMPLING_INTERVAL;
         _timer.AutoReset = true;
         _timer.Elapsed += Timer_Elapsed;
         _timer.Start();
@@ -60,6 +60,9 @@ abstract class PointingDevice : IDisposable
 
     // Internal
 
+    const int POLLING_INTERVAL = 10;
+    const int SAMPLING_INTERVAL = 20;
+
     readonly System.Timers.Timer _timer = new();
     readonly CancellationTokenSource _cts = new();
 
@@ -71,13 +74,13 @@ abstract class PointingDevice : IDisposable
     protected List<Proto.Button> _buttons = [];
     protected List<Proto.Slider> _sliders = [];
     protected List<Proto.PointOfView> _povs = [];
-    protected Common.Vector rotation = Common.Vector.Empty;
-    protected Common.Vector velocity = Common.Vector.Empty;
-    protected Common.Vector angularVelocity = Common.Vector.Empty;
-    protected Common.Vector acceleration = Common.Vector.Empty;
-    protected Common.Vector angularAcceleration = Common.Vector.Empty;
-    protected Common.Vector force = Common.Vector.Empty;
-    protected Common.Vector torque = Common.Vector.Empty;
+    protected Common.Vector _rotation = Common.Vector.Empty;
+    protected Common.Vector _velocity = Common.Vector.Empty;
+    protected Common.Vector _angularVelocity = Common.Vector.Empty;
+    protected Common.Vector _acceleration = Common.Vector.Empty;
+    protected Common.Vector _angularAcceleration = Common.Vector.Empty;
+    protected Common.Vector _force = Common.Vector.Empty;
+    protected Common.Vector _torque = Common.Vector.Empty;
 
     protected abstract void Step(); // this should update _x, _y and _buttons
     protected abstract void Close(); // this should call Unaquire()
@@ -89,7 +92,7 @@ abstract class PointingDevice : IDisposable
 
     private async void RunCycle(CancellationToken cts)
     {
-        await Task.Delay(100, cts);    // just in case, as this loop may start earlier then a device is initialized
+        await Task.Delay(100);    // just in case, as this loop may start earlier then a device is initialized
 
         while (!cts.IsCancellationRequested)
         {
@@ -104,7 +107,7 @@ abstract class PointingDevice : IDisposable
                 break;
             }
 
-            Thread.Sleep(10);
+            Thread.Sleep(POLLING_INTERVAL);
         }
     }
 
@@ -115,14 +118,14 @@ abstract class PointingDevice : IDisposable
             Point = new Common.Vector() {
                 X = _x, Y = _y, Z = _z
             },
-            Rotation = rotation,
+            Rotation = _rotation,
             /* JOYSTICK_DATA
-            Velocity = velocity,
-            AngularVelocity = angularVelocity,
-            Acceleration = acceleration,
-            AngularAcceleration = angularAcceleration,
-            Force = force,
-            Torque = torque
+            Velocity = _velocity,
+            AngularVelocity = _angularVelocity,
+            Acceleration = _acceleration,
+            AngularAcceleration = _angularAcceleration,
+            Force = _force,
+            Torque = _torque
             */
         };
 

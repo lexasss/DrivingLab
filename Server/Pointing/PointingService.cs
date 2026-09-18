@@ -16,11 +16,11 @@ internal class PointingService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
 
         try
         {
-            foreach (var device in PointingDevice.ListDevices(DeviceType.Mouse))
+            foreach (var device in Controller.ListDevices(DeviceType.Mouse))
                 _logger.LogInformation("Found a mouse {device}", device.ProductName);
-            foreach (var device in PointingDevice.ListDevices(DeviceType.Joystick))
+            foreach (var device in Controller.ListDevices(DeviceType.Joystick))
                 _logger.LogInformation("Found a joystick {device}", device.ProductName);
-            foreach (var device in PointingDevice.ListDevices(DeviceType.Gamepad))
+            foreach (var device in Controller.ListDevices(DeviceType.Gamepad))
                 _logger.LogInformation("Found a gamepad {device}", device.ProductName);
 
             _baseService = new(_logger);
@@ -33,10 +33,10 @@ internal class PointingService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
 
     public void Dispose()
     {
-        _device?.Dispose();
+        _controller?.Dispose();
         _baseService?.Dispose();
 
-        _device = null;
+        _controller = null;
 
         GC.SuppressFinalize(this);
     }
@@ -53,7 +53,7 @@ internal class PointingService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
         ServerCallContext context)
     {
         var type = ToDirectInputType(request.Type);
-        var devices = PointingDevice.ListDevices(type);
+        var devices = Controller.ListDevices(type);
 
         var result = new Proto.Devices();
         foreach (var device in devices)
@@ -75,20 +75,20 @@ internal class PointingService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
         ServerCallContext context)
     {
         var type = ToDirectInputType(request.Type);
-        var result = PointingDevice.Has(type);
+        var result = Controller.Has(type);
 
         if (result)
         {
-            _device?.Dispose();
-            _device = request.Type switch
+            _controller?.Dispose();
+            _controller = request.Type switch
             {
                 Proto.DeviceType.Mouse => new Mouse(),
                 Proto.DeviceType.Joystick => new Joystick(request.Name),
                 Proto.DeviceType.Gamepad => new Gamepad(request.Name),
                 _ => throw new NotImplementedException()
             };
-            _device.Data += Device_Data;
-            _device.Disconnected += Device_Disconnected;
+            _controller.Data += Device_Data;
+            _controller.Disconnected += Device_Disconnected;
         }
 
         return Common.Bool.From(result);
@@ -100,7 +100,7 @@ internal class PointingService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
     {
         if (_baseService?.IsSending == false)
         {
-            _device?.Reset();
+            _controller?.Reset();
             _baseService.Start();
         }
         return Common.Constants.Empty;
@@ -121,7 +121,7 @@ internal class PointingService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
         if (_baseService == null)
             return Common.Bool.False;
 
-        _device?.Reset();
+        _controller?.Reset();
 
         return _baseService.SetLogFileName(request.Value);
     }
@@ -153,7 +153,7 @@ internal class PointingService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
     readonly ILogger _logger;
     readonly Tools.TelemetryService<Proto.Data, Proto.Event>? _baseService;
 
-    PointingDevice? _device;
+    Controller? _controller;
 
     private DeviceType ToDirectInputType(Proto.DeviceType type) =>
         type switch

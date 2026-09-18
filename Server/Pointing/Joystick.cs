@@ -3,7 +3,7 @@ using Proto = global::Pointing;
 
 namespace Server.Pointing;
 
-class Joystick : PointingDevice
+class Joystick : Controller
 {
     public enum NameComparisionOption
     {
@@ -111,11 +111,15 @@ class Joystick : PointingDevice
                     else if (name.StartsWith("Rotation"))
                     {
                         if (data.Offset == JoystickOffset.RotationX)
-                            rotation.X = (double)(data.Value - 0x8000) / 0x8000;
+                            _rotation.X = (double)(data.Value - 0x8000) / 0x8000;
                         if (data.Offset == JoystickOffset.RotationY)
-                            rotation.Y = (double)(data.Value - 0x8000) / 0x8000;
+                            _rotation.Y = (double)(data.Value - 0x8000) / 0x8000;
                         if (data.Offset == JoystickOffset.RotationZ)
-                            rotation.Z = (double)(data.Value - 0x8000) / 0x8000;
+                            _rotation.Z = (double)(data.Value - 0x8000) / 0x8000;
+                    }
+                    else
+                    {
+                        Console.WriteLine($"data from {name} unhandled");
                     }
                     /* JOYSTICK_DATA
                     else if (name.StartsWith("Velocity"))

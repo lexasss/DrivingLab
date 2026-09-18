@@ -17,6 +17,7 @@
         <StackPanel>
             <StackPanel.Resources>
                 <Style TargetType="Slider" BasedOn="{StaticResource MaterialDesign3.MaterialDesignSlider}">
+                    <Setter Property="Minimum" Value="-1.0"/>
                     <Setter Property="Maximum" Value="1.0"/>
                     <Setter Property="TickFrequency" Value="0.001"/>
                     <Setter Property="SmallChange" Value="0.001"/>
@@ -220,7 +221,6 @@
                              HorizontalAlignment="Center">
                     <UniformGrid.Resources>
                         <Style TargetType="Slider" BasedOn="{StaticResource MaterialDesign3.MaterialDesignSlider}">
-                            <Setter Property="Maximum" Value="1.0"/>
                             <Setter Property="TickFrequency" Value="0.001"/>
                             <Setter Property="SmallChange" Value="0.001"/>
                             <Setter Property="Foreground" Value="#FF5E6CB7"/>
@@ -232,22 +232,27 @@
                     </UniformGrid.Resources>
                     <StackPanel>
                         <Label Content="Brake"/>
-                        <Slider Value="{Binding Sliders[3].Value}"/>
+                        <Slider Value="{Binding Sliders[3].Value}"
+                                Minimum="-0.98"
+                                Maximum="-0.60"/>
                     </StackPanel>
                     <StackPanel>
                         <Label Content="Throttle"/>
-                        <Slider Value="{Binding Sliders[4].Value}"/>
+                        <Slider Value="{Binding Sliders[4].Value}"
+                                Minimum="-0.90"
+                                Maximum="-0.75"/>
                     </StackPanel>
                     <StackPanel>
                         <Label Content="Ac. Br."/>
-                        <Slider Grid.Row="1" Grid.Column="1"
-                                Value="{Binding Sliders[5].Value}"/>
+                        <Slider Value="{Binding Sliders[5].Value}"
+                                Minimum="-1"
+                                Maximum="1"/>
                     </StackPanel>
                     <StackPanel>
-                        <Label Grid.Row="1" Grid.Column="0"
-                               Content="Ac. Thr."/>
-                        <Slider Grid.Row="1" Grid.Column="1"
-                                Value="{Binding Sliders[6].Value}"/>
+                        <Label Content="Ac. Thr."/>
+                        <Slider Value="{Binding Sliders[6].Value}"
+                                Minimum="-1"
+                                Maximum="1"/>
                     </StackPanel>
                 </UniformGrid>
             </StackPanel>
