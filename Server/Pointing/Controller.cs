@@ -25,6 +25,8 @@ abstract class Controller : IDisposable
     {
         _cts.Cancel();
         _timer.Dispose();
+
+        Close();
     }
 
     public void Reset()

@@ -184,6 +184,7 @@ class Joystick : Controller
     protected override void Close()
     {
         _joystick?.Unacquire();
+        _joystick?.Dispose();
     }
 
     protected void Create(

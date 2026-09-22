@@ -18,6 +18,7 @@ internal sealed class MediaWindow
 
     public string FileName { get; private set; } = string.Empty;
     public string Id { get; }
+    public nint Handle { get; private set; }
 
     public event EventHandler<bool>? Shown;
     public event EventHandler<string>? Hidden;
@@ -28,7 +29,7 @@ internal sealed class MediaWindow
     }
 
     public void Show(
-        string filename,
+        string? filename,
         Common.Point location,
         Common.Size? size,
         int? duration)
@@ -36,15 +37,20 @@ internal sealed class MediaWindow
         if (_thread != null)
             return;
 
-        FileName = Path.GetFileNameWithoutExtension(filename);
+        FileName = filename != null
+            ? Path.GetFileNameWithoutExtension(filename)
+            : string.Empty;
 
         _thread = new Thread(() =>
         {
             double width = size?.Width ?? 0;
             double height = size?.Height ?? 0;
             
-            var content = CreateMedia(filename, ref width, ref height);
-            if (content == null)
+            var content = filename != null
+                ? CreateMedia(filename, ref width, ref height)
+                : null;
+
+            if (filename != null && content == null)
             {
                 Shown?.Invoke(this, false);
                 return;
@@ -72,6 +78,9 @@ internal sealed class MediaWindow
             _window.Show();
 
             Shown?.Invoke(this, true);
+
+            var wih = new WindowInteropHelper(_window);
+            Handle = wih.Handle;
 
             // Keep the WPF dispatcher alive.
             Dispatcher.Run();
@@ -185,7 +194,7 @@ internal sealed class MediaWindow
     }
 
     private static Window CreateWindow(
-        object content,
+        object? content,
         Common.Point location,
         double width,
         double height)

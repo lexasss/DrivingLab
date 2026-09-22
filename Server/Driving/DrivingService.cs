@@ -42,6 +42,27 @@ internal class DrivingService :
             _logger.LogInformation("Running");
 
             _baseService = new(_logger);
+
+            Task.Run(async () =>
+            {
+                await Task.Delay(5000);
+                Console.WriteLine("SC initialization ... ");
+                var initializedPedals = SimucubeApi.Init(2);
+                if (initializedPedals.HasFlag(SimucubeApi.Pedal.Brake))
+                    Console.WriteLine("  brake");
+                if (initializedPedals.HasFlag(SimucubeApi.Pedal.Throttle))
+                    Console.WriteLine("  throttle");
+                if (initializedPedals == SimucubeApi.Pedal.None)
+                    Console.WriteLine("  no pedals found (is Simucube Tuner running?)");
+                else 
+                {
+                    await Task.Delay(1000);
+                    SimucubeApi.Configure(SimucubeApi.Pedal.Both, SimucubeApi.OffsetType.ForceN);
+                    Console.WriteLine("  Absolute force FFB configured");
+                    SimucubeApi.Run(SimucubeApi.Pedal.Both, SimucubeApi.EffectType.Periodic, 1000, 2.0f);
+                    Console.WriteLine("  FFB feedback played");
+                }
+            });
         }
         catch (Exception)
         {
