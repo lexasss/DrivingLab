@@ -3,14 +3,32 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
              xmlns:widgets="clr-namespace:ClientExample.Widgets"
              xmlns:conv="clr-namespace:MaterialDesignThemes.Wpf.Converters;assembly=MaterialDesignThemes.Wpf"
+             xmlns:driv="clr-namespace:Driving;assembly=Core"
              mc:Ignorable="d" 
-             d:DesignHeight="450"
+             d:DesignHeight="750"
              d:DesignWidth="200">
     
     <UserControl.Resources>
         <conv:InvertBooleanConverter x:Key="InvertBoolean"/>
+
+        <ObjectDataProvider x:Key="EffectTypes"
+                            MethodName="GetValues"
+                            ObjectType="{x:Type sys:Enum}">
+            <ObjectDataProvider.MethodParameters>
+                <x:Type TypeName="driv:EffectType"/>
+            </ObjectDataProvider.MethodParameters>
+        </ObjectDataProvider>
+
+        <ObjectDataProvider x:Key="EffectVariables"
+                            MethodName="GetValues"
+                            ObjectType="{x:Type sys:Enum}">
+            <ObjectDataProvider.MethodParameters>
+                <x:Type TypeName="driv:EffectVariable"/>
+            </ObjectDataProvider.MethodParameters>
+        </ObjectDataProvider>
     </UserControl.Resources>
     
     <Border Style="{StaticResource Card}">
@@ -27,21 +45,21 @@
             </StackPanel.Resources>
             <Label Style="{StaticResource Device}"
                    Content="Driving"/>
-            <StackPanel Margin="4">
+            <StackPanel>
                 <widgets:Indicator IsOn="{Binding IsAvailable, Mode=OneWay}"
                                    Margin="8,0"
                                    Text="Available"/>
                 <Separator/>
                 <Label HorizontalAlignment="Center"
                        Content="Connection status"/>
-                <UniformGrid Margin="4,0">
+                <UniformGrid Margin="8,0">
                     <widgets:Indicator IsOn="{Binding IsBaseConnected, Mode=OneWay}"
                                        Text="Base"/>
                     <widgets:Indicator IsOn="{Binding IsWheelConnected, Mode=OneWay}"
                                        Text="Wheel"/>
                     <widgets:Indicator IsOn="{Binding ArePedalsConnected, Mode=OneWay}"
                                        Text="Pedals"/>
-                    <widgets:Indicator IsOn="{Binding AreActivePedalsConnected, Mode=OneWay}"
+                    <widgets:Indicator IsOn="{Binding IsActivePedalsHubConnected, Mode=OneWay}"
                                        Text="Act. pedals"/>
                 </UniformGrid>
                 <Separator/>
@@ -217,43 +235,120 @@
                             Value="{Binding Sliders[0].Value}"
                             Width="132"/>
                 </Canvas>
-                <UniformGrid Columns="4"
-                             HorizontalAlignment="Center">
-                    <UniformGrid.Resources>
-                        <Style TargetType="Slider" BasedOn="{StaticResource MaterialDesign3.MaterialDesignSlider}">
-                            <Setter Property="TickFrequency" Value="0.001"/>
-                            <Setter Property="SmallChange" Value="0.001"/>
-                            <Setter Property="Foreground" Value="#FF5E6CB7"/>
-                            <Setter Property="IsHitTestVisible" Value="False"/>
-                            <Setter Property="Height" Value="40"/>
-                            <Setter Property="Orientation" Value="Vertical"/>
+                <Separator/>
+                <StackPanel>
+                    <StackPanel.Resources>
+                        <Style TargetType="Label" BasedOn="{StaticResource MaterialDesignLabel}">
                             <Setter Property="HorizontalAlignment" Value="Center"/>
                         </Style>
-                    </UniformGrid.Resources>
-                    <StackPanel>
-                        <Label Content="Brake"/>
-                        <Slider Value="{Binding Sliders[3].Value}"
-                                Minimum="-0.98"
-                                Maximum="-0.60"/>
-                    </StackPanel>
-                    <StackPanel>
-                        <Label Content="Throttle"/>
-                        <Slider Value="{Binding Sliders[4].Value}"
-                                Minimum="-0.90"
-                                Maximum="-0.75"/>
-                    </StackPanel>
-                    <StackPanel>
-                        <Label Content="Ac. Br."/>
-                        <Slider Value="{Binding Sliders[5].Value}"
-                                Minimum="-1"
-                                Maximum="1"/>
-                    </StackPanel>
-                    <StackPanel>
-                        <Label Content="Ac. Thr."/>
-                        <Slider Value="{Binding Sliders[6].Value}"
-                                Minimum="-1"
-                                Maximum="1"/>
-                    </StackPanel>
+                    </StackPanel.Resources>
+                    <UniformGrid Columns="2">
+                        <Label Content="Passive"/>
+                        <Label Content="Active"/>
+                    </UniformGrid>
+                    <UniformGrid Columns="4">
+                        <UniformGrid.Resources>
+                            <Style TargetType="Slider" BasedOn="{StaticResource MaterialDesign3.MaterialDesignSlider}">
+                                <Setter Property="TickFrequency" Value="0.001"/>
+                                <Setter Property="SmallChange" Value="0.001"/>
+                                <Setter Property="Foreground" Value="#FF5E6CB7"/>
+                                <Setter Property="IsHitTestVisible" Value="False"/>
+                                <Setter Property="Height" Value="60"/>
+                                <Setter Property="Orientation" Value="Vertical"/>
+                                <Setter Property="HorizontalAlignment" Value="Center"/>
+                            </Style>
+                        </UniformGrid.Resources>
+                        <StackPanel>
+                            <Label Content="Brake"/>
+                            <Slider Value="{Binding Sliders[3].Value}"
+                                    Minimum="-0.98"
+                                    Maximum="-0.60"/>
+                        </StackPanel>
+                        <StackPanel>
+                            <Label Content="Throttle"/>
+                            <Slider Value="{Binding Sliders[4].Value}"
+                                    Minimum="-0.90"
+                                    Maximum="-0.75"/>
+                        </StackPanel>
+                        <StackPanel>
+                            <Label Content="Brake"/>
+                            <Slider Value="{Binding Sliders[5].Value}"
+                                    Minimum="-1"
+                                    Maximum="1"/>
+                            <Button Margin="0,8,0,2"
+                                    Padding="8"
+                                    HorizontalAlignment="Center"
+                                    Command="{Binding PlayBrakeEffectCommand}">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignFlatButton}">
+                                        <Setter Property="IsEnabled" Value="False"/>
+                                        <Style.Triggers>
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding IsActiveBrakeConnected}" Value="True"/>
+                                                    <Condition Binding="{Binding IsPlayingEffect}" Value="False"/>
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter Property="IsEnabled" Value="True"/>
+                                            </MultiDataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                                <TextBlock Text="∿"
+                                           FontSize="24"
+                                           LineHeight="16"
+                                           LineStackingStrategy="BlockLineHeight"
+                                           FontWeight="Bold"/>
+                            </Button>
+                        </StackPanel>
+                        <StackPanel>
+                            <Label Content="Throttle"/>
+                            <Slider Value="{Binding Sliders[6].Value}"
+                                    Minimum="-1"
+                                    Maximum="1"/>
+                            <Button Margin="0,8,0,2"
+                                    Padding="8"
+                                    HorizontalAlignment="Center"
+                                    Command="{Binding PlayThrottleEffectCommand}">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignFlatButton}">
+                                        <Setter Property="IsEnabled" Value="False"/>
+                                        <Style.Triggers>
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding IsActiveThrottleConnected}" Value="True"/>
+                                                    <Condition Binding="{Binding IsPlayingEffect}" Value="False"/>
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter Property="IsEnabled" Value="True"/>
+                                            </MultiDataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                                <TextBlock Text="∿"
+                                           FontSize="24"
+                                           LineHeight="16"
+                                           LineStackingStrategy="BlockLineHeight"
+                                           FontWeight="Bold"/>
+                            </Button>
+                        </StackPanel>
+                    </UniformGrid>
+                </StackPanel>
+                
+                <Separator/>
+                <UniformGrid Columns="2">
+                    <Label Style="{StaticResource OptionName}"
+                           Content="Effect"/>
+                    <ComboBox ItemsSource="{Binding Source={StaticResource EffectTypes}}"
+                              SelectedItem="{Binding EffectType, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                    <Label Style="{StaticResource OptionName}"
+                           Content="Variable"/>
+                    <ComboBox ItemsSource="{Binding Source={StaticResource EffectVariables}}"
+                              SelectedItem="{Binding EffectVariable, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                    <Label Style="{StaticResource OptionName}"
+                           Content="Amplitude"/>
+                    <TextBox Text="{Binding EffectAmplitude, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                    <Label Style="{StaticResource OptionName}"
+                           Content="Duration"/>
+                    <TextBox Text="{Binding EffectDuration, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                 </UniformGrid>
             </StackPanel>
         </StackPanel>

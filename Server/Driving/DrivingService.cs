@@ -37,7 +37,8 @@ internal class DrivingService :
             _connectionStatus.IsWheelConnected = _wheelBase != null;
             _connectionStatus.IsBaseConnected = _wheelBase != null;
             _connectionStatus.ArePedalsConnected = _pedals != null;
-            _connectionStatus.AreActivePedalsConnected = _activePedals != null;
+            _connectionStatus.IsActivePedalsHubConnected = _activePedals != null;
+            _connectionStatus.ActivePedalsConnected = Proto.ActivePedal.None;
 
             _logger.LogInformation("Running");
 
@@ -45,23 +46,29 @@ internal class DrivingService :
 
             Task.Run(async () =>
             {
-                await Task.Delay(5000);
-                Console.WriteLine("SC initialization ... ");
-                var initializedPedals = SimucubeApi.Init(2);
-                if (initializedPedals.HasFlag(SimucubeApi.Pedal.Brake))
-                    Console.WriteLine("  brake");
-                if (initializedPedals.HasFlag(SimucubeApi.Pedal.Throttle))
-                    Console.WriteLine("  throttle");
-                if (initializedPedals == SimucubeApi.Pedal.None)
-                    Console.WriteLine("  no pedals found (is Simucube Tuner running?)");
-                else 
+                await Task.Delay(500);
+
+                _connectionStatus.ActivePedalsConnected = SimucubeApi.Init(2);
+                _baseService?.Publish(new Proto.Event()
+                {
+                    ConnectionStatus = _connectionStatus
+                });
+
+                if (_connectionStatus.ActivePedalsConnected.HasFlag(Proto.ActivePedal.Brake))
+                    _logger.LogInformation("Found pedal BRAKE");
+                if (_connectionStatus.ActivePedalsConnected.HasFlag(Proto.ActivePedal.Throttle))
+                    _logger.LogInformation("Found pedal THROTTLE");
+                if (_connectionStatus.ActivePedalsConnected == Proto.ActivePedal.None)
+                    _logger.LogWarning("Found no pedals (is Simucube Tuner running and the pedals are activated?)");
+
+                /*else 
                 {
                     await Task.Delay(1000);
-                    SimucubeApi.Configure(SimucubeApi.Pedal.Both, SimucubeApi.OffsetType.ForceN);
+                    SimucubeApi.Configure(Proto.ActivePedal.Both, Proto.EffectOffset.ForceN);
                     Console.WriteLine("  Absolute force FFB configured");
-                    SimucubeApi.Run(SimucubeApi.Pedal.Both, SimucubeApi.EffectType.Periodic, 1000, 2.0f);
+                    SimucubeApi.Run(Proto.ActivePedal.Both, Proto.EffectType.Periodic, 1000, 2.0f);
                     Console.WriteLine("  FFB feedback played");
-                }
+                }*/
             });
         }
         catch (Exception)
@@ -99,11 +106,46 @@ internal class DrivingService :
         return Task.FromResult(_connectionStatus);
     }
 
-    public override Task<Empty> SetActivePedalProfile(
-        Proto.ActivePedalProfile request,
+    public override Task<Empty> PlayPedalEffect(
+        Proto.PedalEffect request,
         ServerCallContext context)
     {
-        // TODO
+        if (_connectionStatus.ActivePedalsConnected.HasFlag(request.Pedal))
+        {
+            _logger.LogInformation("Playing {type} {var} = {amplitude} for {duration}ms on {pedal}",
+                request.Type,
+                request.Variable,
+                request.Amplitude,
+                request.Duration,
+                request.Pedal);
+            SimucubeApi.Configure(request.Pedal, request.Variable);
+
+            Task.Run(() =>
+            {
+                SimucubeApi.Run(
+                    request.Pedal,
+                    request.Type,
+                    request.Duration,
+                    request.Amplitude);
+                _baseService?.Publish(new Proto.Event()
+                {
+                    EffectFinished = new Empty()
+                });
+            });
+        }
+        else
+        {
+            _logger.LogError("Pedal {pedal} is not active", request.Pedal);
+        }
+
+        return Common.Constants.Empty;
+    }
+
+    public override Task<Empty> StopPedalEffect(
+        Proto.StopEffect request,
+        ServerCallContext context)
+    {
+        SimucubeApi.Stop(request.Pedal);
         return Common.Constants.Empty;
     }
 
@@ -183,18 +225,18 @@ internal class DrivingService :
         RotaryButton = new Proto.RotaryButton(),
         RotaryTiltButton = new Proto.RotaryTiltButton(),
     };
+    readonly Proto.ConnectionStatus _connectionStatus = new()
+    {
+        IsBaseConnected = false,
+        IsWheelConnected = false,
+        ArePedalsConnected = false,
+        IsActivePedalsHubConnected = false,
+        ActivePedalsConnected = Proto.ActivePedal.None
+    };
 
     Pointing.Controller? _wheelBase;
     Pointing.Controller? _pedals;
     Pointing.Controller? _activePedals;
-
-
-    Proto.ConnectionStatus _connectionStatus = new() {
-        IsBaseConnected = false,
-        IsWheelConnected = false,
-        ArePedalsConnected = false,
-        AreActivePedalsConnected = false
-    };
 
     private Pointing.Joystick? Create(
         string name,
@@ -264,7 +306,7 @@ internal class DrivingService :
 
     private void ActivePedals_Disconnected(object? sender, EventArgs e)
     {
-        _connectionStatus.AreActivePedalsConnected = false;
+        _connectionStatus.IsActivePedalsHubConnected = false;
         _baseService?.Publish(new Proto.Event() {
             ConnectionStatus = _connectionStatus
         });

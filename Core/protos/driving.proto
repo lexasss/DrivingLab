@@ -9,7 +9,8 @@ service Dispatcher {
 	rpc IsAvailable (google.protobuf.Empty) returns (Common.Bool) {}
 
 	rpc GetConnectionStatus (google.protobuf.Empty) returns (ConnectionStatus) {}
-	rpc SetActivePedalProfile (ActivePedalProfile) returns (google.protobuf.Empty) {}
+	rpc PlayPedalEffect (PedalEffect) returns (google.protobuf.Empty) {}
+	rpc StopPedalEffect (StopEffect) returns (google.protobuf.Empty) {}
 
 	rpc SetLogFileName (Common.String) returns (Common.Bool) {}
 
@@ -25,13 +26,37 @@ service Dispatcher {
 }
 
 enum ActivePedal {
-	Throttle = 0;
-	Brake = 1;
+    None = 0x0;
+    Brake = 0x1;
+    Throttle = 0x2;
+    Both = 0x3;
 }
 
-message ActivePedalProfile {
+enum EffectType
+{
+    Constant = 0;
+    Periodic = 1;
+}
+
+enum EffectVariable
+{
+    TorqueNm = 0;
+    TorqueRelative = 1;
+    ForceN = 2;
+    ForceRelative = 3;
+    PositionMm = 4;
+}
+
+message PedalEffect {
 	ActivePedal pedal = 1;
-	repeated Common.Point points = 2;
+	EffectType type = 2;
+	EffectVariable variable = 3;
+	float amplitude = 4;
+	int32 duration = 5;
+}
+
+message StopEffect {
+	ActivePedal pedal = 1;
 }
 
 message Button {
@@ -76,11 +101,13 @@ message ConnectionStatus {
 	bool isBaseConnected = 1;
 	bool isWheelConnected = 2;
 	bool arePedalsConnected = 3;
-	bool areActivePedalsConnected = 4;
+	bool isActivePedalsHubConnected = 4;
+	ActivePedal activePedalsConnected = 5;
 }
 
 message Event {
 	oneof value {
 		ConnectionStatus connectionStatus = 1;
+		google.protobuf.Empty effectFinished = 2;
 	}
 }

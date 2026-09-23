@@ -9,13 +9,16 @@ public class DrivingClient : Client
     public event EventHandler<bool>? BaseConnectionChanged;
     public event EventHandler<bool>? WheelConnectionChanged;
     public event EventHandler<bool>? PedalsConnectionChanged;
-    public event EventHandler<bool>? ActivePedalsConnectionChanged;
+    public event EventHandler<bool>? ActivePedalsHubConnectionChanged;
+    public event EventHandler<Driving.ActivePedal>? ActivePedalsConnectionChanged;
+    public event EventHandler? EffectFinished;
     public event EventHandler<Driving.Data>? DataUpdated;
 
     public bool IsBaseConnected => _isBaseConnected;
     public bool IsWheelConnected => _isWheelConnected;
     public bool ArePedalsConnected => _arePedalsConnected;
-    public bool AreActivePedalsConnected => _areActivePedalsConnected;
+    public bool IsActivePedalsHubConnected => _isActivePedalsHubConnected;
+    public Driving.ActivePedal ActivePedalsConnected => _activePedalsConnected;
     public bool IsReading => _isReading;
     public bool IsLogging => _isLogging;
 
@@ -33,9 +36,16 @@ public class DrivingClient : Client
         base.Dispose();
     }
 
-    public void SetActivePedalProfile(Driving.ActivePedalProfile profiles) 
+    public void PlayPedalEffect(Driving.PedalEffect pedalEffect) 
     {
-        _client.SetActivePedalProfile(profiles);
+        _client.PlayPedalEffect(pedalEffect);
+    }
+
+    public void StopPedalEffect(Driving.ActivePedal pedal)
+    {
+        _client.StopPedalEffect(new Driving.StopEffect() { 
+            Pedal = pedal
+        });
     }
 
     public void Start()
@@ -75,7 +85,8 @@ public class DrivingClient : Client
     bool _isBaseConnected = false;
     bool _isWheelConnected = false;
     bool _arePedalsConnected = false;
-    bool _areActivePedalsConnected = false;
+    bool _isActivePedalsHubConnected = false;
+    Driving.ActivePedal _activePedalsConnected = Driving.ActivePedal.None;
     bool _isReading = false;
     bool _isLogging = false;
 
@@ -91,7 +102,8 @@ public class DrivingClient : Client
             _isBaseConnected = status.IsBaseConnected;
             _isWheelConnected = status.IsWheelConnected;
             _arePedalsConnected = status.ArePedalsConnected;
-            _areActivePedalsConnected = status.AreActivePedalsConnected;
+            _isActivePedalsHubConnected = status.IsActivePedalsHubConnected;
+            _activePedalsConnected = status.ActivePedalsConnected;
 
             _ = ReadData();
             _ = ReadEvents();
@@ -153,11 +165,19 @@ public class DrivingClient : Client
                             _arePedalsConnected = status.ArePedalsConnected;
                             PedalsConnectionChanged?.Invoke(this, _arePedalsConnected);
                         }
-                        if (status.AreActivePedalsConnected != _areActivePedalsConnected)
+                        if (status.IsActivePedalsHubConnected != _isActivePedalsHubConnected)
                         {
-                            _areActivePedalsConnected = status.AreActivePedalsConnected;
-                            ActivePedalsConnectionChanged?.Invoke(this, _areActivePedalsConnected);
+                            _isActivePedalsHubConnected = status.IsActivePedalsHubConnected;
+                            ActivePedalsHubConnectionChanged?.Invoke(this, _isActivePedalsHubConnected);
                         }
+                        if (status.ActivePedalsConnected != _activePedalsConnected)
+                        {
+                            _activePedalsConnected = status.ActivePedalsConnected;
+                            ActivePedalsConnectionChanged?.Invoke(this, _activePedalsConnected);
+                        }
+                        break;
+                    case Driving.Event.ValueOneofCase.EffectFinished:
+                        EffectFinished?.Invoke(this, EventArgs.Empty);
                         break;
                     default:
                         System.Diagnostics.Debug.WriteLine($"Driving event '{evt.ValueCase}' is not supported");

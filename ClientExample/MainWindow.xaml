@@ -10,18 +10,64 @@
         Style="{StaticResource MaterialDesignWindow}"
         Title="Driving Lab Client Example"
         Height="916"
-        Width="816"
+        Width="1020"
         MinHeight="458"
         MinWidth="204">
 
-    <UniformGrid Columns="4">
-        <widgets:LeapMotion DataContext="{Binding LeapMotion}"/>
-        <widgets:SmartEye DataContext="{Binding SmartEye}"/>
-        <widgets:SoundPlayer DataContext="{Binding SoundPlayer}"/>
-        <widgets:Screen DataContext="{Binding Screen}"/>
-        <widgets:Pointing DataContext="{Binding Pointing}"/>
-        <widgets:TensionR DataContext="{Binding TensionR}"/>
-        <widgets:StreamDeck DataContext="{Binding StreamDeck}"/>
-        <widgets:Driving DataContext="{Binding Driving}"/>
-    </UniformGrid>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition />
+            <RowDefinition />
+        </Grid.RowDefinitions>
+
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition />
+            <ColumnDefinition />
+            <ColumnDefinition />
+            <ColumnDefinition />
+            <ColumnDefinition />
+        </Grid.ColumnDefinitions>
+
+        <widgets:LeapMotion
+            Grid.Row="0"
+            Grid.Column="0"
+            DataContext="{Binding LeapMotion}" />
+
+        <widgets:SmartEye
+            Grid.Row="0"
+            Grid.Column="1"
+            DataContext="{Binding SmartEye}" />
+
+        <widgets:SoundPlayer
+            Grid.Row="0"
+            Grid.Column="2"
+            DataContext="{Binding SoundPlayer}" />
+
+        <widgets:Screen
+            Grid.Row="0"
+            Grid.Column="4"
+            DataContext="{Binding Screen}" />
+
+        <widgets:Driving
+            Grid.Row="0"
+            Grid.RowSpan="2"
+            Grid.Column="3"
+            DataContext="{Binding Driving}" />
+
+        <widgets:Pointing
+            Grid.Row="1"
+            Grid.Column="0"
+            DataContext="{Binding Pointing}" />
+
+        <widgets:TensionR
+            Grid.Row="1"
+            Grid.Column="1"
+            DataContext="{Binding TensionR}" />
+
+        <widgets:StreamDeck
+            Grid.Row="1"
+            Grid.Column="2"
+            DataContext="{Binding StreamDeck}" />
+    </Grid>
+
 </Window>

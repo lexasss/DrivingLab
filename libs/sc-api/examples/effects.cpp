@@ -30,8 +30,10 @@ sc_api::DeviceSessionId                  brake_ap;
 sc_api::DeviceSessionId                  throttle_ap;
 std::unique_ptr<sc_api::FfbPipeline>     pipeline_brake;
 std::unique_ptr<sc_api::FfbPipeline>     pipeline_throttle;
-bool                                     is_brake_configured    = false;
-bool                                     is_throttle_configured = false;
+bool                                     is_brake_configured        = false;
+bool                                     is_throttle_configured     = false;
+bool                                     is_brake_playing_effect    = false;
+bool                                     is_throttle_playing_effect = false;
 
 extern "C" _declspec(dllexport) Pedal Init(long timeout_s = 2)
 {
@@ -132,6 +134,17 @@ extern "C" _declspec(dllexport) void Run(
     int duration_ms,
     float amplitude)
 {
+    if (is_brake_playing_effect || is_throttle_playing_effect) {
+        return;
+    }
+
+    is_brake_playing_effect = (pedal & Pedal::Brake) != 0 && pipeline_brake;
+    is_throttle_playing_effect = (pedal & Pedal::Throttle) != 0 && pipeline_throttle;
+
+    if (!is_brake_playing_effect && !is_throttle_playing_effect) {
+        return;
+    }
+
     auto start_time         = sc_api::Clock::now();
 
     // 1000Hz update rate
@@ -157,7 +170,7 @@ extern "C" _declspec(dllexport) void Run(
             if (auto* s = sc_api::event::getIfSessionStateChanged(&event)) {
                 if (s->state != sc_api::SessionState::connected_control) {
                     //std::cerr << LOG_HEADER << "Session was disconnected." << std::endl;
-                    return;
+                    goto finished;
                 }
             }
         }
@@ -186,11 +199,15 @@ extern "C" _declspec(dllexport) void Run(
         static constexpr uint32_t k_sample_count          = 2;
         float                     samples[k_sample_count] = {value, value};
 
-        if ((pedal & Pedal::Throttle) != 0 && pipeline_throttle) {
+        if (is_brake_playing_effect && pipeline_brake) {
+            pipeline_brake->generateEffect(cur_time + sample_time_offset, sample_length, samples, k_sample_count);
+        }
+        if (is_throttle_playing_effect && pipeline_throttle) {
             pipeline_throttle->generateEffect(cur_time + sample_time_offset, sample_length, samples, k_sample_count);
         }
-        if ((pedal & Pedal::Brake) != 0 && pipeline_brake) {
-            pipeline_brake->generateEffect(cur_time + sample_time_offset, sample_length, samples, k_sample_count);
+
+        if (!is_brake_playing_effect && !is_throttle_playing_effect) {
+            break;
         }
 
         // Do some busy looping while we wait for the next update time
@@ -200,4 +217,17 @@ extern "C" _declspec(dllexport) void Run(
             std::this_thread::yield();
         }
     }
+
+finished:
+
+    is_brake_playing_effect    = false;
+    is_throttle_playing_effect = false;
+}
+
+extern "C" _declspec(dllexport) void Stop(Pedal pedal)
+{
+    if ((pedal & Pedal::Brake) != 0)
+        is_brake_playing_effect = false;
+    if ((pedal & Pedal::Throttle) != 0)
+        is_throttle_playing_effect = false;
 }

@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
 
 namespace ClientExample;
@@ -14,11 +15,25 @@ public partial class DrivingViewModel : ObservableObject
     [ObservableProperty]
     public partial bool ArePedalsConnected { get; set; } = false;
     [ObservableProperty]
-    public partial bool AreActivePedalsConnected { get; set; } = false;
+    public partial bool IsActivePedalsHubConnected { get; set; } = false;
+    [ObservableProperty]
+    public partial bool IsActiveBrakeConnected { get; set; } = false;
+    [ObservableProperty]
+    public partial bool IsActiveThrottleConnected { get; set; } = false;
+    [ObservableProperty]
+    public partial bool IsPlayingEffect { get; set; } = false;
     [ObservableProperty]
     public partial bool IsStreaming { get; set; } = false;
     [ObservableProperty]
     public partial bool IsLogging { get; set; } = false;
+    [ObservableProperty]
+    public partial Driving.EffectType EffectType { get; set; } = Driving.EffectType.Periodic;
+    [ObservableProperty]
+    public partial Driving.EffectVariable EffectVariable { get; set; } = Driving.EffectVariable.ForceN;
+    [ObservableProperty]
+    public partial float EffectAmplitude { get; set; } = 1;
+    [ObservableProperty]
+    public partial int EffectDuration { get; set; } = 1000; // ms
 
     public ObservableCollection<ButtonState> Buttons { get; } =
         new(Enumerable.Range(0, 14).Select(_ => new ButtonState()));
@@ -36,7 +51,9 @@ public partial class DrivingViewModel : ObservableObject
             IsBaseConnected = _drivingClient.IsBaseConnected;
             IsWheelConnected = _drivingClient.IsWheelConnected;
             ArePedalsConnected = _drivingClient.ArePedalsConnected;
-            AreActivePedalsConnected = _drivingClient.AreActivePedalsConnected;
+            IsActivePedalsHubConnected = _drivingClient.IsActivePedalsHubConnected;
+            IsActiveBrakeConnected = _drivingClient.ActivePedalsConnected.HasFlag(Driving.ActivePedal.Brake);
+            IsActiveThrottleConnected = _drivingClient.ActivePedalsConnected.HasFlag(Driving.ActivePedal.Throttle);
 
             OnPropertyChanged(nameof(IsAvailable));
         };
@@ -52,9 +69,18 @@ public partial class DrivingViewModel : ObservableObject
         {
             ArePedalsConnected = e;
         };
+        _drivingClient.ActivePedalsHubConnectionChanged += (s, e) =>
+        {
+            IsActivePedalsHubConnected = e;
+        };
         _drivingClient.ActivePedalsConnectionChanged += (s, e) =>
         {
-            AreActivePedalsConnected = e;
+            IsActiveBrakeConnected = e.HasFlag(Driving.ActivePedal.Brake);
+            IsActiveThrottleConnected = e.HasFlag(Driving.ActivePedal.Throttle);
+        };
+        _drivingClient.EffectFinished += (s, e) =>
+        {
+            IsPlayingEffect = false;
         };
         _drivingClient.DataUpdated += (s, e) =>
         {
@@ -66,6 +92,34 @@ public partial class DrivingViewModel : ObservableObject
     #region Internal
 
     readonly DrivingClient _drivingClient;
+
+    [RelayCommand]
+    private void PlayBrakeEffect()
+    {
+        IsPlayingEffect = true;
+        _drivingClient.PlayPedalEffect(new()
+        {
+            Pedal = Driving.ActivePedal.Brake,
+            Type = EffectType,
+            Variable = EffectVariable,
+            Amplitude = EffectAmplitude,
+            Duration = EffectDuration
+        });
+    }
+
+    [RelayCommand]
+    private void PlayThrottleEffect()
+    {
+        IsPlayingEffect = true;
+        _drivingClient.PlayPedalEffect(new()
+        {
+            Pedal = Driving.ActivePedal.Throttle,
+            Type = EffectType,
+            Variable = EffectVariable,
+            Amplitude = EffectAmplitude,
+            Duration = EffectDuration
+        });
+    }
 
     partial void OnIsStreamingChanged(bool value)
     {

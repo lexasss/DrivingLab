@@ -26,6 +26,7 @@ extern "C" {
 	__declspec(dllexport) Pedal Init();
 	__declspec(dllexport) void  Configure(Pedal pedal, OffsetType offset_type);
 	__declspec(dllexport) void  Run(Pedal pedal, EffectType effectType, int durationMs, float amplitude);
+    __declspec(dllexport) void  Stop(Pedal pedal);
 }
 
 }
