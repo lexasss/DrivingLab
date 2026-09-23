@@ -48,6 +48,7 @@ public partial class App : Application
         services.AddSingleton<TensionRClient>();
         services.AddSingleton<StreamDeckClient>();
         services.AddSingleton<DrivingClient>();
+        services.AddSingleton<TobiiEyeXClient>();
 
         services.AddTransient<LeapMotionViewModel>();
         services.AddTransient<SmartEyeViewModel>();
@@ -57,6 +58,7 @@ public partial class App : Application
         services.AddTransient<TensionRViewModel>();
         services.AddTransient<StreamDeckViewModel>();
         services.AddTransient<DrivingViewModel>();
+        services.AddTransient<TobiiEyeXViewModel>();
 
         services.AddTransient<MainViewModel>();
         services.AddTransient<MainWindow>();

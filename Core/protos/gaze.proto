@@ -7,6 +7,10 @@ import "google/protobuf/empty.proto";
 
 service Dispatcher {
 	rpc IsAvailable (google.protobuf.Empty) returns (Common.Bool) {}
+	rpc IsConnected (google.protobuf.Empty) returns (Common.Bool) {}
+	rpc IsCalibrating (google.protobuf.Empty) returns (Common.Bool) {}
+	rpc IsCalibrated (google.protobuf.Empty) returns (Common.Bool) {}
+	rpc IsTracking (google.protobuf.Empty) returns (Common.Bool) {}
 
 	rpc SetLogFileName (Common.String) returns (Common.Bool) {}
 
@@ -21,7 +25,13 @@ service Dispatcher {
 	rpc Stop (google.protobuf.Empty) returns (google.protobuf.Empty) {}
 }
 
-// Gaze sample
+message Status {
+	bool isConnected = 1;
+	bool isCalibrating = 2;
+	bool IsCalibrated = 3;
+	bool IsTracking = 4;
+}
+
 message Sample {
 	double timestamp = 1;
 	double eyeX = 2;
@@ -46,8 +56,6 @@ message Sample {
 
 message Event {
 	oneof value {
-		bool isConnected = 1;
-		bool isCalibrated = 2;
-		bool isTracking = 3;
+		Status status = 1;
 	}
 }

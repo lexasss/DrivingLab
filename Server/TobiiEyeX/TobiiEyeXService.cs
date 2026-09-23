@@ -22,9 +22,15 @@ internal class TobiiEyeXService :
 
             if (_eyeX.IsValid)
             {
-                _eyeX.Tracker?.GazeData += EyeX_GazeData;
+                //_eyeX.Tracker?.GazeData += EyeX_GazeData;
                 _eyeX.PosStream?.Next += EyeX_Pos;
                 _eyeX.GazeStream?.Next += EyeX_Gaze;
+                _eyeX.StatusChanged += EyeX_StatusChanged;
+
+                _isConnected = _eyeX.IsConnected;
+                _isCalibrating = _eyeX.IsCalibrating;
+                _isCalibrated = _eyeX.IsCalibrated;
+                _isTracking = _eyeX.IsTracking;
 
                 _baseService = new(_logger);
             }
@@ -57,6 +63,34 @@ internal class TobiiEyeXService :
         ServerCallContext context)
     {
         return Common.Bool.From(IsAvailable());
+    }
+
+    public override Task<Common.Bool> IsConnected(
+        Empty request,
+        ServerCallContext context)
+    {
+        return Common.Bool.From(_isConnected);
+    }
+
+    public override Task<Common.Bool> IsCalibrating(
+        Empty request,
+        ServerCallContext context)
+    {
+        return Common.Bool.From(_isCalibrating);
+    }
+
+    public override Task<Common.Bool> IsCalibrated(
+        Empty request,
+        ServerCallContext context)
+    {
+        return Common.Bool.From(_isCalibrated);
+    }
+
+    public override Task<Common.Bool> IsTracking(
+        Empty request,
+        ServerCallContext context)
+    {
+        return Common.Bool.From(_isTracking);
     }
 
     public override Task<Empty> Start(
@@ -125,6 +159,11 @@ internal class TobiiEyeXService :
 
     EyeX? _eyeX;
 
+    bool _isConnected = false;
+    bool _isCalibrating = false;
+    bool _isCalibrated = false;
+    bool _isTracking = false;
+
     // Event handlers
 
     private void EyeX_Pos(object? sender, EyeXFramework.EyePositionEventArgs e)
@@ -145,7 +184,9 @@ internal class TobiiEyeXService :
             _sample.Timestamp = e.Timestamp;
             _sample.EyeX = e.X;
             _sample.EyeY = e.Y;
-        };
+
+            _baseService?.Publish(_sample);
+        }
     }
 
     private void EyeX_GazeData(object? sender, EyeXCore.GazeDataEventArgs e)
@@ -216,6 +257,34 @@ internal class TobiiEyeXService :
         }
 
         _baseService?.Publish(_sample);
+    }
+
+    private void EyeX_StatusChanged(object? sender, EventArgs e)
+    {
+        if (_eyeX == null)
+            return;
+
+        if (_isConnected != _eyeX.IsConnected ||
+            _isCalibrating != _eyeX.IsCalibrating ||
+            _isCalibrated != _eyeX.IsCalibrated ||
+            _isTracking != _eyeX.IsTracking)
+        {
+            _isConnected = _eyeX.IsConnected;
+            _isCalibrating = _eyeX.IsCalibrating;
+            _isCalibrated = _eyeX.IsCalibrated;
+            _isTracking = _eyeX.IsTracking;
+
+            _baseService?.Publish(new Proto.Event()
+            {
+                Status = new Proto.Status()
+                {
+                    IsConnected = _isConnected,
+                    IsCalibrating = _isCalibrating,
+                    IsCalibrated = _isCalibrated,
+                    IsTracking = _isTracking
+                }
+            });
+        }
     }
 
     #endregion

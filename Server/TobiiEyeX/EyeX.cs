@@ -5,11 +5,28 @@ namespace Server.TobiiEyeX;
 
 internal class EyeX : IDisposable
 {
+    public event EventHandler? StatusChanged;
+
     public EyeXCore.EyeTracker? Tracker => _tracker;
     public EyeXFramework.EyePositionDataStream? PosStream => _posStream;
-    public EyeXFramework.GazePointDataStream? GazeStream =>_gazeStream;
+    public EyeXFramework.GazePointDataStream? GazeStream => _gazeStream;
 
     public bool IsValid { get; private set; } = false;
+    public bool IsConnected => 
+        _status != Tobii.EyeX.Framework.EyeTrackingDeviceStatus.ConnectionError &&
+        _status != Tobii.EyeX.Framework.EyeTrackingDeviceStatus.DeviceNotConnected &&
+        _status != Tobii.EyeX.Framework.EyeTrackingDeviceStatus.Initializing &&
+        _status != Tobii.EyeX.Framework.EyeTrackingDeviceStatus.NotAvailable &&
+        _status != Tobii.EyeX.Framework.EyeTrackingDeviceStatus.TrackingUnavailable &&
+        _status != Tobii.EyeX.Framework.EyeTrackingDeviceStatus.UnknownError;
+    public bool IsCalibrating =>
+        _status == Tobii.EyeX.Framework.EyeTrackingDeviceStatus.Configuring;
+    public bool IsCalibrated =>
+        _status == Tobii.EyeX.Framework.EyeTrackingDeviceStatus.Tracking ||
+        _status == Tobii.EyeX.Framework.EyeTrackingDeviceStatus.TrackingPaused ||
+        _status == Tobii.EyeX.Framework.EyeTrackingDeviceStatus.Configuring;
+    public bool IsTracking =>
+        _status == Tobii.EyeX.Framework.EyeTrackingDeviceStatus.Tracking;
 
     public EyeX(ILogger logger)
     {
@@ -20,21 +37,6 @@ internal class EyeX : IDisposable
         _host.Start();
 
         using var etLib = new EyeXCore.EyeTrackerCoreLibrary();
-
-        try
-        {
-            var devices = etLib.ListUsbEyeTrackers();
-            foreach (EyeXCore.DeviceInfo device in devices)
-            {
-                _logger.LogInformation("Found Tobii EyeX device: {device}",
-                    device);
-            }
-        }
-        catch (Exception)
-        {
-            _logger.LogWarning("Failed to list devices (Tobii EyeX software is not installed or not running)");
-            return;
-        }
 
         Uri url = etLib.GetConnectedEyeTracker();
         if (url == null)
@@ -56,17 +58,18 @@ internal class EyeX : IDisposable
         }
 
         _tracker.RunEventLoopOnInternalThread(error => {
-            _logger.LogError("Tobii internal error: {error}",
-                error);
+            if (error != EyeXCore.ErrorCode.Success)
+                _logger.LogError("Tobii internal error: {error}", error);
+            else
+                _logger.LogInformation("Tobii internal operation succeeded");
         });
 
-        _tracker.ConnectAsync((error) =>
+        _tracker.ConnectAsync(error =>
         {
             if (error == EyeXCore.ErrorCode.Success)
                 _logger.LogInformation("Connected");
             else
-                _logger.LogError("Cannot connect to the device ({error})",
-                    error);
+                _logger.LogError("Cannot connect to the device ({error})", error);
         });
 
         _posStream = _host.CreateEyePositionDataStream();
@@ -94,13 +97,20 @@ internal class EyeX : IDisposable
     readonly EyeXFramework.GazePointDataStream? _gazeStream;
     readonly ILogger _logger;
 
+    Tobii.EyeX.Framework.EyeTrackingDeviceStatus _status = Tobii.EyeX.Framework.EyeTrackingDeviceStatus.NotAvailable;
+
     private void Host_DeviceStatusChanged(
         object? sender,
         EyeXFramework.EngineStateValue<Tobii.EyeX.Framework.EyeTrackingDeviceStatus> e)
     {
         if (e.IsValid)
         {
-            _logger.LogInformation($"Status: {e.Value}");
+            _logger.LogInformation("Status: {status}", e.Value);
+
+            var prevStatus = _status;
+            _status = e.Value;
+
+            StatusChanged?.Invoke(this, EventArgs.Empty);
         }
     }
 

@@ -1,0 +1,72 @@
+﻿<UserControl x:Class="ClientExample.Widgets.TobiiEyeX"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:ClientExample"
+             xmlns:widgets="clr-namespace:ClientExample.Widgets"
+             mc:Ignorable="d" 
+             d:DesignHeight="450"
+             d:DesignWidth="200">
+    
+    <UserControl.Resources>
+        <local:EnumToBooleanConverter x:Key="EnumToBoolean"/>
+    </UserControl.Resources>
+    
+    <Border Style="{StaticResource Card}">
+        <StackPanel>
+            <StackPanel.Resources>
+                <Style TargetType="widgets:Indicator">
+                    <Setter Property="Margin" Value="8,0"/>
+                </Style>
+            </StackPanel.Resources>
+            <Label Style="{StaticResource Device}"
+                   Content="Tobii EyeX"/>
+            <StackPanel Margin="4">
+                <widgets:Indicator IsOn="{Binding IsAvailable, Mode=OneWay}"
+                                   Text="Available"/>
+                <widgets:Indicator IsOn="{Binding IsConnected, Mode=OneWay}"
+                                   Text="Connected"/>
+                <widgets:Indicator IsOn="{Binding IsCalibrating, Mode=OneWay}"
+                                   Text="Calibrating"/>
+                <widgets:Indicator IsOn="{Binding IsCalibrated, Mode=OneWay}"
+                                   Text="Calibrated"/>
+                <widgets:Indicator IsOn="{Binding IsTracking, Mode=OneWay}"
+                                   Text="Tracking"/>
+                <Separator/>
+                <StackPanel>
+                    <StackPanel.Style>
+                        <Style TargetType="StackPanel">
+                            <Setter Property="IsEnabled" Value="False"/>
+                            <Style.Triggers>
+                                <MultiDataTrigger>
+                                    <MultiDataTrigger.Conditions>
+                                        <Condition Binding="{Binding IsConnected}" Value="True"/>
+                                        <Condition Binding="{Binding IsCalibrating}" Value="False"/>
+                                        <Condition Binding="{Binding IsTracking}" Value="True"/>
+                                    </MultiDataTrigger.Conditions>
+                                    <Setter Property="IsEnabled" Value="True"/>
+                                </MultiDataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </StackPanel.Style>
+                    <WrapPanel>
+                        <ToggleButton Style="{StaticResource Switch}"
+                                      IsChecked="{Binding IsStreaming}"/>
+                        <Label Style="{StaticResource RowHeader}"
+                               Content="Stream data"/>
+                    </WrapPanel>
+                    <WrapPanel>
+                        <ToggleButton Style="{StaticResource Switch}"
+                                      IsChecked="{Binding IsLogging}"/>
+                        <Label Style="{StaticResource RowHeader}"
+                               Content="Log data"/>
+                    </WrapPanel>
+                </StackPanel>
+                <Separator/>
+                <TextBlock Style="{StaticResource Data}"
+                           Text="{Binding Data, Mode=OneWay}"/>
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</UserControl>

@@ -68,6 +68,11 @@
             Grid.Row="1"
             Grid.Column="2"
             DataContext="{Binding StreamDeck}" />
+
+        <widgets:TobiiEyeX
+            Grid.Row="1"
+            Grid.Column="4"
+            DataContext="{Binding TobiiEyeX}" />
     </Grid>
 
 </Window>
