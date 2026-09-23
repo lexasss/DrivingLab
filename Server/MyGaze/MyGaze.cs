@@ -16,9 +16,9 @@ internal class MyGaze : IDisposable
 		_logger = logger;
 
         Log(MyGazeAPI.SetLicense(LICENSE), nameof(MyGazeAPI.SetLicense));
-        MyGazeAPI.Ret result = Log(MyGazeAPI.Connect(), nameof(MyGazeAPI.Connect));
+        MyGazeAPI.Result result = Log(MyGazeAPI.Connect(), nameof(MyGazeAPI.Connect));
 
-        if (result == MyGazeAPI.Ret.SUCCESS)
+        if (result == MyGazeAPI.Result.Success)
         {
 			var info = new MyGazeAPI.SystemInfoStruct();
             _ = MyGazeAPI.GetSystemInfo(ref info);
@@ -56,8 +56,8 @@ internal class MyGaze : IDisposable
 
 	public void Dispose()
 	{
-        Log(MyGazeAPI.Disconnect(), nameof(MyGazeAPI.Disconnect));
-        Log(MyGazeAPI.Quit(), nameof(MyGazeAPI.Quit));
+        MyGazeAPI.Disconnect();
+        MyGazeAPI.Quit();
 	}
 
 	#region Internal
@@ -76,11 +76,14 @@ internal class MyGaze : IDisposable
 		Event?.Invoke(this, evt);
 	}
 
-    private MyGazeAPI.Ret Log(int result, string fnc)
+    private MyGazeAPI.Result Log(int result, string fnc)
     {
-		MyGazeAPI.Ret code = (MyGazeAPI.Ret)result;
-        _logger.LogInformation("{fnc} => {code}", fnc, code);
-		return code;
+		MyGazeAPI.Result code = (MyGazeAPI.Result)result;
+		if (MyGazeAPI.IsError(code))
+            _logger.LogError("{fnc} => {code}", fnc, code);
+		else
+            _logger.LogInformation("{fnc} => {code}", fnc, code);
+        return code;
 	}
 
     #endregion

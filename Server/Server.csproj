@@ -24,47 +24,77 @@
     <ProjectReference Include="..\Core\Core.csproj" />
   </ItemGroup>
 
+  <PropertyGroup>
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(PlatformTarget)' == 'x64'">
+    <DefineConstants>$(DefineConstants);X64</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(PlatformTarget)' == 'x86'">
+    <DefineConstants>$(DefineConstants);X86</DefineConstants>
+  </PropertyGroup>
+
   <ItemGroup>
     <Reference Include="LeapCSharp.NET4.5, Version=3.2.1.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\libs\x32\LeapCSharp.NET4.5.dll</HintPath>
+      <HintPath>..\libs\managed\LeapCSharp.NET4.5.dll</HintPath>
     </Reference>
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(PlatformTarget)' == 'x86'">
     <Reference Include="Tobii.EyeX.Client.Net20">
-      <HintPath>..\libs\x32\Tobii.EyeX.Client.Net20.dll</HintPath>
+      <HintPath>..\libs\x86\Tobii.EyeX.Client.Net20.dll</HintPath>
     </Reference>
     <Reference Include="Tobii.Gaze.Core.Net">
-      <HintPath>..\libs\x32\Tobii.Gaze.Core.Net.dll</HintPath>
+      <HintPath>..\libs\x86\Tobii.Gaze.Core.Net.dll</HintPath>
     </Reference>
     <Reference Include="EyeXFramework">
-      <HintPath>..\libs\x32\EyeXFramework.dll</HintPath>
+      <HintPath>..\libs\x86\EyeXFramework.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(PlatformTarget)' == 'x64'">
+    <Reference Include="Tobii.EyeX.Client.Net20">
+      <HintPath>..\libs\x64\Tobii.EyeX.Client.Net20.dll</HintPath>
+    </Reference>
+    <Reference Include="Tobii.Gaze.Core.Net">
+      <HintPath>..\libs\x64\Tobii.Gaze.Core.Net.dll</HintPath>
+    </Reference>
+    <Reference Include="EyeXFramework">
+      <HintPath>..\libs\x64\EyeXFramework.dll</HintPath>
     </Reference>
   </ItemGroup>
 
   <ItemGroup>
-    <None Visible="false" Include="..\libs\x32\LeapC.dll">
+    <None Visible="false" Include="..\libs\$(PlatformTarget)\LeapC.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Visible="false" Include="..\libs\x32\Tobii.EyeX.Client.dll">
+    <None Visible="false" Include="..\libs\$(PlatformTarget)\Tobii.EyeX.Client.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Visible="false" Include="..\libs\x32\TobiiGazeCore32.dll">
+    <None Visible="false" Include="..\libs\x86\TobiiGazeCore32.dll" Condition="'$(PlatformTarget)' == 'x86'">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Visible="false" Include="..\\libs\sc-api\out\build\x86-Debug\examples\sc-api-effects.dll">
+    <None Visible="false" Include="..\libs\x64\TobiiGazeCore64.dll" Condition="'$(PlatformTarget)' == 'x64'">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Visible="false" Include="..\libs\x86\myGazeAPI.dll" Condition="'$(PlatformTarget)' == 'x86'">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Visible="false" Include="..\libs\x64\myGazeAPI64.dll" Condition="'$(PlatformTarget)' == 'x64'">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Visible="false" Include="..\\libs\sc-api\out\build\$(PlatformTarget)-Debug\examples\sc-api-effects.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 
   <PropertyGroup>
     <Product>DrivingLab Server</Product>
-    <Company>Tampere University</Company>
-    <Authors>Oleg Spakov</Authors>
     <PackageId>DrivingLabServer</PackageId>
     <Description>DrivingLab Server</Description>
-  </PropertyGroup>
-
-  <PropertyGroup>
-    <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
 
 </Project>

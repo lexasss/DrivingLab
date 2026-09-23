@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
 using EyeXCore = Tobii.Gaze.Core;
-using EyeXFramewor = Tobii.EyeX.Framework;
 
 namespace Server.TobiiEyeX;
 
@@ -34,6 +33,7 @@ internal class EyeX : IDisposable
         catch (Exception)
         {
             _logger.LogWarning("Failed to list devices (Tobii EyeX software is not installed or not running)");
+            return;
         }
 
         Uri url = etLib.GetConnectedEyeTracker();
@@ -72,7 +72,7 @@ internal class EyeX : IDisposable
         _posStream = _host.CreateEyePositionDataStream();
 
         _gazeStream = _host.CreateGazePointDataStream(
-            EyeXFramewor.GazePointDataMode.Unfiltered
+            Tobii.EyeX.Framework.GazePointDataMode.Unfiltered
         );
 
         IsValid = true;
@@ -96,7 +96,7 @@ internal class EyeX : IDisposable
 
     private void Host_DeviceStatusChanged(
         object? sender,
-        EyeXFramework.EngineStateValue<EyeXFramewor.EyeTrackingDeviceStatus> e)
+        EyeXFramework.EngineStateValue<Tobii.EyeX.Framework.EyeTrackingDeviceStatus> e)
     {
         if (e.IsValid)
         {

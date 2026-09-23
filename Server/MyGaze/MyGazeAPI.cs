@@ -9,11 +9,11 @@ namespace Server.MyGaze;
 internal static class MyGazeAPI
 {
 
-#if (x86)
+#if X86
         // use for 32 bit
         const string dllName = "myGazeAPI.dll";
 
-#elif (x64)
+#elif X64
         //use for 64 bit
         const string dllName = "myGazeAPI64.dll";
 #else
@@ -70,49 +70,51 @@ internal static class MyGazeAPI
     public const int ERR_LICENSE_EXPIRED = 251;
     public const int ERR_DEPRECATED_FUNCTION = 300;
 
-    public enum Ret
+    public enum Result
     {
-        SUCCESS = 1,
-        DATA_INVALID = 2,
-        CALIBRATION_ABORTED = 3,
-        SERVER_IS_RUNNING = 4,
-        CALIBRATION_NOT_IN_PROGRESS = 5,
-        WINDOW_IS_OPEN = 11,
-        WINDOW_IS_CLOSED = 12,
+        Success = RET_SUCCESS,
+        DataInvalid = RET_DATA_INVALID,
+        CalibrationAborted = RET_CALIBRATION_ABORTED,
+        ServerIsRunning = RET_SERVER_IS_RUNNING,
+        CalibrationNotInProgress = RET_CALIBRATION_NOT_IN_PROGRESS,
+        WindowIsOpen = RET_WINDOW_IS_OPEN,
+        WindowIsClosed = RET_WINDOW_IS_CLOSED,
 
-        CONNECTION_REFUSED = 100,
-        CONNECTION_NOT_ESTABLISHED = 101,
-        CALIBRATION_NOT_AVAILABLE = 102,
-        CALIBRATION_NOT_VALIDATED = 103,
-        SERVER_NOT_RUNNING = 104,
-        SERVER_NOT_RESPONDING = 105,
-        PARAMETER_INVALID = 112,
-        PARAMETER_CALIBRATION_INVALID = 113,
-        CALIBRATION_TIMEOUT = 114,
-        TRACKING_NOT_STABLE = 115,
-        SOCKET_CREATE = 121,
-        SOCKET_CONNECT = 122,
-        SOCKET_BIND = 123,
-        SOCKET_DELETE = 124,
-        SERVER_NO_RESPONSE = 131,
-        SERVER_VERSION_INVALID = 132,
-        SERVER_VERSION_UNKNOWN = 133,
-        FILE_ACCESS = 171,
-        SOCKET_ERROR = 181,
-        SERVER_NOT_READY = 194,
-        SERVER_NOT_FOUND = 201,
-        SERVER_PATH_NOT_FOUND = 202,
-        SERVER_ACCESS_DENIED = 203,
-        SERVER_ACCESS_INCOMPLETE = 204,
-        SERVER_OUT_OF_MEMORY = 205,
-        MULTIPLE_DEVICES = 206,
-        DEVICE_NOT_FOUND = 211,
-        DEVICE_UNKNOWN = 212,
-        DEVICE_CONNECTED_TO_WRONG_PORT = 213,
-        FEATURE_NOT_LICENSED = 250,
-        LICENSE_EXPIRED = 251,
-        DEPRECATED_FUNCTION = 300,
+        ConnectionRefused = ERR_CONNECTION_REFUSED,
+        ConnectionNotEstablished = ERR_CONNECTION_NOT_ESTABLISHED,
+        CalibrationNotAvailable = ERR_CALIBRATION_NOT_AVAILABLE,
+        CalibrationNotValidated = ERR_CALIBRATION_NOT_VALIDATED,
+        ServerNotRunning = ERR_SERVER_NOT_RUNNING,
+        ServerNotResponding = ERR_SERVER_NOT_RESPONDING,
+        ParameterInvalid = ERR_PARAMETER_INVALID,
+        ParameterCalibrationInvalid = ERR_PARAMETER_CALIBRATION_INVALID,
+        CalibrationTimeout = ERR_CALIBRATION_TIMEOUT,
+        TrackingNotStable = ERR_TRACKING_NOT_STABLE,
+        SocketCreate = ERR_SOCKET_CREATE,
+        SocketConnect = ERR_SOCKET_CONNECT,
+        SocketBind = ERR_SOCKET_BIND,
+        SocketDelete = ERR_SOCKET_DELETE,
+        ServerNoResponse = ERR_SERVER_NO_RESPONSE,
+        ServerVersionInvalid = ERR_SERVER_VERSION_INVALID,
+        ServerVersionUnknown = ERR_SERVER_VERSION_UNKNOWN,
+        FileAccess = ERR_FILE_ACCESS,
+        SocketError = ERR_SOCKET_ERROR,
+        ServerNotReady = ERR_SERVER_NOT_READY,
+        ServerNotFound = ERR_SERVER_NOT_FOUND,
+        ServerPathNotFound = ERR_SERVER_PATH_NOT_FOUND,
+        ServerAccessDenied = ERR_SERVER_ACCESS_DENIED,
+        ServerAccessIncomplete = ERR_SERVER_ACCESS_INCOMPLETE,
+        ServerOutOfMemory = ERR_SERVER_OUT_OF_MEMORY,
+        MultipleDevices = ERR_MULTIPLE_DEVICES,
+        DeviceNotFound = ERR_DEVICE_NOT_FOUND,
+        DeviceUnknown = ERR_DEVICE_UNKNOWN,
+        DeviceConnectedToWrongPort = ERR_DEVICE_CONNECTED_TO_WRONG_PORT,
+        FeatureNotLicensed = ERR_FEATURE_NOT_LICENSED,
+        LicenseExpired = ERR_LICENSE_EXPIRED,
+        DeprecatedFunction = ERR_DEPRECATED_FUNCTION,
     }
+
+    public static bool IsError(Result result) => result >= Result.ConnectionRefused;
 
     public enum CalibrationStatusEnum
     {
