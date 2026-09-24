@@ -230,7 +230,7 @@ public class SoundPlayerService :
             });
         }
 
-        _logger.LogInformation("Playing {tone}", tone.ToneType);
+        _logger.LogInformation("Playing tone {tone}", tone.ToneType);
         return tonePlayer;
     }
 
@@ -255,7 +255,7 @@ public class SoundPlayerService :
             soundPlayer.Init(audioFile);
             soundPlayer.Play();
 
-            _logger.LogInformation("Playing {filename}", filename);
+            _logger.LogInformation("Playing sound from {filename}", filename);
         }
         catch (Exception ex)
         {

@@ -35,6 +35,11 @@ public partial class DrivingViewModel : ObservableObject
     [ObservableProperty]
     public partial int EffectDuration { get; set; } = 1000; // ms
 
+    [ObservableProperty]
+    public partial Driving.PeriodicEffectType PeriodicEffectType { get ; set; } = Driving.PeriodicEffectType.Sine;
+    [ObservableProperty]
+    public partial float PeriodicEffectFrequency { get; set; } = 20;
+
     public ObservableCollection<ButtonState> Buttons { get; } =
         new(Enumerable.Range(0, 14).Select(_ => new ButtonState()));
     public ObservableCollection<SliderState> Sliders { get; } =
@@ -81,6 +86,11 @@ public partial class DrivingViewModel : ObservableObject
         _drivingClient.EffectFinished += (s, e) =>
         {
             IsPlayingEffect = false;
+        };
+        _drivingClient.PeriodicEffectParametersRetrieved += (s, e) =>
+        {
+            PeriodicEffectType = e.Type;
+            PeriodicEffectFrequency = e.Frequency;
         };
         _drivingClient.DataUpdated += (s, e) =>
         {
@@ -138,6 +148,24 @@ public partial class DrivingViewModel : ObservableObject
     {
         _drivingClient.SetLoggingEnabled(value);
         IsLogging = _drivingClient.IsLogging;
+    }
+
+    partial void OnPeriodicEffectTypeChanged(Driving.PeriodicEffectType value)
+    {
+        _drivingClient.SetPeriodicEffectParameters(new()
+        {
+            Type = value,
+            Frequency = PeriodicEffectFrequency
+        });
+    }
+
+    partial void OnPeriodicEffectFrequencyChanged(float value)
+    {
+        _drivingClient.SetPeriodicEffectParameters(new()
+        {
+            Type = PeriodicEffectType,
+            Frequency = value
+        });
     }
 
     private void SetData(Driving.Data data)

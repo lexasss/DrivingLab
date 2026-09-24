@@ -4,15 +4,17 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:sys="clr-namespace:System;assembly=mscorlib"
+             xmlns:local="clr-namespace:ClientExample"
              xmlns:widgets="clr-namespace:ClientExample.Widgets"
              xmlns:conv="clr-namespace:MaterialDesignThemes.Wpf.Converters;assembly=MaterialDesignThemes.Wpf"
              xmlns:driv="clr-namespace:Driving;assembly=Core"
              mc:Ignorable="d" 
              d:DesignHeight="750"
              d:DesignWidth="200">
-    
+
     <UserControl.Resources>
         <conv:InvertBooleanConverter x:Key="InvertBoolean"/>
+        <local:EnumToBooleanConverter x:Key="EnumToBoolean"/>
 
         <ObjectDataProvider x:Key="EffectTypes"
                             MethodName="GetValues"
@@ -29,8 +31,16 @@
                 <x:Type TypeName="driv:EffectVariable"/>
             </ObjectDataProvider.MethodParameters>
         </ObjectDataProvider>
+
+        <ObjectDataProvider x:Key="PeriodicEffectTypes"
+                            MethodName="GetValues"
+                            ObjectType="{x:Type sys:Enum}">
+            <ObjectDataProvider.MethodParameters>
+                <x:Type TypeName="driv:PeriodicEffectType"/>
+            </ObjectDataProvider.MethodParameters>
+        </ObjectDataProvider>
     </UserControl.Resources>
-    
+
     <Border Style="{StaticResource Card}">
         <StackPanel>
             <StackPanel.Resources>
@@ -78,8 +88,9 @@
                            Content="Log data"/>
                 </WrapPanel>
                 <Separator/>
-                <Canvas HorizontalAlignment="Stretch"
-                        Width="200"
+                <Canvas x:Name="canvas"
+                        HorizontalAlignment="Stretch"
+                        IsEnabled="{Binding IsWheelConnected}"
                         Height="156">
                     <Canvas.Resources>
                         <Style TargetType="widgets:Indicator">
@@ -88,8 +99,10 @@
                         <Style x:Key="Shape" TargetType="Path">
                             <Setter Property="Fill" Value="#FFDEDEDE"/>
                             <Setter Property="Stroke" Value="DarkGray"/>
-                            <Setter Property="StrokeThickness" Value="2"/>
+                            <Setter Property="StrokeThickness" Value="1"/>
                             <Setter Property="StrokeLineJoin" Value="Round"/>
+                            <Setter Property="StrokeEndLineCap" Value="Round"/>
+                            <Setter Property="StrokeStartLineCap" Value="Round"/>
                             <Setter Property="Stretch" Value="Fill"/>
                         </Style>
                         <Style x:Key="TriangleTop" TargetType="Path" BasedOn="{StaticResource Shape}">
@@ -152,20 +165,20 @@
                           Canvas.Left="2"
                           Canvas.Top="0"/>
                     <Path Style="{StaticResource TriangleTop}"
-                          Canvas.Left="110"
+                          Canvas.Right="2"
                           Canvas.Top="0"/>
                     <Path Style="{StaticResource TriangleBottom}"
                           Canvas.Left="2"
                           Canvas.Top="114"/>
                     <Path Style="{StaticResource TriangleBottom}"
-                          Canvas.Left="110"
+                          Canvas.Right="2"
                           Canvas.Top="114"/>
                     <Path Style="{StaticResource PaddleLeft}"
-                          Canvas.Left="0"
-                          Canvas.Top="48"/>
+                          Canvas.Left="2"
+                          Canvas.Top="46"/>
                     <Path Style="{StaticResource PaddleRight}"
-                          Canvas.Left="174"
-                          Canvas.Top="48"/>
+                          Canvas.Right="2"
+                          Canvas.Top="46"/>
 
                     <widgets:Indicator IsOn="{Binding Buttons[0].IsPressed, Mode=OneWay}"
                                        Canvas.Left="16"
@@ -201,7 +214,7 @@
                     <widgets:Indicator IsOn="{Binding Buttons[10].IsPressed, Mode=OneWay}"
                                        Canvas.Right="16"
                                        Canvas.Top="112"/>
-                    <widgets:PointOfView Canvas.Left="115"
+                    <widgets:PointOfView Canvas.Right="39"
                                          Canvas.Top="105"
                                          Value="{Binding PointOfView}"
                                          Height="30"
@@ -212,28 +225,29 @@
                                        Canvas.Top="112"
                                        StrokeThickness="2"/>
                     <widgets:Indicator IsOn="{Binding Buttons[12].IsPressed, Mode=OneWay}"
-                                       Canvas.Left="0"
+                                       Canvas.Left="2"
                                        Canvas.Top="64"/>
                     <widgets:Indicator IsOn="{Binding Buttons[13].IsPressed, Mode=OneWay}"
-                                       Canvas.Right="0"
+                                       Canvas.Right="2"
                                        Canvas.Top="64"/>
                     <Slider Canvas.Left="68"
                             Canvas.Top="96"
                             Value="{Binding Sliders[1].Value}"
                             Orientation="Vertical"
                             Height="50"/>
-                    <Slider Canvas.Right="82"
+                    <Slider Canvas.Right="74"
                             Canvas.Top="96"
                             Value="{Binding Sliders[2].Value}"
                             Orientation="Vertical"
                             Height="50"/>
-                    <Label Canvas.Left="72"
-                            Canvas.Top="50"
-                            Content="Wheel"/>
-                    <Slider Canvas.Left="28"
-                            Canvas.Top="66"
-                            Value="{Binding Sliders[0].Value}"
-                            Width="132"/>
+                    <StackPanel Canvas.Top="44"
+                                Width="{Binding ActualWidth, ElementName=canvas, Mode=OneWay}">
+                        <Label Content="Wheel"
+                               HorizontalAlignment="Center"/>
+                        <Slider Value="{Binding Sliders[0].Value}"
+                                IsEnabled="{Binding IsBaseConnected}"
+                                Margin="28,0"/>
+                    </StackPanel>
                 </Canvas>
                 <Separator/>
                 <StackPanel>
@@ -261,18 +275,21 @@
                         <StackPanel>
                             <Label Content="Brake"/>
                             <Slider Value="{Binding Sliders[3].Value}"
+                                    IsEnabled="{Binding ArePedalsConnected}"
                                     Minimum="-0.98"
                                     Maximum="-0.60"/>
                         </StackPanel>
                         <StackPanel>
                             <Label Content="Throttle"/>
                             <Slider Value="{Binding Sliders[4].Value}"
+                                    IsEnabled="{Binding ArePedalsConnected}"
                                     Minimum="-0.90"
                                     Maximum="-0.75"/>
                         </StackPanel>
                         <StackPanel>
                             <Label Content="Brake"/>
                             <Slider Value="{Binding Sliders[5].Value}"
+                                    IsEnabled="{Binding IsActiveBrakeConnected}"
                                     Minimum="-1"
                                     Maximum="1"/>
                             <Button Margin="0,8,0,2"
@@ -297,12 +314,14 @@
                                            FontSize="24"
                                            LineHeight="16"
                                            LineStackingStrategy="BlockLineHeight"
-                                           FontWeight="Bold"/>
+                                           FontWeight="Bold"
+                                           ToolTip="Play the effect"/>
                             </Button>
                         </StackPanel>
                         <StackPanel>
                             <Label Content="Throttle"/>
                             <Slider Value="{Binding Sliders[6].Value}"
+                                    IsEnabled="{Binding IsActiveThrottleConnected}"
                                     Minimum="-1"
                                     Maximum="1"/>
                             <Button Margin="0,8,0,2"
@@ -327,25 +346,56 @@
                                            FontSize="24"
                                            LineHeight="16"
                                            LineStackingStrategy="BlockLineHeight"
-                                           FontWeight="Bold"/>
+                                           FontWeight="Bold"
+                                           ToolTip="Play the effect"/>
                             </Button>
                         </StackPanel>
                     </UniformGrid>
                 </StackPanel>
-                
+
                 <Separator/>
-                <UniformGrid Columns="2">
+                <UniformGrid Columns="2"
+                             IsEnabled="{Binding IsActivePedalsHubConnected}">
                     <Label Style="{StaticResource OptionName}"
                            Content="Effect"/>
                     <ComboBox ItemsSource="{Binding Source={StaticResource EffectTypes}}"
                               SelectedItem="{Binding EffectType, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                    <Label Style="{StaticResource OptionName}"
+                           Margin="16,0,0,0"
+                           Content="type"/>
+                    <ComboBox ItemsSource="{Binding Source={StaticResource PeriodicEffectTypes}}"
+                              SelectedItem="{Binding PeriodicEffectType, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                              IsEnabled="{Binding EffectType,
+                                                  Converter={StaticResource EnumToBoolean},
+                                                  ConverterParameter={x:Static driv:EffectType.Periodic}}"/>
+                    <Label Style="{StaticResource OptionName}"
+                           Margin="16,0,0,0"
+                           Content="frequency"/>
+                    <TextBox Text="{Binding PeriodicEffectFrequency, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                             IsEnabled="{Binding EffectType,
+                                                 Converter={StaticResource EnumToBoolean},
+                                                 ConverterParameter={x:Static driv:EffectType.Periodic}}"/>
                     <Label Style="{StaticResource OptionName}"
                            Content="Variable"/>
                     <ComboBox ItemsSource="{Binding Source={StaticResource EffectVariables}}"
                               SelectedItem="{Binding EffectVariable, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                     <Label Style="{StaticResource OptionName}"
                            Content="Amplitude"/>
-                    <TextBox Text="{Binding EffectAmplitude, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                    <TextBox>
+                        <TextBox.Text>
+                            <Binding Path="EffectAmplitude"
+                                     Mode="TwoWay"
+                                     UpdateSourceTrigger="LostFocus"
+                                     ValidatesOnExceptions="True"
+                                     StringFormat="{}{0:0.##}">
+                                <Binding.ValidationRules>
+                                    <local:DoubleRangeValidationRule
+                                            Minimum="0.01"
+                                            Maximum="100" />
+                                </Binding.ValidationRules>
+                            </Binding>
+                        </TextBox.Text>
+                    </TextBox>
                     <Label Style="{StaticResource OptionName}"
                            Content="Duration"/>
                     <TextBox Text="{Binding EffectDuration, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>

@@ -9,7 +9,9 @@ service Dispatcher {
 	rpc IsAvailable (google.protobuf.Empty) returns (Common.Bool) {}
 
 	rpc GetConnectionStatus (google.protobuf.Empty) returns (ConnectionStatus) {}
-	rpc PlayPedalEffect (PedalEffect) returns (google.protobuf.Empty) {}
+	rpc GetPeriodicEffectParameters (google.protobuf.Empty) returns (PeriodicEffectParameters) {}
+	rpc SetPeriodicEffectParameters (PeriodicEffectParameters) returns (Common.Bool) {}
+	rpc PlayPedalEffect (PedalEffect) returns (Common.Bool) {}
 	rpc StopPedalEffect (StopEffect) returns (google.protobuf.Empty) {}
 
 	rpc SetLogFileName (Common.String) returns (Common.Bool) {}
@@ -32,19 +34,29 @@ enum ActivePedal {
     Both = 0x3;
 }
 
-enum EffectType
-{
+enum EffectType {
     Constant = 0;
     Periodic = 1;
 }
 
-enum EffectVariable
-{
+enum EffectVariable {
     TorqueNm = 0;
     TorqueRelative = 1;
     ForceN = 2;
     ForceRelative = 3;
     PositionMm = 4;
+}
+
+enum PeriodicEffectType {
+	Sine = 0;
+	Triangle = 1;
+	Square = 2;
+	SawTooth = 3;
+}
+
+message PeriodicEffectParameters {
+	PeriodicEffectType type = 1;
+	float frequency = 2;
 }
 
 message PedalEffect {

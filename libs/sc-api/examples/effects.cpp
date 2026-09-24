@@ -19,9 +19,10 @@ using sc_api::device_info::DeviceInfo;
 using sc_api::device_info::DeviceRole;
 using sc_api::device_info::FeedbackType;
 
-constexpr char* LOG_HEADER         = "[SC-LINK API] ";
-constexpr float PERIODIC_FREQUENCY = 20.0f;
-constexpr float PERIODIC_W         = PERIODIC_FREQUENCY * 3.1415 * 2;
+constexpr char* LOG_HEADER     = "[SC-LINK API] ";
+constexpr float PI             = 3.1415;
+constexpr float ONE_OVER_PI    = 1.f / PI;
+constexpr float ONE_OVER_PI_SQ = 1.f / PI / PI;
 
 sc_api::Api                              api_thread;
 std::unique_ptr<sc_api::Api::EventQueue> event_queue;
@@ -34,6 +35,8 @@ bool                                     is_brake_configured        = false;
 bool                                     is_throttle_configured     = false;
 bool                                     is_brake_playing_effect    = false;
 bool                                     is_throttle_playing_effect = false;
+PeriodicEffectType                       periodic_effect_type       = PeriodicEffectType::Sine;
+float                                    periodic_effect_frequency  = 20.0f;
 
 extern "C" _declspec(dllexport) Pedal Init(long timeout_s = 2)
 {
@@ -43,7 +46,7 @@ extern "C" _declspec(dllexport) Pedal Init(long timeout_s = 2)
     api_user_information.display_name   = "driving-lab";
     api_user_information.type           = "";
     api_user_information.path           = "";
-    api_user_information.author         = "Simucube";
+    api_user_information.author         = "Simucube | Tampere University";
     api_user_information.version_string = "";
 
     sc_api::NoAuthControlEnabler control_enabler(
@@ -128,6 +131,13 @@ extern "C" _declspec(dllexport) void Configure(
     }
 }
 
+extern "C" _declspec(dllexport) void ConfigurePeriodic(
+    PeriodicEffectType type,
+    float frequency) {
+    periodic_effect_type = type;
+    periodic_effect_frequency = frequency;
+}
+
 extern "C" _declspec(dllexport) void Run(
     Pedal pedal,
     EffectType effect_type,
@@ -165,6 +175,8 @@ extern "C" _declspec(dllexport) void Run(
     const auto start        = std::chrono::steady_clock::now();
     const auto timeout      = start + duration;
 
+    float w                 = periodic_effect_frequency * PI * 2;
+
     while (std::chrono::steady_clock::now() - start < duration) {
         while (auto event = event_queue->tryPop()) {
             if (auto* s = sc_api::event::getIfSessionStateChanged(&event)) {
@@ -187,7 +199,30 @@ extern "C" _declspec(dllexport) void Run(
                 value = amplitude;
                 break;
             case EffectType::Periodic:
-                value = (float)std::sin(seconds_from_start * PERIODIC_W) * amplitude;
+                switch (periodic_effect_type)
+                { 
+                    case PeriodicEffectType::Sine:
+                        value = (float)std::sin(w * seconds_from_start);
+                        break;
+                    case PeriodicEffectType::Triangle:
+                        value = 8.f * ONE_OVER_PI_SQ * (float)(
+                            std::sin(w * seconds_from_start) - 
+                            std::sin(3 * w * seconds_from_start) / 9 +
+                            std::sin(5 * w * seconds_from_start) / 25);
+                        break;
+                    case PeriodicEffectType::Square:
+                        value = (float)fabs(std::sin(w * seconds_from_start + PI / 4)) < 0.5 ? -1.f : 1.f;
+                        break;
+                    case PeriodicEffectType::SawTooth:
+                        value = 2.f * ONE_OVER_PI * (float)(
+                            std::sin(w * seconds_from_start) - 
+                            std::sin(2 * w * seconds_from_start) / 2 +
+                            std::sin(3 * w * seconds_from_start) / 3 -
+                            std::sin(4 * w * seconds_from_start) / 4 +
+                            std::sin(5 * w * seconds_from_start) / 5);
+                        break;
+                }
+                value *= amplitude;
                 break;
         }
 

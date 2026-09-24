@@ -18,17 +18,17 @@ internal class DrivingService :
 
         try
         {
-            _wheelBase = Create(
+            _wheelBase = CreateController(
                 "Simucube 2 Pro",
                 DeviceType.FirstPerson,
                 WheelBase_Data,
                 WheelBase_Disconnected);
-            _pedals = Create(
+            _pedals = CreateController(
                 "Meca",
                 DeviceType.Supplemental,
                 Pedals_Data,
                 Pedals_Disconnected);
-            _activePedals = Create(
+            _activePedals = CreateController(
                 "SC-Link",
                 DeviceType.FirstPerson,
                 ActivePedals_Data,
@@ -60,15 +60,6 @@ internal class DrivingService :
                     _logger.LogInformation("Found pedal THROTTLE");
                 if (_connectionStatus.ActivePedalsConnected == Proto.ActivePedal.None)
                     _logger.LogWarning("Found no pedals (is Simucube Tuner running and the pedals are activated?)");
-
-                /*else 
-                {
-                    await Task.Delay(1000);
-                    SimucubeApi.Configure(Proto.ActivePedal.Both, Proto.EffectOffset.ForceN);
-                    Console.WriteLine("  Absolute force FFB configured");
-                    SimucubeApi.Run(Proto.ActivePedal.Both, Proto.EffectType.Periodic, 1000, 2.0f);
-                    Console.WriteLine("  FFB feedback played");
-                }*/
             });
         }
         catch (Exception)
@@ -106,27 +97,59 @@ internal class DrivingService :
         return Task.FromResult(_connectionStatus);
     }
 
-    public override Task<Empty> PlayPedalEffect(
+    public override Task<Proto.PeriodicEffectParameters> GetPeriodicEffectParameters(
+        Empty request,
+        ServerCallContext context)
+    {
+        return Task.FromResult(_periodicEffectParams);
+    }
+
+    public override Task<Common.Bool> SetPeriodicEffectParameters(
+        Proto.PeriodicEffectParameters request,
+        ServerCallContext context)
+    {
+        if (!_isPlayingEffect)
+        {
+            _periodicEffectParams = request;
+            return Common.Bool.True;
+        }
+
+        return Common.Bool.False;
+    }
+
+    public override Task<Common.Bool> PlayPedalEffect(
         Proto.PedalEffect request,
         ServerCallContext context)
     {
+        if (_isPlayingEffect)
+            return Common.Bool.False;
+
         if (_connectionStatus.ActivePedalsConnected.HasFlag(request.Pedal))
         {
-            _logger.LogInformation("Playing {type} {var} = {amplitude} for {duration}ms on {pedal}",
-                request.Type,
+            _isPlayingEffect = true;
+            _logger.LogInformation("Playing {type} {var} = {amplitude} for {duration} ms on {pedal}",
+                request.Type == Proto.EffectType.Constant
+                    ? "Constant"
+                    : $"{_periodicEffectParams.Type} {_periodicEffectParams.Frequency} Hz",
                 request.Variable,
                 request.Amplitude,
                 request.Duration,
                 request.Pedal);
             SimucubeApi.Configure(request.Pedal, request.Variable);
+            if (request.Type == Proto.EffectType.Periodic)
+                SimucubeApi.ConfigurePeriodic(
+                    _periodicEffectParams.Type,
+                    _periodicEffectParams.Frequency);
 
-            Task.Run(() =>
+            Task.Run(() =>  // SimucubeApi.Run is a blocking function
             {
                 SimucubeApi.Run(
                     request.Pedal,
                     request.Type,
                     request.Duration,
                     request.Amplitude);
+
+                _isPlayingEffect = false;
                 _baseService?.Publish(new Proto.Event()
                 {
                     EffectFinished = new Empty()
@@ -136,9 +159,10 @@ internal class DrivingService :
         else
         {
             _logger.LogError("Pedal {pedal} is not active", request.Pedal);
+            return Common.Bool.False;
         }
 
-        return Common.Constants.Empty;
+        return Common.Bool.True;
     }
 
     public override Task<Empty> StopPedalEffect(
@@ -238,7 +262,13 @@ internal class DrivingService :
     Pointing.Controller? _pedals;
     Pointing.Controller? _activePedals;
 
-    private Pointing.Joystick? Create(
+    Proto.PeriodicEffectParameters _periodicEffectParams = new() {
+        Type = Proto.PeriodicEffectType.Sine,
+        Frequency = 20
+    };
+    bool _isPlayingEffect = false;
+
+    private Pointing.Joystick? CreateController(
         string name,
         DeviceType type,
         EventHandler<global::Pointing.Data> dataHandler,

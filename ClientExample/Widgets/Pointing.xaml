@@ -86,7 +86,8 @@
                     <Label Content="Buttons"
                            HorizontalContentAlignment="Center"/>
                     <UniformGrid Columns="6"
-                                 HorizontalAlignment="Center">
+                                 HorizontalAlignment="Center"
+                                 IsEnabled="{Binding IsConnected}">
                         <widgets:Indicator IsOn="{Binding Buttons[0].IsPressed, Mode=OneWay}"/>
                         <widgets:Indicator IsOn="{Binding Buttons[1].IsPressed, Mode=OneWay}"/>
                         <widgets:Indicator IsOn="{Binding Buttons[2].IsPressed, Mode=OneWay}"/>
@@ -108,7 +109,8 @@
                     </UniformGrid>
                 </StackPanel>
                 <Separator/>
-                <UniformGrid Columns="3">
+                <UniformGrid Columns="3"
+                             IsEnabled="{Binding IsConnected}">
                     <StackPanel>
                         <Label Content="Sliders"
                                HorizontalContentAlignment="Center"/>

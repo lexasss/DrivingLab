@@ -12,6 +12,7 @@ public class DrivingClient : Client
     public event EventHandler<bool>? ActivePedalsHubConnectionChanged;
     public event EventHandler<Driving.ActivePedal>? ActivePedalsConnectionChanged;
     public event EventHandler? EffectFinished;
+    public event EventHandler<Driving.PeriodicEffectParameters>? PeriodicEffectParametersRetrieved;
     public event EventHandler<Driving.Data>? DataUpdated;
 
     public bool IsBaseConnected => _isBaseConnected;
@@ -36,13 +37,28 @@ public class DrivingClient : Client
         base.Dispose();
     }
 
-    public void PlayPedalEffect(Driving.PedalEffect pedalEffect) 
+    public void SetPeriodicEffectParameters(Driving.PeriodicEffectParameters parameters)
     {
-        _client.PlayPedalEffect(pedalEffect);
+        if (!_isAvailable)
+            return;
+
+        _periodicEffectParams = parameters;
+        _client.SetPeriodicEffectParameters(parameters);
+    }
+
+    public bool PlayPedalEffect(Driving.PedalEffect pedalEffect) 
+    {
+        if (!_isAvailable)
+            return false;
+
+        return _client.PlayPedalEffect(pedalEffect).Value;
     }
 
     public void StopPedalEffect(Driving.ActivePedal pedal)
     {
+        if (!_isAvailable)
+            return;
+
         _client.StopPedalEffect(new Driving.StopEffect() { 
             Pedal = pedal
         });
@@ -90,6 +106,8 @@ public class DrivingClient : Client
     bool _isReading = false;
     bool _isLogging = false;
 
+    Driving.PeriodicEffectParameters _periodicEffectParams = new();
+
     AsyncServerStreamingCall<Driving.Data>? _dataCall;
     AsyncServerStreamingCall<Driving.Event>? _eventsCall;
 
@@ -104,6 +122,9 @@ public class DrivingClient : Client
             _arePedalsConnected = status.ArePedalsConnected;
             _isActivePedalsHubConnected = status.IsActivePedalsHubConnected;
             _activePedalsConnected = status.ActivePedalsConnected;
+
+            _periodicEffectParams = _client.GetPeriodicEffectParameters(new Empty());
+            PeriodicEffectParametersRetrieved?.Invoke(this, _periodicEffectParams);
 
             _ = ReadData();
             _ = ReadEvents();

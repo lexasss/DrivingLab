@@ -120,7 +120,8 @@
                         Command="{Binding SetKeyCommand}"/>
                 <Separator/>
                 <UniformGrid Columns="5"
-                             HorizontalAlignment="Center">
+                             HorizontalAlignment="Center"
+                             IsEnabled="{Binding IsConnected}">
                     <widgets:Indicator IsOn="{Binding Keys[0].IsPressed, Mode=OneWay}"/>
                     <widgets:Indicator IsOn="{Binding Keys[1].IsPressed, Mode=OneWay}"/>
                     <widgets:Indicator IsOn="{Binding Keys[2].IsPressed, Mode=OneWay}"/>

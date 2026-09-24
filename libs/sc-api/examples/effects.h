@@ -15,16 +15,24 @@ enum EffectType {
 };
 
 enum OffsetType {
-	torque_Nm = 0,
-	torque_relative,
-	force_N,
-	force_relative,
-	position_mm
+	TorqueNm = 0,
+	TorqueRelative = 1,
+	ForceN = 2,
+	ForceRelative = 3,
+	PositionMm = 4
+};
+
+enum PeriodicEffectType {
+	Sine = 0,
+	Triangle = 1,
+	Square = 2,
+	SawTooth = 3
 };
 
 extern "C" {
 	__declspec(dllexport) Pedal Init();
 	__declspec(dllexport) void  Configure(Pedal pedal, OffsetType offset_type);
+	__declspec(dllexport) void  ConfigurePeriodic(PeriodicEffectType type, float frequency);
 	__declspec(dllexport) void  Run(Pedal pedal, EffectType effectType, int durationMs, float amplitude);
     __declspec(dllexport) void  Stop(Pedal pedal);
 }

@@ -21,6 +21,12 @@ internal partial class SimucubeApi
 
     [LibraryImport(DllName)]
     [UnmanagedCallConv(CallConvs = [typeof(System.Runtime.CompilerServices.CallConvCdecl)])]
+    public static partial void ConfigurePeriodic(
+        Proto.PeriodicEffectType type,
+        float frequency);
+
+    [LibraryImport(DllName)]
+    [UnmanagedCallConv(CallConvs = [typeof(System.Runtime.CompilerServices.CallConvCdecl)])]
     public static partial void Run(
         Proto.ActivePedal pedal,
         Proto.EffectType effectType,
