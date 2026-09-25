@@ -14,6 +14,7 @@ public enum Ports
     TensionR = 30057,
     StreamDeck = 30058,
     Driving = 30059,
+    Camera = 30060,
 }
 
 public interface ILoggable

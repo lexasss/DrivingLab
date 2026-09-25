@@ -22,7 +22,7 @@ internal class TelemetryService<T, U> : Service<U>
     {
         if (!IsSending)
         {
-            _logger.LogInformation("Data streaming: started");
+            _logger.LogInformation("Data streaming started");
             IsSending = true;
         }
     }
@@ -31,7 +31,7 @@ internal class TelemetryService<T, U> : Service<U>
     {
         if (IsSending)
         {
-            _logger.LogInformation("Data streaming: stopped");
+            _logger.LogInformation("Data streaming stopped");
             IsSending = false;
         }
     }

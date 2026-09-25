@@ -44,6 +44,7 @@ class Program
         serviceCollection.AddTransient<TensionR.TensionRService>();
         serviceCollection.AddTransient<StreamDeck.StreamDeckService>();
         serviceCollection.AddTransient<Driving.DrivingService>();
+        serviceCollection.AddTransient<Camera.CameraService>();
 
         var serviceProvider = serviceCollection.BuildServiceProvider();
 
@@ -140,6 +141,15 @@ class Program
                 global::Driving.Dispatcher.Descriptor,
                 service => global::Driving.Dispatcher.BindService(
                     (global::Driving.Dispatcher.DispatcherBase)service
+                )
+            ),
+            Create<Camera.CameraService>(
+                serviceProvider,
+                "Camera",
+                (int)Common.Ports.Camera,
+                global::Camera.Dispatcher.Descriptor,
+                service => global::Camera.Dispatcher.BindService(
+                    (global::Camera.Dispatcher.DispatcherBase)service
                 )
             ),
         };

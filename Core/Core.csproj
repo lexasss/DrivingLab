@@ -22,6 +22,7 @@
     <Protobuf Include="protos\tensionr.proto" Link="protos\tensionr.proto" />
     <Protobuf Include="protos\streamdeck.proto" Link="protos\streamdeck.proto" />
     <Protobuf Include="protos\driving.proto" Link="protos\driving.proto" />
+    <Protobuf Include="protos\camera.proto" Link="protos\camera.proto" />
   </ItemGroup>
 	
 </Project>

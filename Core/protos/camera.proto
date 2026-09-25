@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+package Camera;
+
+import "protos/common.proto";
+import "google/protobuf/empty.proto";
+
+service Dispatcher {
+	rpc IsAvailable (google.protobuf.Empty) returns (Common.Bool) {}
+	rpc IsReadyToRecord (google.protobuf.Empty) returns (Common.Bool) {}  // set camera and stream to make it ready to record
+	rpc IsRecording (google.protobuf.Empty) returns (Common.Bool) {}
+
+	rpc SetLogFileName (Common.String) returns (Common.Bool) {}
+
+	rpc GetCameras (google.protobuf.Empty) returns (Cameras) {}
+	rpc SetCamera (Camera) returns (Common.Bool) {}
+	rpc GetStreams (google.protobuf.Empty) returns (Streams) {}
+	rpc SetStream (Stream) returns (Common.Bool) {}
+
+	// Initializes data reading stream, but the data is not polling to clients
+	// until Start is called
+	rpc ReadEvents (google.protobuf.Empty) returns (stream Event) {}
+
+	// Enable of disable video recording
+	// (has no effect if camera and stream are not set yet)
+	rpc Start (google.protobuf.Empty) returns (Common.Bool) {}
+	rpc Stop (google.protobuf.Empty) returns (google.protobuf.Empty) {}
+}
+
+message Camera {
+	string name = 1;
+}
+
+message Cameras {
+	repeated Camera items = 1;
+}
+
+message Stream {
+	int32 index = 1;
+	int32 width = 2;
+	int32 height = 3;
+	double fps = 4;
+}
+
+message Streams {
+	repeated Stream items = 1;
+}
+
+message Event {
+	oneof value {
+		bool isRecording = 1;
+	}
+}

@@ -21,19 +21,27 @@ internal sealed class FileLogger : IDisposable
                 return false;
 
             var filePath = filename;
-            if (!Path.IsPathRooted(filePath))
-            {
-                filePath = Path.Combine(
-                    AppContext.BaseDirectory,
-                    DATA_FOLDER,
-                    filename
-                );
-            }
 
-            var folder = Path.GetDirectoryName(filePath);
-            if (!Directory.Exists(folder))
+            try
             {
-                Directory.CreateDirectory(folder!);
+                if (!Path.IsPathRooted(filePath))
+                {
+                    filePath = Path.Combine(
+                        AppContext.BaseDirectory,
+                        DATA_FOLDER,
+                        filename
+                    );
+                }
+
+                var folder = Path.GetDirectoryName(filePath);
+                if (!Directory.Exists(folder))
+                {
+                    Directory.CreateDirectory(folder!);
+                }
+            }
+            catch
+            {
+                return false;
             }
 
             try
