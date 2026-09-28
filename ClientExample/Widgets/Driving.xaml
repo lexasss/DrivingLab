@@ -189,13 +189,13 @@
                     <widgets:Indicator IsOn="{Binding Buttons[2].IsPressed, Mode=OneWay}"
                                        Canvas.Left="48"
                                        Canvas.Top="16"/>
-                    <widgets:Indicator IsOn="{Binding Buttons[3].IsPressed, Mode=OneWay}"
+                    <widgets:Indicator IsOn="{Binding Buttons[5].IsPressed, Mode=OneWay}"
                                        Canvas.Right="48"
                                        Canvas.Top="16"/>
                     <widgets:Indicator IsOn="{Binding Buttons[4].IsPressed, Mode=OneWay}"
                                        Canvas.Right="32"
                                        Canvas.Top="0"/>
-                    <widgets:Indicator IsOn="{Binding Buttons[5].IsPressed, Mode=OneWay}"
+                    <widgets:Indicator IsOn="{Binding Buttons[3].IsPressed, Mode=OneWay}"
                                        Canvas.Right="16"
                                        Canvas.Top="16"/>
                     <widgets:Indicator IsOn="{Binding Buttons[6].IsPressed, Mode=OneWay}"
@@ -208,10 +208,10 @@
                                        Canvas.Left="48"
                                        Canvas.Top="112"
                                        StrokeThickness="2"/>
-                    <widgets:Indicator IsOn="{Binding Buttons[9].IsPressed, Mode=OneWay}"
+                    <widgets:Indicator IsOn="{Binding Buttons[10].IsPressed, Mode=OneWay}"
                                        Canvas.Right="32"
                                        Canvas.Top="128"/>
-                    <widgets:Indicator IsOn="{Binding Buttons[10].IsPressed, Mode=OneWay}"
+                    <widgets:Indicator IsOn="{Binding Buttons[9].IsPressed, Mode=OneWay}"
                                        Canvas.Right="16"
                                        Canvas.Top="112"/>
                     <widgets:PointOfView Canvas.Right="39"
@@ -234,11 +234,17 @@
                             Canvas.Top="96"
                             Value="{Binding Sliders[1].Value}"
                             Orientation="Vertical"
+                            Minimum="-1"
+                            Maximum="1"
+                            Ticks="0.001"
                             Height="50"/>
                     <Slider Canvas.Right="74"
                             Canvas.Top="96"
                             Value="{Binding Sliders[2].Value}"
                             Orientation="Vertical"
+                            Minimum="-1"
+                            Maximum="1"
+                            Ticks="0.001"
                             Height="50"/>
                     <StackPanel Canvas.Top="44"
                                 Width="{Binding ActualWidth, ElementName=canvas, Mode=OneWay}">

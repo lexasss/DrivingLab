@@ -10,7 +10,7 @@
         Style="{StaticResource MaterialDesignWindow}"
         Title="Driving Lab Client Example"
         Height="916"
-        Width="1020"
+        Width="1224"
         MinHeight="458"
         MinWidth="204">
 

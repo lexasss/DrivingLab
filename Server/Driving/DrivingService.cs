@@ -230,6 +230,9 @@ internal class DrivingService :
 
     #region Internal
 
+    const double ROTARY_BUTTON_STEP = 1.0 / 18;
+    const double ROTARY_TILT_BUTTON_STEP = 1.0 / 30;
+
     readonly ILogger _logger;
     readonly Tools.TelemetryService<Proto.Data, Proto.Event>? _baseService;
     readonly Proto.Data _data = new()
@@ -300,6 +303,92 @@ internal class DrivingService :
     private void WheelBase_Data(object? sender, global::Pointing.Data data)
     {
         _data.WheelRotation = data.Point.X;
+
+        foreach (var btn in data.Buttons)
+        {
+            // Buttons
+            if (btn.Id == 24)
+                _data.TopLeftButton1.IsPressed = btn.IsPressed;
+            else if (btn.Id == 23)
+                _data.TopLeftButton2.IsPressed = btn.IsPressed;
+            else if (btn.Id == 19)
+                _data.TopLeftButton3.IsPressed = btn.IsPressed;
+            else if (btn.Id == 11)
+                _data.TopRightButton1.IsPressed = btn.IsPressed;
+            else if (btn.Id == 20)
+                _data.TopRightButton2.IsPressed = btn.IsPressed;
+            else if (btn.Id == 10)
+                _data.TopRightButton3.IsPressed = btn.IsPressed;
+            else if (btn.Id == 25)
+                _data.BottomLeftButton1.IsPressed = btn.IsPressed;
+            else if (btn.Id == 35)
+                _data.BottomLeftButton2.IsPressed = btn.IsPressed;
+            else if (btn.Id == 31)
+                _data.RotaryButton.IsPressed = btn.IsPressed;
+            else if (btn.Id == 14)
+                _data.BottomRightButton1.IsPressed = btn.IsPressed;
+            else if (btn.Id == 28)
+                _data.BottomRightButton2.IsPressed = btn.IsPressed;
+            else if (btn.Id == 29)
+                _data.RotaryTiltButton.IsPressed = btn.IsPressed;
+            else if (btn.Id == 8)
+                _data.LeftPaddleShifter.IsPressed = btn.IsPressed;
+            else if (btn.Id == 9)
+                _data.RightPaddleShifter.IsPressed = btn.IsPressed;
+
+            // Rotating Rotation and Rotation-Tilt knobs
+            else if (btn.Id == 16)
+            {
+                _data.RotaryButton.IsRotated = btn.IsPressed;
+                if (btn.IsPressed)
+                    _data.RotaryButton.Rotation -= ROTARY_BUTTON_STEP;
+            }
+            else if (btn.Id == 17)
+            {
+                _data.RotaryButton.IsRotated = btn.IsPressed;
+                if (btn.IsPressed)
+                    _data.RotaryButton.Rotation += ROTARY_BUTTON_STEP;
+            }
+            else if (btn.Id == 12)
+            {
+                _data.RotaryTiltButton.IsRotated = btn.IsPressed;
+                if (btn.IsPressed)
+                    _data.RotaryTiltButton.Rotation -= ROTARY_TILT_BUTTON_STEP;
+            }
+            else if (btn.Id == 13)
+            {
+                _data.RotaryTiltButton.IsRotated = btn.IsPressed;
+                if (btn.IsPressed)
+                    _data.RotaryTiltButton.Rotation += ROTARY_TILT_BUTTON_STEP;
+            }
+
+            // Tilting Rotation-Tilt knob
+            else if (btn.Id == 15)
+            {
+                _data.RotaryTiltButton.IsTilted = btn.IsPressed;
+                if (btn.IsPressed)
+                    _data.RotaryTiltButton.Degrees = 0;
+            }
+            else if (btn.Id == 30)
+            {
+                _data.RotaryTiltButton.IsTilted = btn.IsPressed;
+                if (btn.IsPressed)
+                    _data.RotaryTiltButton.Degrees = 90;
+            }
+            else if (btn.Id == 21)
+            {
+                _data.RotaryTiltButton.IsTilted = btn.IsPressed;
+                if (btn.IsPressed)
+                    _data.RotaryTiltButton.Degrees = 180;
+            }
+            else if (btn.Id == 22)
+            {
+                _data.RotaryTiltButton.IsTilted = btn.IsPressed;
+                if (btn.IsPressed)
+                    _data.RotaryTiltButton.Degrees = 270;
+            }
+        }
+
         _baseService?.Publish(_data);
     }
 
