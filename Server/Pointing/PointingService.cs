@@ -45,7 +45,7 @@ internal class PointingService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
         Empty request,
         ServerCallContext context)
     {
-        return Common.Bool.From(IsAvailable());
+        return Common.Awaitable.From(IsAvailable());
     }
 
     public override Task<Proto.Devices> GetDevices(
@@ -91,7 +91,7 @@ internal class PointingService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
             _controller.Disconnected += Device_Disconnected;
         }
 
-        return Common.Bool.From(result);
+        return Common.Awaitable.From(result);
     }
 
     public override Task<Empty> Start(
@@ -103,7 +103,7 @@ internal class PointingService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
             _controller?.Reset();
             _baseService.Start();
         }
-        return Common.Constants.Empty;
+        return Common.Awaitable.Empty;
     }
 
     public override Task<Empty> Stop(
@@ -111,7 +111,7 @@ internal class PointingService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
         ServerCallContext context)
     {
         _baseService?.Stop();
-        return Common.Constants.Empty;
+        return Common.Awaitable.Empty;
     }
 
     public override Task<Common.Bool> SetLogFileName(
@@ -119,7 +119,7 @@ internal class PointingService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
         ServerCallContext context)
     {
         if (_baseService == null)
-            return Common.Bool.False;
+            return Common.Awaitable.False;
 
         _controller?.Reset();
 

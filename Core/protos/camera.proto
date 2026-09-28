@@ -11,11 +11,13 @@ service Dispatcher {
 	rpc IsRecording (google.protobuf.Empty) returns (Common.Bool) {}
 
 	rpc SetLogFileName (Common.String) returns (Common.Bool) {}
-
+		
 	rpc GetCameras (google.protobuf.Empty) returns (Cameras) {}
 	rpc SetCamera (Camera) returns (Common.Bool) {}
+	rpc GetCurrentCamera (google.protobuf.Empty) returns (Camera) {}
 	rpc GetStreams (google.protobuf.Empty) returns (Streams) {}
 	rpc SetStream (Stream) returns (Common.Bool) {}
+	rpc GetCurrentStream (google.protobuf.Empty) returns (Stream) {}
 
 	// Initializes data reading stream, but the data is not polling to clients
 	// until Start is called

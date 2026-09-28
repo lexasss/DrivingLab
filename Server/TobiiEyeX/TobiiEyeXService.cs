@@ -62,35 +62,35 @@ internal class TobiiEyeXService :
         Empty request,
         ServerCallContext context)
     {
-        return Common.Bool.From(IsAvailable());
+        return Common.Awaitable.From(IsAvailable());
     }
 
     public override Task<Common.Bool> IsConnected(
         Empty request,
         ServerCallContext context)
     {
-        return Common.Bool.From(_isConnected);
+        return Common.Awaitable.From(_isConnected);
     }
 
     public override Task<Common.Bool> IsCalibrating(
         Empty request,
         ServerCallContext context)
     {
-        return Common.Bool.From(_isCalibrating);
+        return Common.Awaitable.From(_isCalibrating);
     }
 
     public override Task<Common.Bool> IsCalibrated(
         Empty request,
         ServerCallContext context)
     {
-        return Common.Bool.From(_isCalibrated);
+        return Common.Awaitable.From(_isCalibrated);
     }
 
     public override Task<Common.Bool> IsTracking(
         Empty request,
         ServerCallContext context)
     {
-        return Common.Bool.From(_isTracking);
+        return Common.Awaitable.From(_isTracking);
     }
 
     public override Task<Empty> Start(
@@ -98,7 +98,7 @@ internal class TobiiEyeXService :
         ServerCallContext context)
     {
         _baseService?.Start();
-        return Common.Constants.Empty;
+        return Common.Awaitable.Empty;
     }
 
     public override Task<Empty> Stop(
@@ -106,7 +106,7 @@ internal class TobiiEyeXService :
         ServerCallContext context)
     {
         _baseService?.Stop();
-        return Common.Constants.Empty;
+        return Common.Awaitable.Empty;
     }
 
     public override Task<Common.Bool> SetLogFileName(
@@ -114,7 +114,7 @@ internal class TobiiEyeXService :
         ServerCallContext context)
     {
         if (_baseService == null)
-            return Common.Bool.False;
+            return Common.Awaitable.False;
 
         return _baseService.SetLogFileName(request.Value);
     }

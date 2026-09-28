@@ -47,14 +47,14 @@ internal class StreamDeckService : Proto.Dispatcher.DispatcherBase, IFileService
         Empty request,
         ServerCallContext context)
     {
-        return Common.Bool.From(IsAvailable());
+        return Common.Awaitable.From(IsAvailable());
     }
 
     public override Task<Common.Bool> IsConnected(
         Empty request,
         ServerCallContext context)
     {
-        return Common.Bool.From(_isConnected);
+        return Common.Awaitable.From(_isConnected);
     }
 
     public override async Task<Common.UploadResult> UploadFile(
@@ -94,7 +94,7 @@ internal class StreamDeckService : Proto.Dispatcher.DispatcherBase, IFileService
             _deck?.SetBrightness(brightness);
             _logger.LogInformation("Brightness set to {brightness}", brightness);
         }
-        return Common.Constants.Empty;
+        return Common.Awaitable.Empty;
     }
 
     public override Task<Common.Bool> SetKey(
@@ -102,7 +102,7 @@ internal class StreamDeckService : Proto.Dispatcher.DispatcherBase, IFileService
         ServerCallContext context)
     {
         if (_deck == null || !_isConnected)
-            return Common.Bool.False;
+            return Common.Awaitable.False;
 
         bool result = false;
 
@@ -174,7 +174,7 @@ internal class StreamDeckService : Proto.Dispatcher.DispatcherBase, IFileService
                 request.FileNameOrColor);
         }
 
-        return Common.Bool.From(result);
+        return Common.Awaitable.From(result);
     }
 
     public override async Task ReadEvents(

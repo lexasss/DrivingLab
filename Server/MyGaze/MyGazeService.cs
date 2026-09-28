@@ -43,7 +43,7 @@ internal class MyGazeService :
         Empty request,
         ServerCallContext context)
     {
-        return Common.Bool.From(IsAvailable());
+        return Common.Awaitable.From(IsAvailable());
     }
 
     public override Task<Empty> Start(
@@ -51,7 +51,7 @@ internal class MyGazeService :
         ServerCallContext context)
     {
         _baseService?.Start();
-        return Common.Constants.Empty;
+        return Common.Awaitable.Empty;
     }
 
     public override Task<Empty> Stop(
@@ -59,7 +59,7 @@ internal class MyGazeService :
         ServerCallContext context)
     {
         _baseService?.Stop();
-        return Common.Constants.Empty;
+        return Common.Awaitable.Empty;
     }
 
     public override Task<Common.Bool> SetLogFileName(
@@ -67,7 +67,7 @@ internal class MyGazeService :
         ServerCallContext context)
     {
         if (_baseService == null)
-            return Common.Bool.False;
+            return Common.Awaitable.False;
 
         return _baseService.SetLogFileName(request.Value);
     }

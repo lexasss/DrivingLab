@@ -70,14 +70,14 @@ internal class LeapMotionService :
         Empty request,
         ServerCallContext context)
     {
-        return Common.Bool.From(IsAvailable());
+        return Common.Awaitable.From(IsAvailable());
     }
 
     public override Task<Common.Bool> IsConnected(
         Empty request,
         ServerCallContext context)
     {
-        return Common.Bool.From(_isConnected);
+        return Common.Awaitable.From(_isConnected);
     }
 
     public override Task<Empty> Configure(Proto.Configuration request, ServerCallContext context)
@@ -105,7 +105,7 @@ internal class LeapMotionService :
 
         _logger.LogInformation("Configured as '{type}'", request.Config);
 
-        return Common.Constants.Empty;
+        return Common.Awaitable.Empty;
     }
 
     public override Task<Empty> Start(
@@ -113,7 +113,7 @@ internal class LeapMotionService :
         ServerCallContext context)
     {
         _baseService?.Start();
-        return Common.Constants.Empty;
+        return Common.Awaitable.Empty;
     }
 
     public override Task<Empty> Stop(
@@ -121,7 +121,7 @@ internal class LeapMotionService :
         ServerCallContext context)
     {
         _baseService?.Stop();
-        return Common.Constants.Empty;
+        return Common.Awaitable.Empty;
     }
 
     public override Task<Common.Bool> SetLogFileName(
@@ -129,7 +129,7 @@ internal class LeapMotionService :
         ServerCallContext context)
     {
         if (_baseService == null)
-            return Common.Bool.False;
+            return Common.Awaitable.False;
 
         return _baseService.SetLogFileName(request.Value);
     }

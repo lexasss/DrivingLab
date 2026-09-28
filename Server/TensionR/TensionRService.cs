@@ -34,28 +34,28 @@ internal class TensionRService :
         Empty request,
         ServerCallContext context)
     {
-        return Common.Bool.From(IsAvailable());
+        return Common.Awaitable.From(IsAvailable());
     }
 
     public override Task<Common.Bool> IsConnected(
         Empty request,
         ServerCallContext context)
     {
-        return Common.Bool.From(_belt?.IsConnected ?? false);
+        return Common.Awaitable.From(_belt?.IsConnected ?? false);
     }
 
     public override Task<Common.Bool> IsEnabled(
         Empty request,
         ServerCallContext context)
     {
-        return Common.Bool.From(_isEnabled);
+        return Common.Awaitable.From(_isEnabled);
     }
 
     public override Task<Common.Bool> IsCalibrated(
         Empty request,
         ServerCallContext context)
     {
-        return Common.Bool.From(_isCalibrated);
+        return Common.Awaitable.From(_isCalibrated);
     }
 
     public override Task<Common.Bool> Connect(
@@ -63,7 +63,7 @@ internal class TensionRService :
         ServerCallContext context)
     {
         if (_belt != null)
-            return Common.Bool.False;
+            return Common.Awaitable.False;
 
         bool isConnected = false;
 
@@ -90,7 +90,7 @@ internal class TensionRService :
             });
         }
 
-        return Common.Bool.From(isConnected);
+        return Common.Awaitable.From(isConnected);
     }
 
     public override Task<Common.Bool> SetLogFileName(
@@ -118,7 +118,7 @@ internal class TensionRService :
                 IsEnabled = _isEnabled
             });
         }
-        return Common.Constants.Empty;
+        return Common.Awaitable.Empty;
     }
 
     public override Task<Empty> Stop(
@@ -136,7 +136,7 @@ internal class TensionRService :
                 IsEnabled = _isEnabled
             });
         }
-        return Common.Constants.Empty;
+        return Common.Awaitable.Empty;
     }
 
     public override Task<Empty> Calibrate(
@@ -152,7 +152,7 @@ internal class TensionRService :
             _logger.LogInformation("Calibrating");
         }
 
-        return Common.Constants.Empty;
+        return Common.Awaitable.Empty;
     }
 
     public override Task<Empty> SetTension(
@@ -174,7 +174,7 @@ internal class TensionRService :
                 request.Side);
         }
 
-        return Common.Constants.Empty;
+        return Common.Awaitable.Empty;
     }
 
     public override async Task ReadEvents(

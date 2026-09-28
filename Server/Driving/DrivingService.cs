@@ -87,7 +87,7 @@ internal class DrivingService :
         Empty request,
         ServerCallContext context)
     {
-        return Common.Bool.From(IsAvailable());
+        return Common.Awaitable.From(IsAvailable());
     }
 
     public override Task<Proto.ConnectionStatus> GetConnectionStatus(
@@ -111,10 +111,10 @@ internal class DrivingService :
         if (!_isPlayingEffect)
         {
             _periodicEffectParams = request;
-            return Common.Bool.True;
+            return Common.Awaitable.True;
         }
 
-        return Common.Bool.False;
+        return Common.Awaitable.False;
     }
 
     public override Task<Common.Bool> PlayPedalEffect(
@@ -122,7 +122,7 @@ internal class DrivingService :
         ServerCallContext context)
     {
         if (_isPlayingEffect)
-            return Common.Bool.False;
+            return Common.Awaitable.False;
 
         if (_connectionStatus.ActivePedalsConnected.HasFlag(request.Pedal))
         {
@@ -159,10 +159,10 @@ internal class DrivingService :
         else
         {
             _logger.LogError("Pedal {pedal} is not active", request.Pedal);
-            return Common.Bool.False;
+            return Common.Awaitable.False;
         }
 
-        return Common.Bool.True;
+        return Common.Awaitable.True;
     }
 
     public override Task<Empty> StopPedalEffect(
@@ -170,7 +170,7 @@ internal class DrivingService :
         ServerCallContext context)
     {
         SimucubeApi.Stop(request.Pedal);
-        return Common.Constants.Empty;
+        return Common.Awaitable.Empty;
     }
 
     public override Task<Empty> Start(Empty request, ServerCallContext context)
@@ -183,13 +183,13 @@ internal class DrivingService :
 
             _baseService.Start();
         }
-        return Common.Constants.Empty;
+        return Common.Awaitable.Empty;
     }
 
     public override Task<Empty> Stop(Empty request, ServerCallContext context)
     {
         _baseService?.Stop();
-        return Common.Constants.Empty;
+        return Common.Awaitable.Empty;
     }
 
     public override Task<Common.Bool> SetLogFileName(
@@ -197,7 +197,7 @@ internal class DrivingService :
         ServerCallContext context)
     {
         if (_baseService == null)
-            return Common.Bool.False;
+            return Common.Awaitable.False;
 
         _wheelBase?.Reset();
         _pedals?.Reset();

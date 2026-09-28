@@ -80,9 +80,9 @@ internal class CameraService :
         }
     }
 
-    public void Dispose()
+    public async void Dispose()
     {
-        CloseCamera(true);
+        await CloseCamera(true);
 
         _baseService?.Dispose();
 
@@ -93,14 +93,14 @@ internal class CameraService :
         Empty request,
         ServerCallContext context)
     {
-        return Common.Bool.From(IsAvailable());
+        return Common.Awaitable.From(IsAvailable());
     }
 
     public override Task<Common.Bool> IsRecording(
         Empty request,
         ServerCallContext context)
     {
-        return Common.Bool.From(_isRecording);
+        return Common.Awaitable.From(_isRecording);
     }
 
     public override Task<Common.Bool> SetLogFileName(
@@ -108,12 +108,12 @@ internal class CameraService :
         ServerCallContext context)
     {
         if (_isRecording)
-            return Common.Bool.False;
+            return Common.Awaitable.False;
 
         var filename = request.Value;
 
         if (string.IsNullOrEmpty(filename))
-            return Common.Bool.False;
+            return Common.Awaitable.False;
 
         _videoFileName = filename;
         if (!_videoFileName.EndsWith(".mp4", StringComparison.OrdinalIgnoreCase))
@@ -142,14 +142,14 @@ internal class CameraService :
         {
             _logger.LogError("Filename '{name}' cannot be set", filename);
             _videoFileName = string.Empty;
-            return Common.Bool.False;
+            return Common.Awaitable.False;
         }
         finally
         {
             _logger.LogError("Filename '{name}' was set", Path.GetFileName(_videoFileName));
         }
 
-        return Common.Bool.True;
+        return Common.Awaitable.True;
     }
 
     public override Task<Proto.Cameras> GetCameras(
@@ -165,14 +165,14 @@ internal class CameraService :
         return Task.FromResult(result);
     }
 
-    public override Task<Common.Bool> SetCamera(
+    public override async Task<Common.Bool> SetCamera(
         Proto.Camera request,
         ServerCallContext context)
     {
         if (_isRecording)
             return Common.Bool.False;
 
-        CloseCamera(false);
+        await CloseCamera(false);
 
         _camera = _cameras.FirstOrDefault(cam => cam.FriendName == request.Name);
         if (_camera == null)
@@ -181,16 +181,15 @@ internal class CameraService :
             return Common.Bool.False;
         }
 
-        var task = _camera.InitCaptureEngine(new WebCam_MF_Setting()
+        var result = await _camera.InitCaptureEngine(new WebCam_MF_Setting()
         {
             IsMirror = true,
             Rotate = CameraRotates.Rotate0,
             Shared = true,
             UseD3D = true,
         });
-        task.Wait();
 
-        if (task.Result != DirectN.HRESULTS.S_OK)
+        if (result != DirectN.HRESULTS.S_OK)
         {
             _logger.LogError("Camera '{name}' cannot be initilized", request.Name);
             return Common.Bool.False;
@@ -206,6 +205,20 @@ internal class CameraService :
         return Common.Bool.True;
     }
 
+    public override Task<Proto.Camera> GetCurrentCamera(
+        Empty request,
+        ServerCallContext context)
+    {
+        if (_camera == null)
+            throw new RpcException(
+                new Status(StatusCode.NotFound, "Camera not yet selected."));
+
+        return Task.FromResult(new Proto.Camera()
+        {
+            Name = _camera.FriendName,
+        });
+    }
+
     public override Task<Proto.Streams> GetStreams(
         Empty request,
         ServerCallContext context) 
@@ -214,14 +227,15 @@ internal class CameraService :
         foreach (var stream in _streams)
             result.Items.Add(new Proto.Stream()
             {
+                Index = (int)stream.StreamIndex,
                 Width = (int)stream.Width,
                 Height = (int)stream.Height,
-                Fps = stream.Fps
+                Fps = stream.Fps,
             });
         return Task.FromResult(result);
     }
 
-    public override Task<Common.Bool> SetStream(
+    public override async Task<Common.Bool> SetStream(
         Proto.Stream request, 
         ServerCallContext context) 
     {
@@ -232,8 +246,7 @@ internal class CameraService :
         if (stream == null)
             return Common.Bool.False;
 
-        var task = _camera.SetMediaStreamPropertiesAsync(stream);
-        task.Wait();
+        await _camera.SetMediaStreamPropertiesAsync(stream);
 
         if (string.IsNullOrEmpty(_videoFileName))
             _logger.LogInformation("Stream set to {w} x {h}, {fps} Hz",
@@ -252,7 +265,29 @@ internal class CameraService :
         return Common.Bool.True;
     }
 
-    public override Task<Common.Bool> Start(
+    public override Task<Proto.Stream> GetCurrentStream(
+        Empty request,
+        ServerCallContext context)
+    {
+        if (_camera == null)
+            throw new RpcException(
+                new Status(StatusCode.NotFound, "Camera or stream not yet selected."));
+
+        var stream = _camera.GetMediaStreamProperties(DirectN.MF_CAPTURE_ENGINE_STREAM_CATEGORY.MF_CAPTURE_ENGINE_STREAM_CATEGORY_VIDEO_CAPTURE, 0);
+        if (stream == null)
+            throw new RpcException(
+                new Status(StatusCode.NotFound, "Camera or stream not yet selected."));
+
+        return Task.FromResult(new Proto.Stream()
+        {
+            Index = (int)stream.StreamIndex,
+            Width = (int)stream.Width,
+            Height = (int)stream.Height,
+            Fps = stream.Fps,
+        });
+    }
+
+    public override async Task<Common.Bool> Start(
         Empty request,
         ServerCallContext context)
     {
@@ -279,8 +314,7 @@ internal class CameraService :
 
         try
         {
-            var task = _camera.StartRecord(_videoFileName);
-            task.Wait();
+            await _camera.StartRecord(_videoFileName);
         }
         catch (Exception ex)
         {
@@ -296,17 +330,16 @@ internal class CameraService :
         return Common.Bool.True;
     }
 
-    public override Task<Empty> Stop(
+    public override async Task<Empty> Stop(
         Empty request,
         ServerCallContext context)
     {
         if (!_isRecording || _camera == null)
-            return Common.Constants.Empty;
+            return new Empty();
 
         try
         {
-            var task = _camera.StopRecord();
-            task.Wait();
+            await _camera.StopRecord();
         }
         finally
         {
@@ -314,7 +347,7 @@ internal class CameraService :
             _logger.LogInformation("Video recording stopped");
         }
 
-        return Common.Constants.Empty;
+        return new Empty();
     }
 
     public override async Task ReadEvents(
@@ -344,7 +377,7 @@ internal class CameraService :
     bool _isRecording = false;
     string _videoFileName = string.Empty;
 
-    private void CloseCamera(bool isDisposing)
+    private async Task CloseCamera(bool isDisposing)
     {
         if (_camera == null)
             return;
@@ -356,8 +389,7 @@ internal class CameraService :
         {
             if (_isRecording)
             {
-                var task = _camera.StopRecord();
-                task.Wait();
+                await _camera.StopRecord();
             }
         }
         catch { }
@@ -368,7 +400,7 @@ internal class CameraService :
         _camera = null;
     }
 
-    private void Camera_MediaCaptureFailedEventHandler(object? sender, MediaCaptureFailedEventArgs e)
+    private async void Camera_MediaCaptureFailedEventHandler(object? sender, MediaCaptureFailedEventArgs e)
     {
         var self = (WebCam_MF?)sender;
         if (self == _camera)
@@ -382,7 +414,7 @@ internal class CameraService :
                 });
             }
 
-            CloseCamera(false);
+            await CloseCamera(false);
         }
     }
 

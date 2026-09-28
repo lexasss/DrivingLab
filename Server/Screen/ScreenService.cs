@@ -50,7 +50,7 @@ public class ScreenService :
         Empty request,
         ServerCallContext context)
     {
-        return Common.Bool.True;
+        return Common.Awaitable.True;
     }
 
     public override async Task<Proto.Screens> GetScreens(
@@ -90,7 +90,7 @@ public class ScreenService :
             _logger);
 
         if (string.IsNullOrEmpty(filePath))
-            return Common.String.Empty;
+            return Common.Awaitable.EmptyString;
 
         string id = string.Empty;
 
@@ -120,7 +120,7 @@ public class ScreenService :
                 request.FileName, ex.Message);
         }
 
-        return Common.String.From(id);
+        return Common.Awaitable.From(id);
     }
 
     public override Task<Empty> Close(Common.String request, ServerCallContext context)
@@ -132,7 +132,7 @@ public class ScreenService :
             _logger.LogInformation("Closing the media {name}", mediaWindow.FileName);
         }
 
-        return Common.Constants.Empty;
+        return Common.Awaitable.Empty;
     }
 
     public override async Task<Common.UploadResult> UploadFile(

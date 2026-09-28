@@ -17,7 +17,7 @@ internal class TelemetryHelper
                 fileLogger.SetFileName(string.Empty);
             }
 
-            return Common.Bool.False;
+            return Common.Awaitable.False;
         }
         else
         {
@@ -28,7 +28,7 @@ internal class TelemetryHelper
             else
                 logger.LogWarning("Cannot log to {filename}", filename);
 
-            return Common.Bool.From(result);
+            return Common.Awaitable.From(result);
         }
     }
 }

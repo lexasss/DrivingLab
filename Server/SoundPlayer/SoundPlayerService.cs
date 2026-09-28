@@ -47,7 +47,7 @@ public class SoundPlayerService :
         Empty request,
         ServerCallContext context)
     {
-        return Common.Bool.True;
+        return Common.Awaitable.True;
     }
 
     public override async Task<Proto.Devices> GetDevices(
@@ -103,7 +103,7 @@ public class SoundPlayerService :
             _logger.LogWarning("Unsupported sound type");
         }
 
-        return Common.Bool.From(result);
+        return Common.Awaitable.From(result);
     }
 
     public override Task<Empty> Stop(
@@ -123,7 +123,7 @@ public class SoundPlayerService :
 
         _logger.LogInformation("Stopping playback");
 
-        return Common.Constants.Empty;
+        return Common.Awaitable.Empty;
     }
 
     public override async Task<Common.UploadResult> UploadFile(
