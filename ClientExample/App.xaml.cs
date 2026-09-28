@@ -49,6 +49,7 @@ public partial class App : Application
         services.AddSingleton<StreamDeckClient>();
         services.AddSingleton<DrivingClient>();
         services.AddSingleton<TobiiEyeXClient>();
+        services.AddSingleton<CameraClient>();
 
         services.AddTransient<LeapMotionViewModel>();
         services.AddTransient<SmartEyeViewModel>();
@@ -59,6 +60,7 @@ public partial class App : Application
         services.AddTransient<StreamDeckViewModel>();
         services.AddTransient<DrivingViewModel>();
         services.AddTransient<TobiiEyeXViewModel>();
+        services.AddTransient<CameraViewModel>();
 
         services.AddTransient<MainViewModel>();
         services.AddTransient<MainWindow>();

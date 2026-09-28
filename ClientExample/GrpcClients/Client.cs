@@ -13,10 +13,11 @@ public abstract class Client : IDisposable
     {
         _channel = new Channel(appSettings.Value.ServerIp, port, ChannelCredentials.Insecure);
 
-        Task.Run(() =>
+        Task.Run(async () =>
         {
             try
             {
+                await Task.Delay(10); // to be started after the instance is created
                 Initialize();
             }
             catch (RpcException ex)

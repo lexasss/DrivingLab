@@ -7,10 +7,10 @@ import "google/protobuf/empty.proto";
 
 service Dispatcher {
 	rpc IsAvailable (google.protobuf.Empty) returns (Common.Bool) {}
-	rpc IsReadyToRecord (google.protobuf.Empty) returns (Common.Bool) {}  // set camera and stream to make it ready to record
+	rpc IsCameraStreamReady (google.protobuf.Empty) returns (Common.Bool) {}
 	rpc IsRecording (google.protobuf.Empty) returns (Common.Bool) {}
 
-	rpc SetLogFileName (Common.String) returns (Common.Bool) {}
+	rpc SetVideoFileName (Common.String) returns (Common.Bool) {}
 		
 	rpc GetCameras (google.protobuf.Empty) returns (Cameras) {}
 	rpc SetCamera (Camera) returns (Common.Bool) {}

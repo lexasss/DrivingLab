@@ -59,8 +59,8 @@
                            Style="{StaticResource OptionName}"
                            Content="Source"/>
                     <ComboBox Grid.Row="1" Grid.Column="1"
-                          ItemsSource="{Binding Source={StaticResource IntersectionSource}}"
-                          SelectedItem="{Binding IntersectionSource, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                              ItemsSource="{Binding Source={StaticResource IntersectionSource}}"
+                              SelectedItem="{Binding IntersectionSource, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                     <Label Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
                            Style="{StaticResource OptionName}"
                            Content="Use filtered data"/>

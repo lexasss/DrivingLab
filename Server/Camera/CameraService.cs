@@ -96,6 +96,13 @@ internal class CameraService :
         return Common.Awaitable.From(IsAvailable());
     }
 
+    public override Task<Common.Bool> IsCameraStreamReady(
+        Empty request,
+        ServerCallContext context)
+    {
+        return Common.Awaitable.From(_isCameraStreamReady);
+    }
+
     public override Task<Common.Bool> IsRecording(
         Empty request,
         ServerCallContext context)
@@ -103,7 +110,7 @@ internal class CameraService :
         return Common.Awaitable.From(_isRecording);
     }
 
-    public override Task<Common.Bool> SetLogFileName(
+    public override Task<Common.Bool> SetVideoFileName(
         Common.String request,
         ServerCallContext context)
     {
@@ -146,7 +153,7 @@ internal class CameraService :
         }
         finally
         {
-            _logger.LogError("Filename '{name}' was set", Path.GetFileName(_videoFileName));
+            _logger.LogInformation("Filename '{name}' was set", Path.GetFileName(_videoFileName));
         }
 
         return Common.Awaitable.True;
@@ -246,6 +253,8 @@ internal class CameraService :
         if (stream == null)
             return Common.Bool.False;
 
+        _streamIndex = stream.StreamIndex;
+
         await _camera.SetMediaStreamPropertiesAsync(stream);
 
         if (string.IsNullOrEmpty(_videoFileName))
@@ -260,7 +269,7 @@ internal class CameraService :
                 request.Fps,
                 Path.GetFileName(_videoFileName));
 
-        _isReady = true;
+        _isCameraStreamReady = true;
 
         return Common.Bool.True;
     }
@@ -269,11 +278,11 @@ internal class CameraService :
         Empty request,
         ServerCallContext context)
     {
-        if (_camera == null)
+        if (_camera == null || _streamIndex == null)
             throw new RpcException(
                 new Status(StatusCode.NotFound, "Camera or stream not yet selected."));
 
-        var stream = _camera.GetMediaStreamProperties(DirectN.MF_CAPTURE_ENGINE_STREAM_CATEGORY.MF_CAPTURE_ENGINE_STREAM_CATEGORY_VIDEO_CAPTURE, 0);
+        var stream = _camera.GetMediaStreamProperties(DirectN.MF_CAPTURE_ENGINE_STREAM_CATEGORY.MF_CAPTURE_ENGINE_STREAM_CATEGORY_VIDEO_CAPTURE, _streamIndex);
         if (stream == null)
             throw new RpcException(
                 new Status(StatusCode.NotFound, "Camera or stream not yet selected."));
@@ -300,7 +309,7 @@ internal class CameraService :
             return Common.Bool.False;
         }
 
-        if (!_isReady)
+        if (!_isCameraStreamReady)
         {
             _logger.LogError("Cannot start video recording as {reason} was not specified yet", "stream");
             return Common.Bool.False;
@@ -369,11 +378,12 @@ internal class CameraService :
     readonly Tools.Service<Proto.Event>? _baseService;
     readonly List<WebCam_MF> _cameras = [];
 
-    WebCam_MF? _camera;
+    WebCam_MF? _camera = null;
     ImageEncodingProperties[] _streams = [];
+    uint? _streamIndex = null;
 
     bool _isAvailable = false;
-    bool _isReady = false;
+    bool _isCameraStreamReady = false;
     bool _isRecording = false;
     string _videoFileName = string.Empty;
 
@@ -395,9 +405,10 @@ internal class CameraService :
         catch { }
 
         _streams = [];
-        _isReady = false;
+        _isCameraStreamReady = false;
         _isRecording = false;
         _camera = null;
+        _streamIndex = null;
     }
 
     private async void Camera_MediaCaptureFailedEventHandler(object? sender, MediaCaptureFailedEventArgs e)

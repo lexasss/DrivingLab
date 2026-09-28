@@ -26,6 +26,7 @@
             <ColumnDefinition />
             <ColumnDefinition />
             <ColumnDefinition />
+            <ColumnDefinition />
         </Grid.ColumnDefinitions>
 
         <widgets:LeapMotion
@@ -43,6 +44,11 @@
             Grid.Column="2"
             DataContext="{Binding SoundPlayer}" />
 
+        <widgets:Camera
+            Grid.Row="0"
+            Grid.Column="3"
+            DataContext="{Binding Camera}" />
+
         <widgets:Screen
             Grid.Row="0"
             Grid.Column="4"
@@ -51,7 +57,7 @@
         <widgets:Driving
             Grid.Row="0"
             Grid.RowSpan="2"
-            Grid.Column="3"
+            Grid.Column="5"
             DataContext="{Binding Driving}" />
 
         <widgets:Pointing
@@ -71,7 +77,7 @@
 
         <widgets:TobiiEyeX
             Grid.Row="1"
-            Grid.Column="4"
+            Grid.Column="3"
             DataContext="{Binding TobiiEyeX}" />
     </Grid>
 
