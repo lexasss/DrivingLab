@@ -41,7 +41,7 @@
   <ItemGroup>
     <Reference Include="LeapCSharp.NET4.5, Version=3.2.1.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\libs\any\LeapCSharp.NET4.5.dll</HintPath>
+      <HintPath>..\libs\managed\LeapCSharp.NET4.5.dll</HintPath>
     </Reference>
   </ItemGroup>
 
@@ -69,6 +69,11 @@
     </Reference>
   </ItemGroup>
 
+  <PropertyGroup>
+    <ScApiEffectsDllCompiled>..\libs\sc-api\out\build\$(PlatformTarget)-Debug\examples\sc-api-effects.dll</ScApiEffectsDllCompiled>
+    <ScApiEffectsDllDistro>..\libs\$(PlatformTarget)\sc-api-effects.dll</ScApiEffectsDllDistro>
+  </PropertyGroup>
+  
   <ItemGroup>
     <None Visible="false" Include="..\libs\$(PlatformTarget)\LeapC.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -88,7 +93,20 @@
     <None Visible="false" Include="..\libs\x64\myGazeAPI64.dll" Condition="'$(PlatformTarget)' == 'x64'">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Visible="false" Include="..\\libs\sc-api\out\build\$(PlatformTarget)-Debug\examples\sc-api-effects.dll">
+    
+    <!-- Prefer the compiled version when it exists -->
+    <None
+      Visible="false"
+      Include="$(ScApiEffectsDllCompiled)"
+      Condition="Exists('$(ScApiEffectsDllCompiled)')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+
+    <!-- Otherwise use the distro version -->
+    <None
+      Visible="false"
+      Include="$(ScApiEffectsDllDistro)"
+      Condition="!Exists('$(ScApiEffectsDllCompiled)') AND Exists('$(ScApiEffectsDllDistro)')">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
