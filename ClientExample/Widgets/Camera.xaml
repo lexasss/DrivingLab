@@ -108,13 +108,12 @@
                                 FontSize="20"
                                 Command="{Binding SetVideoFileNameCommand}"/>
                     </Grid>
-                    <widgets:Indicator Grid.Row="3" Grid.Column="1"
+                    <widgets:Indicator Grid.Row="3" Grid.Column="0"
                                        IsOn="{Binding IsReadyToRecord, Mode=OneWay}"
-                                       HorizontalAlignment="Center"
                                        Text="Ready"/>
                 </Grid>
                 <Separator/>
-                <WrapPanel IsEnabled="{Binding IsAvailable}">
+                <WrapPanel IsEnabled="{Binding IsReadyToRecord}">
                     <ToggleButton Style="{StaticResource Switch}"
                                   IsChecked="{Binding IsRecording}"/>
                     <Label Style="{StaticResource RowHeader}"

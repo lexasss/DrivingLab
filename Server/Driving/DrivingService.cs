@@ -319,9 +319,9 @@ internal class DrivingService :
                 _data.TopRightButton2.IsPressed = btn.IsPressed;
             else if (btn.Id == 10)
                 _data.TopRightButton3.IsPressed = btn.IsPressed;
-            else if (btn.Id == 25)
-                _data.BottomLeftButton1.IsPressed = btn.IsPressed;
             else if (btn.Id == 35)
+                _data.BottomLeftButton1.IsPressed = btn.IsPressed;
+            else if (btn.Id == 25)
                 _data.BottomLeftButton2.IsPressed = btn.IsPressed;
             else if (btn.Id == 31)
                 _data.RotaryButton.IsPressed = btn.IsPressed;

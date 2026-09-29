@@ -110,9 +110,17 @@ public partial class CameraViewModel : ObservableObject
                 Data = "cannot set file name";
                 VideoFileName = string.Empty;
             }
-
-            OnPropertyChanged(nameof(IsReadyToRecord));
+            else
+            {
+                Data = "File name was set";
+            }
         }
+        else
+        {
+            Data = "Invalid file name";
+        }
+
+        OnPropertyChanged(nameof(IsReadyToRecord));
     }
 
     private void UpdateStreamList()
