@@ -30,7 +30,7 @@ enum PeriodicEffectType {
 };
 
 extern "C" {
-	__declspec(dllexport) Pedal Init();
+	__declspec(dllexport) Pedal Init(long timeout_s = 2);
 	__declspec(dllexport) void  Configure(Pedal pedal, OffsetType offset_type);
 	__declspec(dllexport) void  ConfigurePeriodic(PeriodicEffectType type, float frequency);
 	__declspec(dllexport) void  Run(Pedal pedal, EffectType effectType, int durationMs, float amplitude);

@@ -27,4 +27,4 @@ add_library(sc-api-effects SHARED
 target_link_libraries(sc-api-effects PRIVATE sc-api)
 
 add_executable(sc-api-effects-test effects-test.cpp)
-target_link_libraries(sc-api-effects-test PRIVATE "C:/Users/olequ/Documents/Dev/DrivingLab/libs/sc-api/out/build/x64-Debug/examples/sc-api-effects.lib")
+target_link_libraries(sc-api-effects-test PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/sc-api-effects.lib")

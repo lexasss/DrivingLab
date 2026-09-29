@@ -38,7 +38,7 @@ bool                                     is_throttle_playing_effect = false;
 PeriodicEffectType                       periodic_effect_type       = PeriodicEffectType::Sine;
 float                                    periodic_effect_frequency  = 20.0f;
 
-extern "C" _declspec(dllexport) Pedal Init(long timeout_s = 2)
+extern "C" _declspec(dllexport) Pedal Init(long timeout_s)
 {
     event_queue = api_thread.createEventQueue();
 
@@ -50,13 +50,14 @@ extern "C" _declspec(dllexport) Pedal Init(long timeout_s = 2)
     api_user_information.version_string = "";
 
     sc_api::NoAuthControlEnabler control_enabler(
-        &api_thread, sc_api::Session::control_ffb_effects,
+        &api_thread,
+        sc_api::Session::control_ffb_effects,
         "driving-lab",
         api_user_information);
 
     auto timeout = std::chrono::steady_clock::now() + std::chrono::seconds(timeout_s);
 
-    while (auto opt_event = event_queue->tryPopUntil(timeout)) {
+     while (auto opt_event = event_queue->tryPopUntil(timeout)) {
         const sc_api::Event event = *opt_event;
 
         // Wait for session to connect and control to be available
