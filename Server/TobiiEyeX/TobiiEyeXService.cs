@@ -10,7 +10,7 @@ internal class TobiiEyeXService :
     Proto.Dispatcher.DispatcherBase,
     ITelemetryService
 {
-    public bool IsAvailable() => _eyeX != null;
+    public bool IsAvailable() => _isAvailable;
 
     public TobiiEyeXService(ILoggerFactory loggerFactory) : base()
     {
@@ -19,6 +19,7 @@ internal class TobiiEyeXService :
         try
         {
             _eyeX = new EyeX(_logger);
+            _isAvailable = true;
 
             if (_eyeX.IsValid)
             {
@@ -38,8 +39,6 @@ internal class TobiiEyeXService :
             {
                 _eyeX.Dispose();
                 _eyeX = null;
-
-                throw new Exception();
             }
         }
         catch (Exception)
@@ -156,6 +155,7 @@ internal class TobiiEyeXService :
     readonly ILogger _logger;
     readonly Tools.TelemetryService<Proto.Sample, Proto.Event>? _baseService;
     readonly Proto.Sample _sample = new();
+    readonly bool _isAvailable = false;
 
     EyeX? _eyeX;
 

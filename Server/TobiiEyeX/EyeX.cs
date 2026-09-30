@@ -41,7 +41,7 @@ internal class EyeX : IDisposable
         Uri url = etLib.GetConnectedEyeTracker();
         if (url == null)
         {
-            _logger.LogWarning("No devices");
+            _logger.LogWarning("Found no devices");
             return;
         }
 

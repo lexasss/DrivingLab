@@ -12,15 +12,13 @@ internal class StreamDeckService : Proto.Dispatcher.DispatcherBase, IFileService
 {
     public string StorageFolder { get; } = "deck";
 
-    public bool IsAvailable() => StreamDeckSharp.StreamDeck
-        .EnumerateDevices()
-        .Any();
+    public bool IsAvailable() => true;
 
     public StreamDeckService(ILoggerFactory loggerFactory) : base()
     {
         _logger = loggerFactory.CreateLogger("DECK");
 
-        if (IsAvailable())
+        if (StreamDeckSharp.StreamDeck.EnumerateDevices().Any())
         {
             if (Connect())
             {

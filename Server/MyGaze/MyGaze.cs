@@ -15,8 +15,8 @@ internal class MyGaze : IDisposable
 	{
 		_logger = logger;
 
-        Log(MyGazeAPI.SetLicense(LICENSE), nameof(MyGazeAPI.SetLicense));
-        MyGazeAPI.Result result = Log(MyGazeAPI.Connect(), nameof(MyGazeAPI.Connect));
+        MyGazeAPI.SetLicense(LICENSE);
+        var result = (MyGazeAPI.Result)MyGazeAPI.Connect();
 
         if (result == MyGazeAPI.Result.Success)
         {
@@ -25,16 +25,24 @@ internal class MyGaze : IDisposable
 
 			MyGazeAPI.SetEventCallback(GetEventCallbackFunction);
 
-            _logger.LogInformation($"{info.iV_ETDevice} v{info.iV_MajorVersion}.{info.iV_MinorVersion}.{info.iV_Buildnumber} @ {info.samplerate} Hz [API v{info.API_MajorVersion}.{info.API_MinorVersion}.{info.API_Buildnumber}]");
+            _logger.LogInformation($"Connected to {info.iV_ETDevice} v{info.iV_MajorVersion}.{info.iV_MinorVersion}.{info.iV_Buildnumber} @ {info.samplerate} Hz [API v{info.API_MajorVersion}.{info.API_MinorVersion}.{info.API_Buildnumber}]");
         }
+		else
+		{
+			_logger.LogWarning("Found no devices");
+		}
 
 		IsConnected = MyGazeAPI.IsConnected() == MyGazeAPI.RET_SUCCESS;
 
 		if (IsConnected)
 		{
-            Log(MyGazeAPI.Start(), nameof(MyGazeAPI.Start));
-		}
-	}
+            result = (MyGazeAPI.Result)MyGazeAPI.Start();
+			if (result == MyGazeAPI.Result.Success)
+				_logger.LogInformation("Tracking started");
+			else
+                _logger.LogError("Cannot start tracking");
+        }
+    }
 
 	public void Start()
     {
@@ -74,16 +82,6 @@ internal class MyGaze : IDisposable
 	private void GetEventCallbackFunction(MyGazeAPI.EventStruct evt)
 	{
 		Event?.Invoke(this, evt);
-	}
-
-    private MyGazeAPI.Result Log(int result, string fnc)
-    {
-		MyGazeAPI.Result code = (MyGazeAPI.Result)result;
-		if (MyGazeAPI.IsError(code))
-            _logger.LogError("{fnc} => {code}", fnc, code);
-		else
-            _logger.LogInformation("{fnc} => {code}", fnc, code);
-        return code;
 	}
 
     #endregion

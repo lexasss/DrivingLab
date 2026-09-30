@@ -55,7 +55,7 @@ public partial class StreamDeckViewModel : ObservableObject
                 KeyIds = [];
             }
 
-            KeyboardSize = _keyboard != null ? $"{_keyboard.Rows}x{_keyboard.Columns}" : string.Empty;
+            KeyboardSize = _keyboard?.Size > 0 ? $"{_keyboard.Rows}x{_keyboard.Columns}" : string.Empty;
 
             OnPropertyChanged(nameof(IsAvailable));
         };

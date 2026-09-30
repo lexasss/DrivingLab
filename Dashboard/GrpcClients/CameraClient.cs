@@ -10,6 +10,7 @@ public class CameraClient : Client
     public event EventHandler<bool>? RecordingChanged;
 
     public bool IsCameraStreamReady => _isCameraStreamReady;
+    public string VideoFileName => _videoFileName;
     public bool IsRecording => _isRecording;
     public Camera.Camera? Camera => _camera;
     public Camera.Stream? Stream => _stream;
@@ -96,10 +97,16 @@ public class CameraClient : Client
 
         if (string.IsNullOrEmpty(filename))
         {
-            filename = $"{DateTime.Now:u}".ToPath();
+            filename = $"{DateTime.Now:u}.mp4".ToPath();
         }
 
-        return _client.SetVideoFileName(new Common.String() { Value = filename }).Value;
+        var isSuccess = _client.SetVideoFileName(new Common.String() { Value = filename }).Value;
+        if (isSuccess)
+        {
+            _videoFileName = filename;
+        }
+
+        return isSuccess;
     }
 
     #region Internal
@@ -107,6 +114,7 @@ public class CameraClient : Client
     readonly Camera.Dispatcher.DispatcherClient _client;
 
     bool _isCameraStreamReady = false;
+    string _videoFileName = string.Empty;
     bool _isRecording = false;
     Camera.Camera? _camera = null;
     Camera.Stream? _stream = null;
@@ -119,6 +127,7 @@ public class CameraClient : Client
         if (_isAvailable)
         {
             _isCameraStreamReady = _client.IsCameraStreamReady(new Empty()).Value;
+            _videoFileName = _client.GetVideoFileName(new Empty()).Value;
             _isRecording = _client.IsRecording(new Empty()).Value;
 
             try

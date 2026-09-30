@@ -35,44 +35,6 @@ internal class CameraService :
             _baseService = new(_logger);
 
             _logger.LogInformation("Running");
-
-            /*
-            Task.Run(async () =>
-            {
-                await Task.Delay(5000);
-                await SetLogFileName(new Common.String { Value = "recording.mp4" }, null);
-                await Task.Delay(1000);
-                var cams = await GetCameras(new Empty(), null);
-                var cam = cams.Items.FirstOrDefault(c => c.Name.Contains("LifeCam"));
-                if (cam != null)
-                {
-                    await Task.Delay(1000);
-                    if ((await SetCamera(cam, null)).Value == true)
-                    {
-                        await Task.Delay(1000);
-                        var streams = await GetStreams(new Empty(), null);
-                        var stream = streams.Items.FirstOrDefault(s => s.Height == 720);
-                        if (stream != null)
-                        {
-                            await Task.Delay(1000);
-                            if ((await SetStream(stream, null)).Value == true)
-                            {
-                                await Task.Delay(1000);
-                                if ((await Start(new Empty(), null)).Value == true)
-                                {
-                                    await Task.Delay(5000);
-                                    await Stop(new Empty(), null);
-                                }
-                                else System.Diagnostics.Debug.WriteLine("cannot start");
-                            }
-                            else System.Diagnostics.Debug.WriteLine("cannot set stream");
-                        }
-                        else System.Diagnostics.Debug.WriteLine("no stream");
-                    }
-                    else System.Diagnostics.Debug.WriteLine("cannot set camera");
-                }
-                else System.Diagnostics.Debug.WriteLine("no camera");
-            });*/
         }
         catch (Exception)
         {
@@ -109,6 +71,11 @@ internal class CameraService :
     {
         return Common.Awaitable.From(_isRecording);
     }
+
+    public override Task<Common.String> GetVideoFileName(
+        Empty request,
+        ServerCallContext context) => 
+        Common.Awaitable.From(Path.GetFileName(_videoFileName));
 
     public override Task<Common.Bool> SetVideoFileName(
         Common.String request,

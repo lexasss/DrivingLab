@@ -15,7 +15,7 @@ internal static class StringExt
     public static bool IsValidPath(this string s)
     {
         var invalidChars = Path.GetInvalidFileNameChars();
-        return s.Trim().Length > 0 && s.IndexOfAny(invalidChars) < 0;
+        return s.IndexOfAny(invalidChars) < 0;
     }
 }
 

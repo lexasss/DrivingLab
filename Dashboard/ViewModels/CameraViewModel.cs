@@ -9,7 +9,7 @@ public partial class CameraViewModel : ObservableObject
     public record class CameraStream(Camera.Stream Ref, string Description);
 
     public bool IsAvailable => _client.IsAvailable;
-    public bool IsReadyToRecord => _isCameraStreamReady && VideoFileName.IsValidPath();
+    public bool IsReadyToRecord => _isCameraStreamReady && _isVideoFileNameSet;
     [ObservableProperty]
     public partial bool IsRecording { get; set; } = false;
     [ObservableProperty]
@@ -30,7 +30,9 @@ public partial class CameraViewModel : ObservableObject
         _client.AvailabilityChanged += (s, e) =>
         {
             _isCameraStreamReady = _client.IsCameraStreamReady;
+            _isVideoFileNameSet = _client.VideoFileName.Length > 0;
 
+            VideoFileName = _client.VideoFileName;
             IsRecording = _client.IsRecording;
 
             UpdateStreamList();
@@ -56,6 +58,7 @@ public partial class CameraViewModel : ObservableObject
 
     readonly CameraClient _client;
 
+    bool _isVideoFileNameSet = false;
     bool _isCameraStreamReady = false;
     bool _isInitilizing = true;
 
@@ -112,12 +115,15 @@ public partial class CameraViewModel : ObservableObject
             }
             else
             {
-                Data = "File name was set";
+                Data = "file name was set";
+                VideoFileName = _client.VideoFileName;
+                _isVideoFileNameSet = true;
             }
         }
         else
         {
-            Data = "Invalid file name";
+            VideoFileName = string.Empty;
+            Data = "invalid file name";
         }
 
         OnPropertyChanged(nameof(IsReadyToRecord));

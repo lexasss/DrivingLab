@@ -10,6 +10,7 @@ service Dispatcher {
 	rpc IsCameraStreamReady (google.protobuf.Empty) returns (Common.Bool) {}
 	rpc IsRecording (google.protobuf.Empty) returns (Common.Bool) {}
 
+	rpc GetVideoFileName (google.protobuf.Empty) returns (Common.String) {}
 	rpc SetVideoFileName (Common.String) returns (Common.Bool) {}
 		
 	rpc GetCameras (google.protobuf.Empty) returns (Cameras) {}
