@@ -1,0 +1,56 @@
+﻿<UserControl x:Class="Dashboard.Widgets.Indicator"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:Dashboard"
+             xmlns:conv="clr-namespace:MaterialDesignThemes.Wpf.Converters;assembly=MaterialDesignThemes.Wpf"
+             mc:Ignorable="d" 
+             d:DesignHeight="12"
+             d:DesignWidth="28"
+             x:Name="root">
+    <UserControl.Resources>
+        <conv:InvertBooleanConverter x:Key="InvertBoolean"/>
+        <conv:NotZeroToVisibilityConverter x:Key="NotZeroToVisibility"/>
+        <local:BooleansToVisibilityConverter x:Key="BooleansToVisibility"/>
+    </UserControl.Resources>
+    <WrapPanel>
+        <Grid Width="12"
+              Height="12"
+              VerticalAlignment="Center">
+            <Ellipse Fill="#FFC12323"
+                     Stroke="{Binding Stroke, ElementName=root}"
+                     StrokeThickness="{Binding StrokeThickness, ElementName=root}">
+                <Ellipse.Visibility>
+                    <MultiBinding Converter="{StaticResource BooleansToVisibility}" >
+                        <Binding Path="IsOn" ElementName="root" Converter="{StaticResource InvertBoolean}"/>
+                        <Binding Path="IsEnabled" ElementName="root"/>
+                    </MultiBinding>
+                </Ellipse.Visibility>
+            </Ellipse>
+
+            <Ellipse Fill="#FF4FCC2D"
+                     Stroke="{Binding Stroke, ElementName=root}"
+                     StrokeThickness="{Binding StrokeThickness, ElementName=root}">
+                <Ellipse.Visibility>
+                    <MultiBinding Converter="{StaticResource BooleansToVisibility}" >
+                        <Binding Path="IsOn" ElementName="root"/>
+                        <Binding Path="IsEnabled" ElementName="root"/>
+                    </MultiBinding>
+                </Ellipse.Visibility>
+            </Ellipse>
+
+            <Ellipse Fill="#FFA0A0A0"
+                     Stroke="{Binding Stroke, ElementName=root}"
+                     StrokeThickness="{Binding StrokeThickness, ElementName=root}"
+                     Visibility="{Binding IsEnabled, ElementName=root, Converter={x:Static conv:BooleanToVisibilityConverter.NotCollapsedInstance}}"/>
+
+        </Grid>
+        <Label Width="8"
+               Visibility="{Binding Text.Length,
+                                    ElementName=root,
+                                    Converter={StaticResource NotZeroToVisibility}}"/>
+        <Label Content="{Binding Text, ElementName=root}"
+               Padding="0,4"/>
+    </WrapPanel>
+</UserControl>

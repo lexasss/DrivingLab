@@ -8,7 +8,7 @@
     <File Path="Directory.Build.props" />
     <File Path="Directory.Packages.props" />
   </Folder>
-  <Project Path="ClientExample/ClientExample.csproj" Id="42853a70-935e-4f5e-afe6-eda2122467fd">
+  <Project Path="Dashboard/Dashboard.csproj" Id="42853a70-935e-4f5e-afe6-eda2122467fd">
     <Platform Solution="*|x64" Project="x64" />
     <Platform Solution="Debug|x86" Project="x86" />
   </Project>
