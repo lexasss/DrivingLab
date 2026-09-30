@@ -339,27 +339,35 @@ internal class DrivingService :
             // Rotating Rotation and Rotation-Tilt knobs
             else if (btn.Id == 16)
             {
-                _data.RotaryButton.IsRotated = btn.IsPressed;
+                _data.RotaryButton.RotationDirection = btn.IsPressed
+                    ? Proto.RotationDirectin.Left
+                    : Proto.RotationDirectin.Null;
                 if (btn.IsPressed)
-                    _data.RotaryButton.Rotation -= ROTARY_BUTTON_STEP;
+                    _data.RotaryButton.RotationValue -= ROTARY_BUTTON_STEP;
             }
             else if (btn.Id == 17)
             {
-                _data.RotaryButton.IsRotated = btn.IsPressed;
+                _data.RotaryButton.RotationDirection = btn.IsPressed
+                    ? Proto.RotationDirectin.Right
+                    : Proto.RotationDirectin.Null;
                 if (btn.IsPressed)
-                    _data.RotaryButton.Rotation += ROTARY_BUTTON_STEP;
+                    _data.RotaryButton.RotationValue += ROTARY_BUTTON_STEP;
             }
             else if (btn.Id == 12)
             {
-                _data.RotaryTiltButton.IsRotated = btn.IsPressed;
+                _data.RotaryTiltButton.RotationDirection = btn.IsPressed
+                    ? Proto.RotationDirectin.Right
+                    : Proto.RotationDirectin.Null;
                 if (btn.IsPressed)
-                    _data.RotaryTiltButton.Rotation -= ROTARY_TILT_BUTTON_STEP;
+                    _data.RotaryTiltButton.RotationValue -= ROTARY_TILT_BUTTON_STEP;
             }
             else if (btn.Id == 13)
             {
-                _data.RotaryTiltButton.IsRotated = btn.IsPressed;
+                _data.RotaryTiltButton.RotationDirection = btn.IsPressed
+                    ? Proto.RotationDirectin.Right
+                    : Proto.RotationDirectin.Null;
                 if (btn.IsPressed)
-                    _data.RotaryTiltButton.Rotation += ROTARY_TILT_BUTTON_STEP;
+                    _data.RotaryTiltButton.RotationValue += ROTARY_TILT_BUTTON_STEP;
             }
 
             // Tilting Rotation-Tilt knob

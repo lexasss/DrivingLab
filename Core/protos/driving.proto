@@ -54,6 +54,12 @@ enum PeriodicEffectType {
 	SawTooth = 3;
 }
 
+enum RotationDirectin {
+	Null = 0;
+	Left = 1;
+	Right = 2;
+}
+
 message PeriodicEffectParameters {
 	PeriodicEffectType type = 1;
 	float frequency = 2;
@@ -77,14 +83,14 @@ message Button {
 
 message RotaryButton {
 	bool isPressed = 1;
-	bool isRotated = 2;
-	double rotation = 3;
+	RotationDirectin rotationDirection = 2;
+	double rotationValue = 3;
 }
 
 message RotaryTiltButton {
 	bool isPressed = 1;
-	bool isRotated = 2;
-	double rotation = 3;
+	RotationDirectin rotationDirection = 2;
+	double rotationValue = 3;
 	bool isTilted = 4;
 	double degrees = 5;
 }

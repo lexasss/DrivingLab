@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
+using ClientExample.Tools;
 
 namespace ClientExample;
 
@@ -186,8 +187,8 @@ public partial class DrivingViewModel : ObservableObject
         Buttons[13].IsPressed = data.RightPaddleShifter.IsPressed;
 
         Sliders[0].Value = data.WheelRotation;
-        Sliders[1].Value = data.RotaryButton.Rotation;
-        Sliders[2].Value = data.RotaryTiltButton.Rotation;
+        Sliders[1].Value = data.RotaryButton.RotationValue.Wrap(-1, 1);
+        Sliders[2].Value = data.RotaryTiltButton.RotationValue.Wrap(-1, 1);
         Sliders[3].Value = data.BrakePedal;
         Sliders[4].Value = data.ThrottlePedal;
         Sliders[5].Value = data.ActiveBrakePedal;

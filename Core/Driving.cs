@@ -11,11 +11,13 @@ public partial class RotaryButton
 {
     public string[] ToStringArray() => [
         IsPressed ? "1" : "0",
-        Rotation.ToString(),
+        RotationDirection.ToString(),
+        RotationValue.ToString(),
     ];
     public string[] ToStringArray(int decimals) => [
         IsPressed ? "1" : "0",
-        Rotation.ToString($"F{decimals}"),
+        RotationDirection.ToString(),
+        RotationValue.ToString($"F{decimals}"),
     ];
 }
 
@@ -23,14 +25,16 @@ public partial class RotaryTiltButton
 {
     public string[] ToStringArray() => [
         IsPressed ? "1" : "0",
+        RotationDirection.ToString(),
+        RotationValue.ToString(),
         IsTilted ? "1" : "0",
-        Rotation.ToString(),
         Degrees.ToString(),
     ];
     public string[] ToStringArray(int decimals) => [
         IsPressed ? "1" : "0",
+        RotationDirection.ToString(),
+        RotationValue.ToString($"F{decimals}"),
         IsTilted ? "1" : "0",
-        Rotation.ToString($"F{decimals}"),
         Degrees.ToString($"F{decimals}"),
     ];
 }

@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Numerics;
 
 namespace ClientExample.Tools;
 
@@ -15,5 +16,19 @@ internal static class StringExt
     {
         var invalidChars = Path.GetInvalidFileNameChars();
         return s.Trim().Length > 0 && s.IndexOfAny(invalidChars) < 0;
+    }
+}
+
+internal static class NumExt
+{
+    public static T Wrap<T>(this T value, T min, T max)
+        where T :INumber<T>
+    {
+        T range = max - min;
+        while (value > max)
+            value -= range;
+        while (value < min)
+            value += range;
+        return value;
     }
 }
