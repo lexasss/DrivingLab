@@ -27,11 +27,13 @@ service Dispatcher {
 	rpc Stop (google.protobuf.Empty) returns (google.protobuf.Empty) {}
 }
 
-enum ActivePedal {
-    None = 0x0;
-    Brake = 0x1;
-    Throttle = 0x2;
-    Both = 0x3;
+enum SimucubeDevice {
+    None = 0;
+    BrakePedal = 0x01;
+    ThrottlePedal = 0x02;
+    BothPedals = 0x03;
+    WheelBase = 0x11;
+    Wheel = 0x12;
 }
 
 enum EffectType {
@@ -66,7 +68,7 @@ message PeriodicEffectParameters {
 }
 
 message PedalEffect {
-	ActivePedal pedal = 1;
+	SimucubeDevice pedal = 1;
 	EffectType type = 2;
 	EffectVariable variable = 3;
 	float amplitude = 4;
@@ -74,7 +76,7 @@ message PedalEffect {
 }
 
 message StopEffect {
-	ActivePedal pedal = 1;
+	SimucubeDevice pedal = 1;
 }
 
 message Button {
@@ -122,7 +124,8 @@ message ConnectionStatus {
 	bool isWheelConnected = 2;
 	bool arePedalsConnected = 3;
 	bool isActivePedalsHubConnected = 4;
-	ActivePedal activePedalsConnected = 5;
+	bool isActiveBrakePedalConnected = 5;
+	bool isActiveThrottlePedalConnected = 6;
 }
 
 message Event {

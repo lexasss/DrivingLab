@@ -38,7 +38,6 @@ internal class DrivingService :
             _connectionStatus.IsBaseConnected = _wheelBase != null;
             _connectionStatus.ArePedalsConnected = _pedals != null;
             _connectionStatus.IsActivePedalsHubConnected = _activePedals != null;
-            _connectionStatus.ActivePedalsConnected = Proto.ActivePedal.None;
 
             _logger.LogInformation("Running");
 
@@ -48,18 +47,26 @@ internal class DrivingService :
             {
                 await Task.Delay(500);
 
-                _connectionStatus.ActivePedalsConnected = SimucubeApi.Init(2);
+                var devices = SimucubeApi.Init(2);
+                _connectionStatus.IsWheelConnected = devices.HasFlag(Proto.SimucubeDevice.Wheel);
+                _connectionStatus.IsActiveBrakePedalConnected = devices.HasFlag(Proto.SimucubeDevice.BrakePedal);
+                _connectionStatus.IsActiveThrottlePedalConnected = devices.HasFlag(Proto.SimucubeDevice.ThrottlePedal);
+
                 _baseService?.Publish(new Proto.Event()
                 {
                     ConnectionStatus = _connectionStatus
                 });
 
-                if (_connectionStatus.ActivePedalsConnected.HasFlag(Proto.ActivePedal.Brake))
-                    _logger.LogInformation("Found pedal BRAKE");
-                if (_connectionStatus.ActivePedalsConnected.HasFlag(Proto.ActivePedal.Throttle))
-                    _logger.LogInformation("Found pedal THROTTLE");
-                if (_connectionStatus.ActivePedalsConnected == Proto.ActivePedal.None)
-                    _logger.LogWarning("Found no pedals (is Simucube Tuner running and the pedals are activated?)");
+                if (_connectionStatus.IsActiveBrakePedalConnected)
+                    _logger.LogInformation("Found BRAKE pedal");
+                if (_connectionStatus.IsActiveBrakePedalConnected)
+                    _logger.LogInformation("Found THROTTLE pedal");
+                if (_connectionStatus.IsWheelConnected)
+                    _logger.LogInformation("Found WHEEL");
+                if (devices == Proto.SimucubeDevice.None)
+                    _logger.LogWarning("Found no Simucube devices (is Simucube Tuner running?)");
+                else if ((devices & Proto.SimucubeDevice.BothPedals) == 0)
+                    _logger.LogWarning("Found no active pedals (are they activated?)");
             });
         }
         catch (Exception)
@@ -124,7 +131,19 @@ internal class DrivingService :
         if (_isPlayingEffect)
             return Common.Awaitable.False;
 
-        if (_connectionStatus.ActivePedalsConnected.HasFlag(request.Pedal))
+        bool CanPlayEffectOn(
+            Proto.SimucubeDevice pedalToTest,
+            bool isPedalConnected) =>
+            request.Pedal.HasFlag(pedalToTest) && isPedalConnected;
+
+        bool canPlayOnBrake = CanPlayEffectOn(
+            Proto.SimucubeDevice.BrakePedal,
+            _connectionStatus.IsActiveBrakePedalConnected);
+        bool canPlayOnThrottle = CanPlayEffectOn(
+            Proto.SimucubeDevice.ThrottlePedal,
+            _connectionStatus.IsActiveThrottlePedalConnected);
+
+        if (canPlayOnBrake || canPlayOnThrottle)
         {
             _isPlayingEffect = true;
             _logger.LogInformation("Playing {type} {var} = {amplitude} for {duration} ms on {pedal}",
@@ -258,7 +277,8 @@ internal class DrivingService :
         IsWheelConnected = false,
         ArePedalsConnected = false,
         IsActivePedalsHubConnected = false,
-        ActivePedalsConnected = Proto.ActivePedal.None
+        IsActiveBrakePedalConnected = false,
+        IsActiveThrottlePedalConnected = false
     };
 
     Pointing.Controller? _wheelBase;

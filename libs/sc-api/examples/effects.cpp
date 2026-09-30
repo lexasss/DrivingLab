@@ -38,8 +38,10 @@ bool                                     is_throttle_playing_effect = false;
 PeriodicEffectType                       periodic_effect_type       = PeriodicEffectType::Sine;
 float                                    periodic_effect_frequency  = 20.0f;
 
-extern "C" _declspec(dllexport) Pedal Init(long timeout_s)
+extern "C" _declspec(dllexport) Device Init(long timeout_s)
 {
+    Device result = Device::None;
+
     event_queue = api_thread.createEventQueue();
 
     sc_api::ApiUserInformation api_user_information;
@@ -70,24 +72,24 @@ extern "C" _declspec(dllexport) Pedal Init(long timeout_s)
         if (session) {
             auto device_info = session->getDeviceInfo();
             for (const DeviceInfo& device : *device_info) {
-                if (device.hasFeedbackType(FeedbackType::active_pedal)) {
-                    if (device.getRole() == DeviceRole::brake_pedal) {
-                        brake_ap = device.getSessionId();
-                    } else if (device.getRole() == DeviceRole::throttle_pedal) {
-                        throttle_ap = device.getSessionId();
-                    }
+                if (device.getRole() == DeviceRole::brake_pedal) {
+                    brake_ap = device.getSessionId();
+                    result   = (Device)(result | Device::BrakePedal);
+                } else if (device.getRole() == DeviceRole::throttle_pedal) {
+                    throttle_ap = device.getSessionId();
+                    result      = (Device)(result | Device::ThrottlePedal);
+                } else if (device.getRole() == DeviceRole::wheelbase) {
+                    result = (Device)(result | Device::WheelBase);
+                } else if (device.getRole() == DeviceRole::wheel) {
+                    result = (Device)(result | Device::Wheel);
                 }
-            }
-
-            if (brake_ap && throttle_ap) {
-                break;
             }
         }
     }
 
     if (!session) {
         //std::cout << LOG_HEADER << "Could not form SC-API session" << std::endl;
-        return Pedal::None;
+        return result;
     }
 
     /* auto device_info = session->getDeviceInfo();
@@ -98,24 +100,16 @@ extern "C" _declspec(dllexport) Pedal Init(long timeout_s)
                   << std::endl;
     }*/
 
-    if (!brake_ap && !throttle_ap) {
-        //std::cout << LOG_HEADER << "Could not find ActivePedal brake and throttle" << std::endl;
-        return Pedal::None;
-    }
-
     //std::this_thread::sleep_for(std::chrono::seconds(1));
 
-    return (Pedal)(
-        (brake_ap ? Pedal::Brake : Pedal::None) |
-        (throttle_ap ? Pedal::Throttle : Pedal::None)
-    );
+    return result;
 }
 
 extern "C" _declspec(dllexport) void Configure(
-    Pedal pedal,
+    Device pedal,
     sc_api::OffsetType offset_type)
 {
-    if ((pedal & Pedal::Brake) != 0 && brake_ap) {
+    if ((pedal & Device::BrakePedal) != 0 && brake_ap) {
         sc_api::PipelineConfig config_brake;
         config_brake.offset_type = offset_type;
         pipeline_brake           = std::make_unique<sc_api::FfbPipeline>(session, brake_ap);
@@ -123,7 +117,7 @@ extern "C" _declspec(dllexport) void Configure(
         is_brake_configured = true;
     }
 
-    if ((pedal & Pedal::Throttle) != 0 && throttle_ap) {
+    if ((pedal & Device::ThrottlePedal) != 0 && throttle_ap) {
         sc_api::PipelineConfig config_throttle;
         config_throttle.offset_type = offset_type;
         pipeline_throttle           = std::make_unique<sc_api::FfbPipeline>(session, throttle_ap);
@@ -140,7 +134,7 @@ extern "C" _declspec(dllexport) void ConfigurePeriodic(
 }
 
 extern "C" _declspec(dllexport) void Run(
-    Pedal pedal,
+    Device pedal,
     EffectType effect_type,
     int duration_ms,
     float amplitude)
@@ -149,8 +143,8 @@ extern "C" _declspec(dllexport) void Run(
         return;
     }
 
-    is_brake_playing_effect = (pedal & Pedal::Brake) != 0 && pipeline_brake;
-    is_throttle_playing_effect = (pedal & Pedal::Throttle) != 0 && pipeline_throttle;
+    is_brake_playing_effect    = (pedal & Device::BrakePedal) != 0 && pipeline_brake;
+    is_throttle_playing_effect = (pedal & Device::ThrottlePedal) != 0 && pipeline_throttle;
 
     if (!is_brake_playing_effect && !is_throttle_playing_effect) {
         return;
@@ -260,10 +254,9 @@ finished:
     is_throttle_playing_effect = false;
 }
 
-extern "C" _declspec(dllexport) void Stop(Pedal pedal)
-{
-    if ((pedal & Pedal::Brake) != 0)
+extern "C" _declspec(dllexport) void Stop(Device pedal) {
+    if ((pedal & Device::BrakePedal) != 0)
         is_brake_playing_effect = false;
-    if ((pedal & Pedal::Throttle) != 0)
+    if ((pedal & Device::ThrottlePedal) != 0)
         is_throttle_playing_effect = false;
 }

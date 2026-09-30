@@ -11,12 +11,12 @@ internal partial class SimucubeApi
 
     [LibraryImport(DllName)]
     [UnmanagedCallConv(CallConvs = [typeof(System.Runtime.CompilerServices.CallConvCdecl)])]
-    public static partial Proto.ActivePedal Init(long timeoutInSeconds);
+    public static partial Proto.SimucubeDevice Init(long timeoutInSeconds);
 
     [LibraryImport(DllName)]
     [UnmanagedCallConv(CallConvs = [typeof(System.Runtime.CompilerServices.CallConvCdecl)])]
     public static partial void Configure(
-        Proto.ActivePedal pedal,
+        Proto.SimucubeDevice pedal,
         Proto.EffectVariable variable);
 
     [LibraryImport(DllName)]
@@ -28,12 +28,12 @@ internal partial class SimucubeApi
     [LibraryImport(DllName)]
     [UnmanagedCallConv(CallConvs = [typeof(System.Runtime.CompilerServices.CallConvCdecl)])]
     public static partial void Run(
-        Proto.ActivePedal pedal,
+        Proto.SimucubeDevice pedal,
         Proto.EffectType effectType,
         int durationMs,
         float amplitude);
 
     [LibraryImport(DllName)]
     [UnmanagedCallConv(CallConvs = [typeof(System.Runtime.CompilerServices.CallConvCdecl)])]
-    public static partial void Stop(Proto.ActivePedal pedal);
+    public static partial void Stop(Proto.SimucubeDevice pedal);
 }

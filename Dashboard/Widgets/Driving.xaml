@@ -88,165 +88,169 @@
                            Content="Log data"/>
                 </WrapPanel>
                 <Separator/>
-                <Canvas x:Name="canvas"
-                        HorizontalAlignment="Stretch"
-                        IsEnabled="{Binding IsWheelConnected}"
-                        Height="156">
-                    <Canvas.Resources>
-                        <Style TargetType="widgets:Indicator">
-                            <Setter Property="Margin" Value="4,0"/>
-                        </Style>
-                        <Style x:Key="Shape" TargetType="Path">
-                            <Setter Property="Fill" Value="#FFDEDEDE"/>
-                            <Setter Property="Stroke" Value="DarkGray"/>
-                            <Setter Property="StrokeThickness" Value="1"/>
-                            <Setter Property="StrokeLineJoin" Value="Round"/>
-                            <Setter Property="StrokeEndLineCap" Value="Round"/>
-                            <Setter Property="StrokeStartLineCap" Value="Round"/>
-                            <Setter Property="Stretch" Value="Fill"/>
-                        </Style>
-                        <Style x:Key="TriangleTop" TargetType="Path" BasedOn="{StaticResource Shape}">
-                            <Setter Property="Width" Value="80"/>
-                            <Setter Property="Height" Value="38"/>
-                            <Setter Property="Data">
-                                <Setter.Value>
-                                    <PathGeometry>
-                                        <PathFigure StartPoint="0.5,0"
-                                                    IsClosed="True">
-                                            <LineSegment Point="1, 1" />
-                                            <LineSegment Point="0, 1" />
-                                        </PathFigure>
-                                    </PathGeometry>
-                                </Setter.Value>
-                            </Setter>
-                        </Style>
-                        <Style x:Key="TriangleBottom" TargetType="Path" BasedOn="{StaticResource TriangleTop}">
-                            <Setter Property="Data">
-                                <Setter.Value>
-                                    <PathGeometry>
-                                        <PathFigure StartPoint="0.5,1"
-                                                    IsClosed="True">
-                                            <LineSegment Point="1, 0" />
-                                            <LineSegment Point="0, 0" />
-                                        </PathFigure>
-                                    </PathGeometry>
-                                </Setter.Value>
-                            </Setter>
-                        </Style>
-                        <Style x:Key="PaddleLeft" TargetType="Path" BasedOn="{StaticResource Shape}">
-                            <Setter Property="Width" Value="20"/>
-                            <Setter Property="Height" Value="60"/>
-                            <Setter Property="Data">
-                                <Setter.Value>
-                                    <PathGeometry>
-                                        <PathFigure StartPoint="1,1"
-                                                    IsClosed="True">
-                                            <ArcSegment Point="1, 0.5" Size="1,1" SweepDirection="Clockwise" />
-                                        </PathFigure>
-                                    </PathGeometry>
-                                </Setter.Value>
-                            </Setter>
-                        </Style>
-                        <Style x:Key="PaddleRight" TargetType="Path" BasedOn="{StaticResource PaddleLeft}">
-                            <Setter Property="Data">
-                                <Setter.Value>
-                                    <PathGeometry>
-                                        <PathFigure StartPoint="0,0"
-                                                    IsClosed="True">
-                                            <ArcSegment Point="0, 1" Size="1,1" SweepDirection="Clockwise" />
-                                        </PathFigure>
-                                    </PathGeometry>
-                                </Setter.Value>
-                            </Setter>
-                        </Style>
-                    </Canvas.Resources>
+                <Grid>
+                    <Canvas x:Name="canvas"
+                            HorizontalAlignment="Stretch"
+                            IsEnabled="{Binding IsWheelConnected}"
+                            Height="156">
+                        <Canvas.Resources>
+                            <Style TargetType="widgets:Indicator">
+                                <Setter Property="Margin" Value="4,0"/>
+                            </Style>
+                            <Style x:Key="Shape" TargetType="Path">
+                                <Setter Property="Fill" Value="#FFDEDEDE"/>
+                                <Setter Property="Stroke" Value="DarkGray"/>
+                                <Setter Property="StrokeThickness" Value="1"/>
+                                <Setter Property="StrokeLineJoin" Value="Round"/>
+                                <Setter Property="StrokeEndLineCap" Value="Round"/>
+                                <Setter Property="StrokeStartLineCap" Value="Round"/>
+                                <Setter Property="Stretch" Value="Fill"/>
+                            </Style>
+                            <Style x:Key="TriangleTop" TargetType="Path" BasedOn="{StaticResource Shape}">
+                                <Setter Property="Width" Value="80"/>
+                                <Setter Property="Height" Value="38"/>
+                                <Setter Property="Data">
+                                    <Setter.Value>
+                                        <PathGeometry>
+                                            <PathFigure StartPoint="0.5,0"
+                                                        IsClosed="True">
+                                                <LineSegment Point="1, 1" />
+                                                <LineSegment Point="0, 1" />
+                                            </PathFigure>
+                                        </PathGeometry>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                            <Style x:Key="TriangleBottom" TargetType="Path" BasedOn="{StaticResource TriangleTop}">
+                                <Setter Property="Data">
+                                    <Setter.Value>
+                                        <PathGeometry>
+                                            <PathFigure StartPoint="0.5,1"
+                                                        IsClosed="True">
+                                                <LineSegment Point="1, 0" />
+                                                <LineSegment Point="0, 0" />
+                                            </PathFigure>
+                                        </PathGeometry>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                            <Style x:Key="PaddleLeft" TargetType="Path" BasedOn="{StaticResource Shape}">
+                                <Setter Property="Width" Value="20"/>
+                                <Setter Property="Height" Value="60"/>
+                                <Setter Property="Data">
+                                    <Setter.Value>
+                                        <PathGeometry>
+                                            <PathFigure StartPoint="1,1"
+                                                        IsClosed="True">
+                                                <ArcSegment Point="1, 0.5" Size="1,1" SweepDirection="Clockwise" />
+                                            </PathFigure>
+                                        </PathGeometry>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                            <Style x:Key="PaddleRight" TargetType="Path" BasedOn="{StaticResource PaddleLeft}">
+                                <Setter Property="Data">
+                                    <Setter.Value>
+                                        <PathGeometry>
+                                            <PathFigure StartPoint="0,0"
+                                                        IsClosed="True">
+                                                <ArcSegment Point="0, 1" Size="1,1" SweepDirection="Clockwise" />
+                                            </PathFigure>
+                                        </PathGeometry>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </Canvas.Resources>
 
-                    <Path Style="{StaticResource TriangleTop}"
-                          Canvas.Left="2"
-                          Canvas.Top="0"/>
-                    <Path Style="{StaticResource TriangleTop}"
-                          Canvas.Right="2"
-                          Canvas.Top="0"/>
-                    <Path Style="{StaticResource TriangleBottom}"
-                          Canvas.Left="2"
-                          Canvas.Top="114"/>
-                    <Path Style="{StaticResource TriangleBottom}"
-                          Canvas.Right="2"
-                          Canvas.Top="114"/>
-                    <Path Style="{StaticResource PaddleLeft}"
-                          Canvas.Left="2"
-                          Canvas.Top="46"/>
-                    <Path Style="{StaticResource PaddleRight}"
-                          Canvas.Right="2"
-                          Canvas.Top="46"/>
+                        <Path Style="{StaticResource TriangleTop}"
+                              Canvas.Left="2"
+                              Canvas.Top="0"/>
+                        <Path Style="{StaticResource TriangleTop}"
+                              Canvas.Right="2"
+                              Canvas.Top="0"/>
+                        <Path Style="{StaticResource TriangleBottom}"
+                              Canvas.Left="2"
+                              Canvas.Top="114"/>
+                        <Path Style="{StaticResource TriangleBottom}"
+                              Canvas.Right="2"
+                              Canvas.Top="114"/>
+                        <Path Style="{StaticResource PaddleLeft}"
+                              Canvas.Left="2"
+                              Canvas.Top="46"/>
+                        <Path Style="{StaticResource PaddleRight}"
+                              Canvas.Right="2"
+                              Canvas.Top="46"/>
 
-                    <widgets:Indicator IsOn="{Binding Buttons[0].IsPressed, Mode=OneWay}"
-                                       Canvas.Left="16"
-                                       Canvas.Top="16"/>
-                    <widgets:Indicator IsOn="{Binding Buttons[1].IsPressed, Mode=OneWay}"
-                                       Canvas.Left="32"
-                                       Canvas.Top="0"/>
-                    <widgets:Indicator IsOn="{Binding Buttons[2].IsPressed, Mode=OneWay}"
-                                       Canvas.Left="48"
-                                       Canvas.Top="16"/>
-                    <widgets:Indicator IsOn="{Binding Buttons[5].IsPressed, Mode=OneWay}"
-                                       Canvas.Right="48"
-                                       Canvas.Top="16"/>
-                    <widgets:Indicator IsOn="{Binding Buttons[4].IsPressed, Mode=OneWay}"
-                                       Canvas.Right="32"
-                                       Canvas.Top="0"/>
-                    <widgets:Indicator IsOn="{Binding Buttons[3].IsPressed, Mode=OneWay}"
-                                       Canvas.Right="16"
-                                       Canvas.Top="16"/>
-                    <widgets:Indicator IsOn="{Binding Buttons[6].IsPressed, Mode=OneWay}"
-                                       Canvas.Left="16"
-                                       Canvas.Top="112"/>
-                    <widgets:Indicator IsOn="{Binding Buttons[7].IsPressed, Mode=OneWay}"
-                                       Canvas.Left="32"
-                                       Canvas.Top="128"/>
-                    <widgets:Indicator IsOn="{Binding Buttons[8].IsPressed, Mode=OneWay}"
-                                       Canvas.Left="48"
-                                       Canvas.Top="112"
-                                       StrokeThickness="2"/>
-                    <widgets:Indicator IsOn="{Binding Buttons[10].IsPressed, Mode=OneWay}"
-                                       Canvas.Right="32"
-                                       Canvas.Top="128"/>
-                    <widgets:Indicator IsOn="{Binding Buttons[9].IsPressed, Mode=OneWay}"
-                                       Canvas.Right="16"
-                                       Canvas.Top="112"/>
-                    <widgets:PointOfView Canvas.Right="39"
-                                         Canvas.Top="105"
-                                         Value="{Binding PointOfView}"
-                                         Height="30"
-                                         Width="30"
-                                         Margin="4"/>
-                    <widgets:Indicator IsOn="{Binding Buttons[11].IsPressed, Mode=OneWay}"
-                                       Canvas.Right="48"
-                                       Canvas.Top="112"
-                                       StrokeThickness="2"/>
-                    <widgets:Indicator IsOn="{Binding Buttons[12].IsPressed, Mode=OneWay}"
-                                       Canvas.Left="2"
-                                       Canvas.Top="64"/>
-                    <widgets:Indicator IsOn="{Binding Buttons[13].IsPressed, Mode=OneWay}"
-                                       Canvas.Right="2"
-                                       Canvas.Top="64"/>
-                    <Slider Canvas.Left="68"
-                            Canvas.Top="96"
-                            Value="{Binding Sliders[1].Value}"
-                            Orientation="Vertical"
-                            Minimum="-1"
-                            Maximum="1"
-                            Ticks="0.001"
-                            Height="50"/>
-                    <Slider Canvas.Right="74"
-                            Canvas.Top="96"
-                            Value="{Binding Sliders[2].Value}"
-                            Orientation="Vertical"
-                            Minimum="-1"
-                            Maximum="1"
-                            Ticks="0.001"
-                            Height="50"/>
-                    <StackPanel Canvas.Top="44"
+                        <widgets:Indicator IsOn="{Binding Buttons[0].IsPressed, Mode=OneWay}"
+                                           Canvas.Left="16"
+                                           Canvas.Top="16"/>
+                        <widgets:Indicator IsOn="{Binding Buttons[1].IsPressed, Mode=OneWay}"
+                                           Canvas.Left="32"
+                                           Canvas.Top="0"/>
+                        <widgets:Indicator IsOn="{Binding Buttons[2].IsPressed, Mode=OneWay}"
+                                           Canvas.Left="48"
+                                           Canvas.Top="16"/>
+                        <widgets:Indicator IsOn="{Binding Buttons[5].IsPressed, Mode=OneWay}"
+                                           Canvas.Right="48"
+                                           Canvas.Top="16"/>
+                        <widgets:Indicator IsOn="{Binding Buttons[4].IsPressed, Mode=OneWay}"
+                                           Canvas.Right="32"
+                                           Canvas.Top="0"/>
+                        <widgets:Indicator IsOn="{Binding Buttons[3].IsPressed, Mode=OneWay}"
+                                           Canvas.Right="16"
+                                           Canvas.Top="16"/>
+                        <widgets:Indicator IsOn="{Binding Buttons[6].IsPressed, Mode=OneWay}"
+                                           Canvas.Left="16"
+                                           Canvas.Top="112"/>
+                        <widgets:Indicator IsOn="{Binding Buttons[7].IsPressed, Mode=OneWay}"
+                                           Canvas.Left="32"
+                                           Canvas.Top="128"/>
+                        <widgets:Indicator IsOn="{Binding Buttons[8].IsPressed, Mode=OneWay}"
+                                           Canvas.Left="48"
+                                           Canvas.Top="112"
+                                           StrokeThickness="2"/>
+                        <widgets:Indicator IsOn="{Binding Buttons[10].IsPressed, Mode=OneWay}"
+                                           Canvas.Right="32"
+                                           Canvas.Top="128"/>
+                        <widgets:Indicator IsOn="{Binding Buttons[9].IsPressed, Mode=OneWay}"
+                                           Canvas.Right="16"
+                                           Canvas.Top="112"/>
+                        <widgets:PointOfView Canvas.Right="39"
+                                             Canvas.Top="105"
+                                             Value="{Binding PointOfView}"
+                                             Height="30"
+                                             Width="30"
+                                             Margin="4"/>
+                        <widgets:Indicator IsOn="{Binding Buttons[11].IsPressed, Mode=OneWay}"
+                                           Canvas.Right="48"
+                                           Canvas.Top="112"
+                                           StrokeThickness="2"/>
+                        <widgets:Indicator IsOn="{Binding Buttons[12].IsPressed, Mode=OneWay}"
+                                           Canvas.Left="2"
+                                           Canvas.Top="64"/>
+                        <widgets:Indicator IsOn="{Binding Buttons[13].IsPressed, Mode=OneWay}"
+                                           Canvas.Right="2"
+                                           Canvas.Top="64"/>
+                        <Slider Canvas.Left="68"
+                                Canvas.Top="96"
+                                Value="{Binding Sliders[1].Value}"
+                                Orientation="Vertical"
+                                Minimum="-1"
+                                Maximum="1"
+                                Ticks="0.001"
+                                Height="50"/>
+                        <Slider Canvas.Right="74"
+                                Canvas.Top="96"
+                                Value="{Binding Sliders[2].Value}"
+                                Orientation="Vertical"
+                                Minimum="-1"
+                                Maximum="1"
+                                Ticks="0.001"
+                                Height="50"/>
+                    </Canvas>
+                    <StackPanel HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Margin="0,0,0,18"
                                 Width="{Binding ActualWidth, ElementName=canvas, Mode=OneWay}">
                         <Label Content="Wheel"
                                HorizontalAlignment="Center"/>
@@ -254,7 +258,7 @@
                                 IsEnabled="{Binding IsBaseConnected}"
                                 Margin="28,0"/>
                     </StackPanel>
-                </Canvas>
+                </Grid>
                 <Separator/>
                 <StackPanel>
                     <StackPanel.Resources>

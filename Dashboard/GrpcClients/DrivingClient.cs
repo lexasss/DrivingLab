@@ -10,16 +10,18 @@ public class DrivingClient : Client
     public event EventHandler<bool>? WheelConnectionChanged;
     public event EventHandler<bool>? PedalsConnectionChanged;
     public event EventHandler<bool>? ActivePedalsHubConnectionChanged;
-    public event EventHandler<Driving.ActivePedal>? ActivePedalsConnectionChanged;
+    public event EventHandler<bool>? ActiveBrakeConnectionChanged;
+    public event EventHandler<bool>? ActiveThrottleConnectionChanged;
     public event EventHandler? EffectFinished;
     public event EventHandler<Driving.PeriodicEffectParameters>? PeriodicEffectParametersRetrieved;
     public event EventHandler<Driving.Data>? DataUpdated;
 
-    public bool IsBaseConnected => _isBaseConnected;
-    public bool IsWheelConnected => _isWheelConnected;
-    public bool ArePedalsConnected => _arePedalsConnected;
-    public bool IsActivePedalsHubConnected => _isActivePedalsHubConnected;
-    public Driving.ActivePedal ActivePedalsConnected => _activePedalsConnected;
+    public bool IsBaseConnected => _connectionStatus.IsBaseConnected;
+    public bool IsWheelConnected => _connectionStatus.IsWheelConnected;
+    public bool ArePedalsConnected => _connectionStatus.ArePedalsConnected;
+    public bool IsActivePedalsHubConnected => _connectionStatus.IsActivePedalsHubConnected;
+    public bool IsActiveBrakePedalConnected => _connectionStatus.IsActiveBrakePedalConnected;
+    public bool IsActiveThrottlePedalConnected => _connectionStatus.IsActiveThrottlePedalConnected;
     public bool IsReading => _isReading;
     public bool IsLogging => _isLogging;
 
@@ -54,7 +56,7 @@ public class DrivingClient : Client
         return _client.PlayPedalEffect(pedalEffect).Value;
     }
 
-    public void StopPedalEffect(Driving.ActivePedal pedal)
+    public void StopPedalEffect(Driving.SimucubeDevice pedal)
     {
         if (!_isAvailable)
             return;
@@ -97,12 +99,17 @@ public class DrivingClient : Client
     #region Internal
 
     readonly Driving.Dispatcher.DispatcherClient _client;
+    
+    Driving.ConnectionStatus _connectionStatus = new()
+    {
+        IsBaseConnected = false,
+        IsWheelConnected = false,
+        ArePedalsConnected = false,
+        IsActivePedalsHubConnected = false,
+        IsActiveBrakePedalConnected = false,
+        IsActiveThrottlePedalConnected = false
+    };
 
-    bool _isBaseConnected = false;
-    bool _isWheelConnected = false;
-    bool _arePedalsConnected = false;
-    bool _isActivePedalsHubConnected = false;
-    Driving.ActivePedal _activePedalsConnected = Driving.ActivePedal.None;
     bool _isReading = false;
     bool _isLogging = false;
 
@@ -116,12 +123,7 @@ public class DrivingClient : Client
         _isAvailable = _client.IsAvailable(new Empty()).Value;
         if (_isAvailable)
         {
-            var status = _client.GetConnectionStatus(new Empty());
-            _isBaseConnected = status.IsBaseConnected;
-            _isWheelConnected = status.IsWheelConnected;
-            _arePedalsConnected = status.ArePedalsConnected;
-            _isActivePedalsHubConnected = status.IsActivePedalsHubConnected;
-            _activePedalsConnected = status.ActivePedalsConnected;
+            _connectionStatus = _client.GetConnectionStatus(new Empty());
 
             _periodicEffectParams = _client.GetPeriodicEffectParameters(new Empty());
             PeriodicEffectParametersRetrieved?.Invoke(this, _periodicEffectParams);
@@ -171,30 +173,35 @@ public class DrivingClient : Client
                 {
                     case Driving.Event.ValueOneofCase.ConnectionStatus:
                         var status = evt.ConnectionStatus;
-                        if (status.IsBaseConnected != _isBaseConnected)
+                        if (status.IsBaseConnected != _connectionStatus.IsBaseConnected)
                         {
-                            _isBaseConnected = status.IsBaseConnected;
-                            BaseConnectionChanged?.Invoke(this, _isBaseConnected);
+                            _connectionStatus.IsBaseConnected = status.IsBaseConnected;
+                            BaseConnectionChanged?.Invoke(this, _connectionStatus.IsBaseConnected);
                         }
-                        if (status.IsWheelConnected != _isWheelConnected)
+                        if (status.IsWheelConnected != _connectionStatus.IsWheelConnected)
                         {
-                            _isWheelConnected = status.IsWheelConnected;
-                            WheelConnectionChanged?.Invoke(this, _isWheelConnected);
+                            _connectionStatus.IsWheelConnected = status.IsWheelConnected;
+                            WheelConnectionChanged?.Invoke(this, _connectionStatus.IsWheelConnected);
                         }
-                        if (status.ArePedalsConnected != _arePedalsConnected)
+                        if (status.ArePedalsConnected != _connectionStatus.ArePedalsConnected)
                         {
-                            _arePedalsConnected = status.ArePedalsConnected;
-                            PedalsConnectionChanged?.Invoke(this, _arePedalsConnected);
+                            _connectionStatus.ArePedalsConnected = status.ArePedalsConnected;
+                            PedalsConnectionChanged?.Invoke(this, _connectionStatus.ArePedalsConnected);
                         }
-                        if (status.IsActivePedalsHubConnected != _isActivePedalsHubConnected)
+                        if (status.IsActivePedalsHubConnected != _connectionStatus.IsActivePedalsHubConnected)
                         {
-                            _isActivePedalsHubConnected = status.IsActivePedalsHubConnected;
-                            ActivePedalsHubConnectionChanged?.Invoke(this, _isActivePedalsHubConnected);
+                            _connectionStatus.IsActivePedalsHubConnected = status.IsActivePedalsHubConnected;
+                            ActivePedalsHubConnectionChanged?.Invoke(this, _connectionStatus.IsActivePedalsHubConnected);
                         }
-                        if (status.ActivePedalsConnected != _activePedalsConnected)
+                        if (status.IsActiveBrakePedalConnected != _connectionStatus.IsActivePedalsHubConnected)
                         {
-                            _activePedalsConnected = status.ActivePedalsConnected;
-                            ActivePedalsConnectionChanged?.Invoke(this, _activePedalsConnected);
+                            _connectionStatus.IsActivePedalsHubConnected = status.IsActivePedalsHubConnected;
+                            ActiveBrakeConnectionChanged?.Invoke(this, _connectionStatus.IsActivePedalsHubConnected);
+                        }
+                        if (status.IsActiveThrottlePedalConnected != _connectionStatus.IsActiveThrottlePedalConnected)
+                        {
+                            _connectionStatus.IsActiveThrottlePedalConnected = status.IsActiveThrottlePedalConnected;
+                            ActiveThrottleConnectionChanged?.Invoke(this, _connectionStatus.IsActiveThrottlePedalConnected);
                         }
                         break;
                     case Driving.Event.ValueOneofCase.EffectFinished:

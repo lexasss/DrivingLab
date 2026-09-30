@@ -58,8 +58,8 @@ public partial class DrivingViewModel : ObservableObject
             IsWheelConnected = _drivingClient.IsWheelConnected;
             ArePedalsConnected = _drivingClient.ArePedalsConnected;
             IsActivePedalsHubConnected = _drivingClient.IsActivePedalsHubConnected;
-            IsActiveBrakeConnected = _drivingClient.ActivePedalsConnected.HasFlag(Driving.ActivePedal.Brake);
-            IsActiveThrottleConnected = _drivingClient.ActivePedalsConnected.HasFlag(Driving.ActivePedal.Throttle);
+            IsActiveBrakeConnected = _drivingClient.IsActiveBrakePedalConnected;
+            IsActiveThrottleConnected = _drivingClient.IsActiveThrottlePedalConnected;
 
             OnPropertyChanged(nameof(IsAvailable));
         };
@@ -79,10 +79,13 @@ public partial class DrivingViewModel : ObservableObject
         {
             IsActivePedalsHubConnected = e;
         };
-        _drivingClient.ActivePedalsConnectionChanged += (s, e) =>
+        _drivingClient.ActiveBrakeConnectionChanged += (s, e) =>
         {
-            IsActiveBrakeConnected = e.HasFlag(Driving.ActivePedal.Brake);
-            IsActiveThrottleConnected = e.HasFlag(Driving.ActivePedal.Throttle);
+            IsActiveBrakeConnected = e;
+        };
+        _drivingClient.ActiveThrottleConnectionChanged += (s, e) =>
+        {
+            IsActiveThrottleConnected = e;
         };
         _drivingClient.EffectFinished += (s, e) =>
         {
@@ -110,7 +113,7 @@ public partial class DrivingViewModel : ObservableObject
         IsPlayingEffect = true;
         _drivingClient.PlayPedalEffect(new()
         {
-            Pedal = Driving.ActivePedal.Brake,
+            Pedal = Driving.SimucubeDevice.BrakePedal,
             Type = EffectType,
             Variable = EffectVariable,
             Amplitude = EffectAmplitude,
@@ -124,7 +127,7 @@ public partial class DrivingViewModel : ObservableObject
         IsPlayingEffect = true;
         _drivingClient.PlayPedalEffect(new()
         {
-            Pedal = Driving.ActivePedal.Throttle,
+            Pedal = Driving.SimucubeDevice.ThrottlePedal,
             Type = EffectType,
             Variable = EffectVariable,
             Amplitude = EffectAmplitude,
