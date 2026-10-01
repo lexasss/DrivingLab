@@ -8,11 +8,11 @@
     <File Path="Directory.Build.props" />
     <File Path="Directory.Packages.props" />
   </Folder>
-  <Project Path="Dashboard/Dashboard.csproj" Id="42853a70-935e-4f5e-afe6-eda2122467fd">
+  <Project Path="Core/Core.csproj">
     <Platform Solution="*|x64" Project="x64" />
     <Platform Solution="Debug|x86" Project="x86" />
   </Project>
-  <Project Path="Core/Core.csproj">
+  <Project Path="Dashboard/Dashboard.csproj" Id="42853a70-935e-4f5e-afe6-eda2122467fd">
     <Platform Solution="*|x64" Project="x64" />
     <Platform Solution="Debug|x86" Project="x86" />
   </Project>
@@ -20,4 +20,5 @@
     <Platform Solution="*|x64" Project="x64" />
     <Platform Solution="Debug|x86" Project="x86" />
   </Project>
+  <Project Path="Tools/Tools.csproj" Id="6933c35d-f667-4557-95d5-4a0fef31e7c5" />
 </Solution>

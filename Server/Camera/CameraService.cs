@@ -134,7 +134,8 @@ internal class CameraService :
         foreach (var camera in _cameras)
             result.Items.Add(new Proto.Camera()
             {
-                Name = camera.FriendName
+                Name = camera.FriendName,
+                Id = camera.SymbolLinkName
             });
         return Task.FromResult(result);
     }
@@ -190,6 +191,7 @@ internal class CameraService :
         return Task.FromResult(new Proto.Camera()
         {
             Name = _camera.FriendName,
+            Id = _camera.SymbolLinkName,
         });
     }
 
@@ -249,7 +251,9 @@ internal class CameraService :
             throw new RpcException(
                 new Status(StatusCode.NotFound, "Camera or stream not yet selected."));
 
-        var stream = _camera.GetMediaStreamProperties(DirectN.MF_CAPTURE_ENGINE_STREAM_CATEGORY.MF_CAPTURE_ENGINE_STREAM_CATEGORY_VIDEO_CAPTURE, _streamIndex);
+        var stream = _camera.GetMediaStreamProperties(
+            DirectN.MF_CAPTURE_ENGINE_STREAM_CATEGORY.MF_CAPTURE_ENGINE_STREAM_CATEGORY_VIDEO_CAPTURE,
+            _streamIndex);
         if (stream == null)
             throw new RpcException(
                 new Status(StatusCode.NotFound, "Camera or stream not yet selected."));

@@ -32,6 +32,7 @@ service Dispatcher {
 
 message Camera {
 	string name = 1;
+	string id = 2;
 }
 
 message Cameras {

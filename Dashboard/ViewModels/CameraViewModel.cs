@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
-using Dashboard.Tools;
 using CommunityToolkit.Mvvm.Input;
+using Dashboard.Tools;
+using Tools;
 
 namespace Dashboard;
 
@@ -21,6 +22,15 @@ public partial class CameraViewModel : ObservableObject
     [ObservableProperty]
     public partial string Data { get; set; } = string.Empty;
 
+    [ObservableProperty]
+    public partial double Exposure { get; set; } = 0;
+    [ObservableProperty]
+    public partial double ExposureMin { get; set; } = 0;
+    [ObservableProperty]
+    public partial double ExposureMax { get; set; } = 0;
+    [ObservableProperty]
+    public partial double ExposureStep { get; set; } = 0;
+
     public Camera.Camera[] Cameras => _client.GetCameras();
     public CameraStream[] Streams { get; private set; } = [];
 
@@ -38,9 +48,15 @@ public partial class CameraViewModel : ObservableObject
             UpdateStreamList();
 
             Camera = _client.Camera;
-            Stream = _client.Stream == null 
+            Stream = _client.Stream == null
                 ? null
                 : ToCameraStream(_client.Stream);
+
+            if (Camera != null)
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    UpdateCameraControls(Camera.Id);
+                });
 
             OnPropertyChanged(nameof(IsAvailable));
 
@@ -52,6 +68,8 @@ public partial class CameraViewModel : ObservableObject
             IsRecording = e;
             Data = IsRecording ? "recording" : "stopped";
         };
+
+        App.Current.Exit += (s, e) => _cameraProperties?.Dispose();
     }
 
     #region Internal
@@ -61,6 +79,7 @@ public partial class CameraViewModel : ObservableObject
     bool _isVideoFileNameSet = false;
     bool _isCameraStreamReady = false;
     bool _isInitilizing = true;
+    CameraProperties? _cameraProperties;
 
     partial void OnIsRecordingChanged(bool value)
     {
@@ -83,9 +102,14 @@ public partial class CameraViewModel : ObservableObject
         if (value != null && !_isInitilizing)
         {
             if (!_client.SetCamera(value))
+            {
                 Data = "failed to set the camera";
+            }
             else
+            {
                 UpdateStreamList();
+                UpdateCameraControls(value.Id);
+            }
         }
     }
 
@@ -101,6 +125,11 @@ public partial class CameraViewModel : ObservableObject
                 OnPropertyChanged(nameof(IsReadyToRecord)); 
             }
         }
+    }
+
+    partial void OnExposureChanged(double value)
+    {
+        _cameraProperties?.SetControlValue(CameraProperties.CameraControlProperty.Exposure, (int)value);
     }
 
     [RelayCommand]
@@ -138,6 +167,25 @@ public partial class CameraViewModel : ObservableObject
         OnPropertyChanged(nameof(Streams));
     }
 
+    void UpdateCameraControls(string cameraId)
+    {
+        _cameraProperties?.Dispose();
+
+        try
+        {
+            _cameraProperties = new CameraProperties(cameraId);
+            if (_cameraProperties.GetControlRangeExposure(
+                CameraProperties.CameraControlProperty.Exposure,
+                out var range))
+            {
+                ExposureMin = range!.Min;
+                ExposureMax = range.Max;
+                ExposureStep = range.Step;
+                Exposure = range.DefaultValue;
+            }
+        }
+        catch { }
+    }
     private static CameraStream ToCameraStream(Camera.Stream stream) =>
         new(stream, $"{stream.Width} x {stream.Height}, {stream.Fps} Hz");
 

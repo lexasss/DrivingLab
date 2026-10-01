@@ -114,6 +114,23 @@
                                        Text="Ready"/>
                 </Grid>
                 <Separator/>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <Label Grid.Column="0"
+                           Style="{StaticResource OptionName}"
+                           Content="Exposure"/>
+                    <Slider Grid.Column="1"
+                            VerticalAlignment="Center"
+                            IsEnabled="{Binding IsReadyToRecord}"
+                            Value="{Binding Exposure}"
+                            Minimum="{Binding ExposureMin}"
+                            Maximum="{Binding ExposureMax}"
+                            TickFrequency="{Binding ExposureStep}"/>
+                </Grid>
+                <Separator/>
                 <WrapPanel IsEnabled="{Binding IsReadyToRecord}">
                     <ToggleButton Style="{StaticResource Switch}"
                                   IsChecked="{Binding IsRecording}"/>
