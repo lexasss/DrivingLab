@@ -6,7 +6,7 @@
              xmlns:sys="clr-namespace:System;assembly=mscorlib"
              xmlns:local="clr-namespace:Dashboard"
              xmlns:widgets="clr-namespace:Dashboard.Widgets"
-             xmlns:se="clr-namespace:SmartEye;assembly=Core"
+             xmlns:core="clr-namespace:SmartEye;assembly=Core"
              xmlns:md="clr-namespace:MaterialDesignThemes.Wpf.Converters;assembly=MaterialDesignThemes.Wpf"
              mc:Ignorable="d" 
              d:DesignHeight="450"
@@ -19,7 +19,7 @@
                         MethodName="GetValues"
                         ObjectType="{x:Type sys:Enum}">
             <ObjectDataProvider.MethodParameters>
-                <x:Type TypeName="se:IntersectionSource" />
+                <x:Type TypeName="core:IntersectionSource" />
             </ObjectDataProvider.MethodParameters>
         </ObjectDataProvider>
     </UserControl.Resources>

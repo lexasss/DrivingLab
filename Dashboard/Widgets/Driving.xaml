@@ -7,7 +7,7 @@
              xmlns:local="clr-namespace:Dashboard"
              xmlns:widgets="clr-namespace:Dashboard.Widgets"
              xmlns:conv="clr-namespace:MaterialDesignThemes.Wpf.Converters;assembly=MaterialDesignThemes.Wpf"
-             xmlns:driv="clr-namespace:Driving;assembly=Core"
+             xmlns:core="clr-namespace:Driving;assembly=Core"
              mc:Ignorable="d" 
              d:DesignHeight="750"
              d:DesignWidth="200">
@@ -20,7 +20,7 @@
                             MethodName="GetValues"
                             ObjectType="{x:Type sys:Enum}">
             <ObjectDataProvider.MethodParameters>
-                <x:Type TypeName="driv:EffectType"/>
+                <x:Type TypeName="core:EffectType"/>
             </ObjectDataProvider.MethodParameters>
         </ObjectDataProvider>
 
@@ -28,7 +28,7 @@
                             MethodName="GetValues"
                             ObjectType="{x:Type sys:Enum}">
             <ObjectDataProvider.MethodParameters>
-                <x:Type TypeName="driv:EffectVariable"/>
+                <x:Type TypeName="core:EffectVariable"/>
             </ObjectDataProvider.MethodParameters>
         </ObjectDataProvider>
 
@@ -36,7 +36,7 @@
                             MethodName="GetValues"
                             ObjectType="{x:Type sys:Enum}">
             <ObjectDataProvider.MethodParameters>
-                <x:Type TypeName="driv:PeriodicEffectType"/>
+                <x:Type TypeName="core:PeriodicEffectType"/>
             </ObjectDataProvider.MethodParameters>
         </ObjectDataProvider>
     </UserControl.Resources>
@@ -377,14 +377,14 @@
                               SelectedItem="{Binding PeriodicEffectType, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                               IsEnabled="{Binding EffectType,
                                                   Converter={StaticResource EnumToBoolean},
-                                                  ConverterParameter={x:Static driv:EffectType.Periodic}}"/>
+                                                  ConverterParameter={x:Static core:EffectType.Periodic}}"/>
                     <Label Style="{StaticResource OptionName}"
                            Margin="16,0,0,0"
                            Content="frequency"/>
                     <TextBox Text="{Binding PeriodicEffectFrequency, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                              IsEnabled="{Binding EffectType,
                                                  Converter={StaticResource EnumToBoolean},
-                                                 ConverterParameter={x:Static driv:EffectType.Periodic}}"/>
+                                                 ConverterParameter={x:Static core:EffectType.Periodic}}"/>
                     <Label Style="{StaticResource OptionName}"
                            Content="Variable"/>
                     <ComboBox ItemsSource="{Binding Source={StaticResource EffectVariables}}"

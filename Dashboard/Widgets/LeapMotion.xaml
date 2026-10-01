@@ -5,7 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Dashboard"
              xmlns:widgets="clr-namespace:Dashboard.Widgets"
-             xmlns:lm="clr-namespace:LeapMotion;assembly=Core"
+             xmlns:core="clr-namespace:LeapMotion;assembly=Core"
              mc:Ignorable="d" 
              d:DesignHeight="450"
              d:DesignWidth="200">
@@ -40,12 +40,12 @@
                                  GroupName="LeapMotionConfig"
                                  IsChecked="{Binding Config,
                                                      Converter={StaticResource EnumToBoolean},
-                                                     ConverterParameter={x:Static lm:ConfigType.Default}}"/>
+                                                     ConverterParameter={x:Static core:ConfigType.Default}}"/>
                     <RadioButton Content="Ultrahaptics"
                                  GroupName="LeapMotionConfig"
                                  IsChecked="{Binding Config,
                                                      Converter={StaticResource EnumToBoolean},
-                                                     ConverterParameter={x:Static lm:ConfigType.Ultrahaptics}}"/>
+                                                     ConverterParameter={x:Static core:ConfigType.Ultrahaptics}}"/>
                     <!--RadioButton Content="Custom"
                                      GroupName="LeapMotionConfig"
                                      IsChecked="{Binding Config,

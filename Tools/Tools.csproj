@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="DirectN" NoWarn="NU1701"/>
+    <PackageReference Include="DirectN" NoWarn="NU1701" />
   </ItemGroup>
 
 </Project>
