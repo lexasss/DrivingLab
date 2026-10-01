@@ -66,32 +66,31 @@
                 </Grid>
                 <Separator/>
                 <WrapPanel>
-                    <ToggleButton IsChecked="{Binding IsEnabled}">
-                        <ToggleButton.Style>
-                            <Style TargetType="ToggleButton" BasedOn="{StaticResource Switch}">
-                                <Setter Property="IsEnabled" Value="False"/>
-                                <Style.Triggers>
-                                    <MultiDataTrigger>
-                                        <MultiDataTrigger.Conditions>
-                                            <Condition Binding="{Binding IsAvailable}" Value="True"/>
-                                            <Condition Binding="{Binding IsConnecting}" Value="False"/>
-                                            <Condition Binding="{Binding IsConnected}" Value="True"/>
-                                            <Condition Binding="{Binding IsCalibrating}" Value="False"/>
-                                        </MultiDataTrigger.Conditions>
-                                        <Setter Property="IsEnabled" Value="True"/>
-                                    </MultiDataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </ToggleButton.Style>
-                    </ToggleButton>
+                    <WrapPanel.Style>
+                        <Style TargetType="WrapPanel">
+                            <Setter Property="IsEnabled" Value="False"/>
+                            <Style.Triggers>
+                                <MultiDataTrigger>
+                                    <MultiDataTrigger.Conditions>
+                                        <Condition Binding="{Binding IsAvailable}" Value="True"/>
+                                        <Condition Binding="{Binding IsConnecting}" Value="False"/>
+                                        <Condition Binding="{Binding IsConnected}" Value="True"/>
+                                        <Condition Binding="{Binding IsCalibrating}" Value="False"/>
+                                    </MultiDataTrigger.Conditions>
+                                    <Setter Property="IsEnabled" Value="True"/>
+                                </MultiDataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </WrapPanel.Style>
+
+                    <ToggleButton Style="{StaticResource Switch}"
+                                  IsChecked="{Binding IsEnabled}"/>
                     <Label Style="{StaticResource RowHeader}"
                            Content="Enabled"/>
                 </WrapPanel>
-                <WrapPanel>
+                <WrapPanel IsEnabled="{Binding IsConnected}">
                     <ToggleButton Style="{StaticResource Switch}"
-                                  IsEnabled="{Binding IsConnected}"
-                                  IsChecked="{Binding IsLogging}">
-                    </ToggleButton>
+                                  IsChecked="{Binding IsLogging}"/>
                     <Label Style="{StaticResource RowHeader}"
                            Content="Log data"/>
                 </WrapPanel>

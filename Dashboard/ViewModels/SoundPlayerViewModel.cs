@@ -11,7 +11,7 @@ public enum PlaybackType
 
 public partial class SoundPlayerViewModel : ObservableObject
 {
-    public bool IsAvailable => _soundPlayerClient.IsAvailable;
+    public bool IsAvailable => _client.IsAvailable;
     [ObservableProperty]
     public partial SoundPlayer.Device[] Devices { get; set; } = [];
     [ObservableProperty]
@@ -45,41 +45,41 @@ public partial class SoundPlayerViewModel : ObservableObject
 
     public SoundPlayerViewModel(SoundPlayerClient soundPlayerClient)
     {
-        _soundPlayerClient = soundPlayerClient;
-        _soundPlayerClient.AvailabilityChanged += (s, e) =>
+        _client = soundPlayerClient;
+        _client.AvailabilityChanged += (s, e) =>
         {
-            Devices = _soundPlayerClient.GetDevices().Items.ToArray();
+            Devices = _client.GetDevices().Items.ToArray();
             Device = Devices.FirstOrDefault();
             OnPropertyChanged(nameof(IsAvailable));
             OnPropertyChanged(nameof(CanTogglePlayback));
             OnPropertyChanged(nameof(CanUploadFile));
         };
-        _soundPlayerClient.PlaybackFinished += SoundPlayerClient_PlaybackFinished;
+        _client.PlaybackFinished += SoundPlayerClient_PlaybackFinished;
     }
 
     #region Internal
 
-    readonly SoundPlayerClient _soundPlayerClient;
+    readonly SoundPlayerClient _client;
 
     [RelayCommand]
     private async Task Play()
     {
         if (IsPlaying)
         {
-            _soundPlayerClient.Stop();
+            _client.Stop();
         }
         else
         {
-            _soundPlayerClient.DeviceId = Device?.Id ?? string.Empty;
+            _client.DeviceId = Device?.Id ?? string.Empty;
 
             if (PlaybackType == PlaybackType.File)
             {
-                IsPlaying = await _soundPlayerClient.PlayFile(Filename);
+                IsPlaying = await _client.PlayFile(Filename);
             }
             else
             {
                 IsPlaying = true;
-                await _soundPlayerClient.PlayTone(new SoundPlayer.ToneDescription {
+                await _client.PlayTone(new SoundPlayer.ToneDescription {
                     ToneType = ToneType,
                     Frequency = ToneFrequency,
                     PulseDuration = 0,
@@ -111,7 +111,7 @@ public partial class SoundPlayerViewModel : ObservableObject
         Data = "Uploading file ...";
         try
         {
-            var result = await _soundPlayerClient.UploadFile(Filename);
+            var result = await _client.UploadFile(Filename);
             if (result.Size > 0)
             {
                 Data = "File uploaded successfully.";

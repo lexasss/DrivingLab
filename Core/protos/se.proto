@@ -7,6 +7,8 @@ import "google/protobuf/empty.proto";
 
 service Dispatcher {
 	rpc IsAvailable (google.protobuf.Empty) returns (Common.Bool) {}
+	rpc IsStreamingData (google.protobuf.Empty) returns (Common.Bool) {}
+	rpc IsLogging (google.protobuf.Empty) returns (Common.Bool) {}
 	rpc IsConnected (google.protobuf.Empty) returns (Common.Bool) {}
 
 	rpc SetLogFileName (Common.String) returns (Common.Bool) {}

@@ -5,7 +5,7 @@ namespace Dashboard;
 
 public partial class ScreenViewModel : ObservableObject
 {
-    public bool IsAvailable => _screenClient.IsAvailable;
+    public bool IsAvailable => _client.IsAvailable;
     [ObservableProperty]
     public partial Screen.Screen[] Screens { get; set; } = [];
     [ObservableProperty]
@@ -33,21 +33,21 @@ public partial class ScreenViewModel : ObservableObject
 
     public ScreenViewModel(ScreenClient screenClient)
     {
-        _screenClient = screenClient;
-        _screenClient.AvailabilityChanged += (s, e) =>
+        _client = screenClient;
+        _client.AvailabilityChanged += (s, e) =>
         {
-            Screens = _screenClient.GetScreens().Items.ToArray();
+            Screens = _client.GetScreens().Items.ToArray();
             Screen = Screens.FirstOrDefault();
             OnPropertyChanged(nameof(IsAvailable));
             OnPropertyChanged(nameof(CanToggleMedia));
             OnPropertyChanged(nameof(CanUploadFile));
         };
-        _screenClient.MediaHidden += ScreenClient_MediaHidden;
+        _client.MediaHidden += ScreenClient_MediaHidden;
     }
 
     #region Internal
 
-    readonly ScreenClient _screenClient;
+    readonly ScreenClient _client;
 
     string? _mediaId = null;
 
@@ -58,12 +58,12 @@ public partial class ScreenViewModel : ObservableObject
 
         if (_mediaId != null)
         {
-            _screenClient.Hide(_mediaId);
+            _client.Hide(_mediaId);
             _mediaId = null;
         }
         else
         {
-            _mediaId = await _screenClient.Show(
+            _mediaId = await _client.Show(
                 Filename,
                 Screen?.Id ?? 0,
                 new Common.Point { X = X, Y = Y },
@@ -88,7 +88,7 @@ public partial class ScreenViewModel : ObservableObject
         Data = "Uploading file ...";
         try
         {
-            var result = await _screenClient.UploadFile(Filename);
+            var result = await _client.UploadFile(Filename);
             if (result.Size > 0)
             {
                 Data = "File uploaded successfully.";

@@ -16,7 +16,7 @@ public class TobiiEyeXClient : Client
     public bool IsCalibrating => _isCalibrating;
     public bool IsCalibrated => _isCalibrated;
     public bool IsTracking => _isTracking;
-    public bool IsReading => _isReading;
+    public bool IsStreamingData => _isStreamingData;
     public bool IsLogging => _isLogging;
 
     public TobiiEyeXClient(IOptions<AppSettings> appSettings)
@@ -38,7 +38,7 @@ public class TobiiEyeXClient : Client
         if (!_isAvailable)
             return;
 
-        _isReading = true;
+        _isStreamingData = true;
         _ = _client.Start(new Empty());
     }
 
@@ -47,7 +47,7 @@ public class TobiiEyeXClient : Client
         if (!_isAvailable)
             return;
 
-        _isReading = false;
+        _isStreamingData = false;
         _ = _client.Stop(new Empty());
     }
 
@@ -71,7 +71,7 @@ public class TobiiEyeXClient : Client
     bool _isCalibrating = false;
     bool _isCalibrated = false;
     bool _isTracking = false;
-    bool _isReading = false;
+    bool _isStreamingData = false;
     bool _isLogging = false;
 
     AsyncServerStreamingCall<Gaze.Sample>? _dataCall;
@@ -86,6 +86,9 @@ public class TobiiEyeXClient : Client
             _isCalibrating = _client.IsCalibrating(new Empty()).Value;
             _isCalibrated = _client.IsCalibrated(new Empty()).Value;
             _isTracking = _client.IsTracking(new Empty()).Value;
+
+            _isStreamingData = _client.IsStreamingData(new Empty()).Value;
+            _isLogging = _client.IsLogging(new Empty()).Value;
 
             _ = ReadData();
             _ = ReadEvents();

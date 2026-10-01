@@ -6,7 +6,7 @@ namespace Dashboard;
 
 public partial class TensionRViewModel : ObservableObject
 {
-    public bool IsAvailable => _tensionRClient.IsAvailable;
+    public bool IsAvailable => _client.IsAvailable;
     [ObservableProperty]
     public partial bool IsConnecting { get; set; } = false;
     [ObservableProperty]
@@ -34,18 +34,18 @@ public partial class TensionRViewModel : ObservableObject
 
     public TensionRViewModel(TensionRClient tensionRClient)
     {
-        _tensionRClient = tensionRClient;
+        _client = tensionRClient;
 
-        IsConnected = _tensionRClient.IsConnected;
-        IsCalibrated = _tensionRClient.IsCalibrated;
-        IsEnabled = _tensionRClient.IsEnabled;
+        IsConnected = _client.IsConnected;
+        IsCalibrated = _client.IsCalibrated;
+        IsEnabled = _client.IsEnabled;
 
-        _tensionRClient.AvailabilityChanged += (s, e) =>
+        _client.AvailabilityChanged += (s, e) =>
         {
             OnPropertyChanged(nameof(IsAvailable));
         };
 
-        _tensionRClient.ConnectionChanged += (s, e) =>
+        _client.ConnectionChanged += (s, e) =>
         {
             IsConnecting = false;
             IsConnected = e;
@@ -55,12 +55,12 @@ public partial class TensionRViewModel : ObservableObject
                 IsEnabled = false;
             }
         };
-        _tensionRClient.CalibrationChanged += (s, e) =>
+        _client.CalibrationChanged += (s, e) =>
         {
             IsCalibrating = false;
             IsCalibrated = e;
         };
-        _tensionRClient.EnabledChanged += (s, e) => IsEnabled = e;
+        _client.EnabledChanged += (s, e) => IsEnabled = e;
 
         _comUtils.Inserted += (s, e) =>
         {
@@ -98,7 +98,7 @@ public partial class TensionRViewModel : ObservableObject
 
     const string TENSIONR_PORT_DESCRIPTION = "Silicon Labs CP210x USB to UART Bridge";
 
-    readonly TensionRClient _tensionRClient;
+    readonly TensionRClient _client;
     readonly COMUtils _comUtils = new();
 
     [RelayCommand]
@@ -107,7 +107,7 @@ public partial class TensionRViewModel : ObservableObject
         if (ComPort != null)
         {
             IsConnecting = true;
-            _tensionRClient.Connect(ComPort.Name);
+            _client.Connect(ComPort.Name);
         }
     }
 
@@ -115,25 +115,25 @@ public partial class TensionRViewModel : ObservableObject
     private void Calibrate()
     {
         IsCalibrating = true;
-        _tensionRClient.Calibrate();
+        _client.Calibrate();
     }
 
     partial void OnIsEnabledChanged(bool value)
     {
         if (value)
-            _tensionRClient.Start();
+            _client.Start();
         else
-            _tensionRClient.Stop();
+            _client.Stop();
     }
 
     partial void OnIsLoggingChanged(bool value)
     {
-        _tensionRClient.SetLoggingEnabled(value);
+        _client.SetLoggingEnabled(value);
     }
 
     partial void OnTensionChanged(int value)
     {
-        _tensionRClient.SetTension(value, Side);
+        _client.SetTension(value, Side);
     }
 
     partial void OnComPortChanged(COMUtils.Port? value)

@@ -10,7 +10,7 @@ public class PointingClient : Client
     public event EventHandler<Pointing.Data>? DataUpdated;
 
     public bool IsConnected => _isConnected;
-    public bool IsReading => _isReading;
+    public bool IsStreamingData => _isStreamingData;
     public bool IsLogging => _isLogging;
 
     public PointingClient(IOptions<AppSettings> appSettings)
@@ -32,7 +32,7 @@ public class PointingClient : Client
         if (!_isAvailable)
             return;
 
-        _isReading = true;
+        _isStreamingData = true;
         _ = _client.Start(new Empty());
     }
 
@@ -41,7 +41,7 @@ public class PointingClient : Client
         if (!_isAvailable)
             return;
 
-        _isReading = false;
+        _isStreamingData = false;
         _ = _client.Stop(new Empty());
     }
 
@@ -63,9 +63,16 @@ public class PointingClient : Client
         if (!_isAvailable)
             return false;
 
-        _isConnected = device != null
-            ? _client.SetPointingDevice(device).Value
-            : false;
+        if (device?.Description != _currentDevice?.Description)
+        {
+            _isConnected = device != null
+                ? _client.SetPointingDevice(device).Value
+                : false;
+        }
+        else
+        {
+            _isConnected = true;
+        }
 
         if (_isConnected && _dataCall == null)
         {
@@ -78,12 +85,25 @@ public class PointingClient : Client
         return _isConnected;
     }
 
+    public Pointing.Device? GetCurrentDevice()
+    {
+        if (!_isAvailable)
+            return null;
+
+        _currentDevice = _client.GetCurrentDevice(new Empty());
+        return _currentDevice;
+    }
+
     public void SetLoggingEnabled(bool enabled)
     {
         if (!_isAvailable)
             return;
 
-        _isLogging = _client.SetLogFileName(new Common.String() { Value = enabled ? "pointing.tsv" : string.Empty }).Value;
+        _isLogging = _client.SetLogFileName(new Common.String() {
+            Value = enabled
+                ? "pointing.tsv" 
+                : string.Empty 
+        }).Value;
     }
 
     #region Internal
@@ -91,8 +111,9 @@ public class PointingClient : Client
     readonly Pointing.Dispatcher.DispatcherClient _client;
 
     bool _isConnected = false;
-    bool _isReading = false;
+    bool _isStreamingData = false;
     bool _isLogging = false;
+    Pointing.Device? _currentDevice = null;
 
     AsyncServerStreamingCall<Pointing.Data>? _dataCall;
     AsyncServerStreamingCall<Pointing.Event>? _eventsCall;
@@ -100,6 +121,11 @@ public class PointingClient : Client
     protected override void Initialize()
     {
         _isAvailable = _client.IsAvailable(new Empty()).Value;
+        if (_isAvailable)
+        {
+            _isStreamingData = _client.IsStreamingData(new Empty()).Value;
+            _isLogging = _client.IsLogging(new Empty()).Value;
+        }
     }
 
     private async Task ReadData()

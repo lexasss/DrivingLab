@@ -6,6 +6,7 @@ namespace Server.Pointing;
 class Mouse : Controller
 {
     public override DeviceType Type => DeviceType.Mouse;
+    public override string Name => string.Empty;
     public override bool IsCreated => true;
 
     public Mouse() : base()

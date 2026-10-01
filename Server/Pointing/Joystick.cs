@@ -1,4 +1,5 @@
 ﻿using SharpDX.DirectInput;
+using System.Xml.Linq;
 using Proto = global::Pointing;
 
 namespace Server.Pointing;
@@ -13,6 +14,7 @@ class Joystick : Controller
     }
 
     public override DeviceType Type { get; }
+    public override string Name => _name;
     public override bool IsCreated => _joystick != null;
 
     public Joystick() : base() { }
@@ -33,6 +35,8 @@ class Joystick : Controller
     #region Internal
 
     protected SharpDX.DirectInput.Joystick? _joystick;
+
+    string _name = string.Empty;
 
     protected override void Step()
     {
@@ -213,6 +217,7 @@ class Joystick : Controller
             joystick.Acquire();
 
             _joystick = joystick;
+            _name = name;
         }
     }
 

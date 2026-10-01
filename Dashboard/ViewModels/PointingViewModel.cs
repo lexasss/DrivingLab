@@ -18,7 +18,7 @@ public partial class SliderState : ObservableObject
 
 public partial class PointingViewModel : ObservableObject
 {
-    public bool IsAvailable => _pointingClient.IsAvailable;
+    public bool IsAvailable => _client.IsAvailable;
     public ObservableCollection<Pointing.Device> Devices { get; } = [];
     
     [ObservableProperty]
@@ -43,17 +43,33 @@ public partial class PointingViewModel : ObservableObject
 
     public PointingViewModel(PointingClient pointingClient)
     {
-        _pointingClient = pointingClient;
-        _pointingClient.AvailabilityChanged += (s, e) =>
+        _client = pointingClient;
+        _client.AvailabilityChanged += (s, e) =>
         {
-            IsConnected = _pointingClient.IsConnected;
-            IsStreaming = _pointingClient.IsReading;
+            IsConnected = _client.IsConnected;
+            IsStreaming = _client.IsStreamingData;
+            IsLogging = _client.IsLogging;
+
             OnPropertyChanged(nameof(IsAvailable));
 
             if (IsAvailable)
+            {
                 UpdateDeviceList();
+
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    var device = _client.GetCurrentDevice();
+                    if (device != null)
+                        for (int i = 0; i < Devices.Count; i++)
+                            if (device.Name == Devices[i].Name && device.Type == Devices[i].Type)
+                            {
+                                Device = Devices[i];
+                                break;
+                            }
+                });
+            }
         };
-        _pointingClient.ConnectionChanged += (s, e) =>
+        _client.ConnectionChanged += (s, e) =>
         {
             IsConnected = e;
             if (!IsConnected)
@@ -67,52 +83,51 @@ public partial class PointingViewModel : ObservableObject
                 });
             }
         };
-        _pointingClient.DataUpdated += (s, e) =>
+        _client.DataUpdated += (s, e) =>
         {
-            if (_pointingClient.IsReading)
+            if (_client.IsStreamingData)
                 SetData(e);
         };
     }
 
     #region Internal
 
-    readonly PointingClient _pointingClient;
+    readonly PointingClient _client;
 
     [RelayCommand]
     private void UpdateDeviceList()
     {
         Devices.Clear();
-        foreach (var device in _pointingClient.GetDevices(Pointing.DeviceType.Mouse))
+        foreach (var device in _client.GetDevices(Pointing.DeviceType.Mouse))
             Devices.Add(device);
-        foreach (var device in _pointingClient.GetDevices(Pointing.DeviceType.Joystick))
+        foreach (var device in _client.GetDevices(Pointing.DeviceType.Joystick))
             Devices.Add(device);
-        foreach (var device in _pointingClient.GetDevices(Pointing.DeviceType.Gamepad))
+        foreach (var device in _client.GetDevices(Pointing.DeviceType.Gamepad))
             Devices.Add(device);
     }
 
     partial void OnDeviceChanged(Pointing.Device? value)
     {
-        _pointingClient.SetPointingDevice(value);
+        _client.SetPointingDevice(value);
     }
 
-    partial void OnIsStreamingChanged(bool value)
+    partial void OnIsStreamingChanging(bool oldValue, bool newValue)
     {
-        if (_pointingClient.IsReading)
+        if (oldValue)
         {
-            _pointingClient.Stop();
+            _client.Stop();
             Data = string.Empty;
         }
         else
         {
-            _pointingClient.Start();
-            IsStreaming = _pointingClient.IsReading;
+            _client.Start();
         }
     }
 
     partial void OnIsLoggingChanged(bool value)
     {
-        _pointingClient.SetLoggingEnabled(value);
-        IsLogging = _pointingClient.IsLogging;
+        _client.SetLoggingEnabled(value);
+        IsLogging = _client.IsLogging;
     }
 
     private void SetData(Pointing.Data data)

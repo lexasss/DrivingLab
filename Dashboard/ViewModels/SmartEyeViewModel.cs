@@ -5,7 +5,7 @@ namespace Dashboard;
 
 public partial class SmartEyeViewModel : ObservableObject
 {
-    public bool IsAvailable => _smartEyeClient.IsAvailable;
+    public bool IsAvailable => _client.IsAvailable;
     [ObservableProperty]
     public partial bool IsConnected { get; set; } = false;
     [ObservableProperty]
@@ -25,22 +25,24 @@ public partial class SmartEyeViewModel : ObservableObject
 
     public SmartEyeViewModel(SmartEyeClient smartEyeClient)
     {
-        _smartEyeClient = smartEyeClient;
-        _smartEyeClient.AvailabilityChanged += (s, e) =>
+        _client = smartEyeClient;
+        _client.AvailabilityChanged += (s, e) =>
         {
-            IsConnected = _smartEyeClient.IsConnected;
+            IsConnected = _client.IsConnected;
+            IsLogging = _client.IsLogging;
+
             OnPropertyChanged(nameof(IsAvailable));
         };
 
-        _smartEyeClient.ConnectionChanged += (s, e) => IsConnected = e;
-        _smartEyeClient.IntersectionChanged += (s, e) => SetIntersection(e);
+        _client.ConnectionChanged += (s, e) => IsConnected = e;
+        _client.IntersectionChanged += (s, e) => SetIntersection(e);
     }
 
     #region Internal
 
     const string NO_INTERSECTION = "-";
 
-    readonly SmartEyeClient _smartEyeClient;
+    readonly SmartEyeClient _client;
 
     [RelayCommand]
     private async Task Configure()
@@ -48,7 +50,7 @@ public partial class SmartEyeViewModel : ObservableObject
         IsConnecting = true;
         ConnectionButtonText = "Wait...";
 
-        var isConnected = await _smartEyeClient.ConfigureAsync(Ip, IntersectionSource, UseFilteredData);
+        var isConnected = await _client.ConfigureAsync(Ip, IntersectionSource, UseFilteredData);
         IsConnecting = false;
 
         ConnectionButtonText = isConnected ? "Connected" : "Connect";
@@ -57,23 +59,23 @@ public partial class SmartEyeViewModel : ObservableObject
     [RelayCommand]
     private void ToggleDataLogging()
     {
-        IsLogging = _smartEyeClient.IsLogging;
+        IsLogging = _client.IsLogging;
 
-        if (_smartEyeClient.IsLogging)
+        if (_client.IsLogging)
         {
-            _smartEyeClient.Stop();
+            _client.Stop();
             Data = string.Empty;
         }
         else
         {
-            _smartEyeClient.Start();
+            _client.Start();
             Data = NO_INTERSECTION;
         }
     }
 
     partial void OnIsLoggingChanged(bool value)
     {
-        _smartEyeClient.SetLoggingEnabled(value);
+        _client.SetLoggingEnabled(value);
     }
 
     private void SetIntersection(SmartEye.Intersection intersection) =>

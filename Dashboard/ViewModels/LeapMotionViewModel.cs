@@ -4,7 +4,7 @@ namespace Dashboard;
 
 public partial class LeapMotionViewModel : ObservableObject
 {
-    public bool IsAvailable => _leapMotionClient.IsAvailable;
+    public bool IsAvailable => _client.IsAvailable;
     [ObservableProperty]
     public partial bool IsConnected { get; set; } = false;
     [ObservableProperty]
@@ -22,57 +22,59 @@ public partial class LeapMotionViewModel : ObservableObject
 
     public LeapMotionViewModel(LeapMotionClient leapMotionClient)
     {
-        _leapMotionClient = leapMotionClient;
-        _leapMotionClient.AvailabilityChanged += (s, e) =>
+        _client = leapMotionClient;
+        _client.AvailabilityChanged += (s, e) =>
         {
-            IsConnected = _leapMotionClient.IsConnected;
-            IsStreaming = _leapMotionClient.IsReading;
+            IsConnected = _client.IsConnected;
+            IsStreaming = _client.IsStreamingData;
+            IsLogging = _client.IsLogging;
+
             OnPropertyChanged(nameof(IsAvailable));
         };
 
-        _leapMotionClient.ConnectionChanged += (s, e) => IsConnected = e;
-        _leapMotionClient.HandLocationChanged += (s, e) =>
+        _client.ConnectionChanged += (s, e) => IsConnected = e;
+        _client.HandLocationChanged += (s, e) =>
         {
-            if (_leapMotionClient.IsReading && IsHandVisible)
+            if (_client.IsStreamingData && IsHandVisible)
                 SetData(e);
         };
-        _leapMotionClient.HandVisibilityChanged += (s, e) =>
+        _client.HandVisibilityChanged += (s, e) =>
         {
             IsHandVisible = e;
-            if (_leapMotionClient.IsReading && !IsHandVisible)
+            if (_client.IsStreamingData && !IsHandVisible)
                 ResetData();
         };
-        _leapMotionClient.HandProximityChanged += (s, e) => IsHandClose = e;
+        _client.HandProximityChanged += (s, e) => IsHandClose = e;
     }
 
     #region Internal
 
     const string WAITING_HAND = "waiting a hand to appear...";
 
-    readonly LeapMotionClient _leapMotionClient;
+    readonly LeapMotionClient _client;
 
-    partial void OnIsStreamingChanged(bool value)
+    partial void OnIsStreamingChanging(bool oldValue, bool newValue)
     {
-        if (_leapMotionClient.IsReading)
+        if (oldValue)
         {
-            _leapMotionClient.Stop();
+            _client.Stop();
             Data = string.Empty;
         }
         else
         {
-            _leapMotionClient.Start();
+            _client.Start();
             Data = WAITING_HAND;
         }
     }
 
     partial void OnIsLoggingChanged(bool value)
     {
-        _leapMotionClient.SetLoggingEnabled(value);
+        _client.SetLoggingEnabled(value);
     }
 
     partial void OnConfigChanged(LeapMotion.ConfigType value)
     {
-        _leapMotionClient.Configure(value);
+        _client.Configure(value);
     }
 
     private void SetData(LeapMotion.Sample pt) =>

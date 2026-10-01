@@ -22,7 +22,7 @@ public class DrivingClient : Client
     public bool IsActivePedalsHubConnected => _connectionStatus.IsActivePedalsHubConnected;
     public bool IsActiveBrakePedalConnected => _connectionStatus.IsActiveBrakePedalConnected;
     public bool IsActiveThrottlePedalConnected => _connectionStatus.IsActiveThrottlePedalConnected;
-    public bool IsReading => _isReading;
+    public bool IsStreamingData => _isStreamingData;
     public bool IsLogging => _isLogging;
 
     public DrivingClient(IOptions<AppSettings> appSettings)
@@ -71,7 +71,7 @@ public class DrivingClient : Client
         if (!_isAvailable)
             return;
 
-        _isReading = true;
+        _isStreamingData = true;
         _ = _client.Start(new Empty());
     }
 
@@ -80,7 +80,7 @@ public class DrivingClient : Client
         if (!_isAvailable)
             return;
 
-        _isReading = false;
+        _isStreamingData = false;
         _ = _client.Stop(new Empty());
     }
 
@@ -110,7 +110,7 @@ public class DrivingClient : Client
         IsActiveThrottlePedalConnected = false
     };
 
-    bool _isReading = false;
+    bool _isStreamingData = false;
     bool _isLogging = false;
 
     Driving.PeriodicEffectParameters _periodicEffectParams = new();
@@ -124,6 +124,8 @@ public class DrivingClient : Client
         if (_isAvailable)
         {
             _connectionStatus = _client.GetConnectionStatus(new Empty());
+            _isStreamingData = _client.IsStreamingData(new Empty()).Value;
+            _isLogging = _client.IsLogging(new Empty()).Value;
 
             _periodicEffectParams = _client.GetPeriodicEffectParameters(new Empty());
             PeriodicEffectParametersRetrieved?.Invoke(this, _periodicEffectParams);

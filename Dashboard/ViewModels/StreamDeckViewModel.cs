@@ -6,7 +6,7 @@ namespace Dashboard;
 
 public partial class StreamDeckViewModel : ObservableObject
 {
-    public bool IsAvailable => _streamDeckClient.IsAvailable;
+    public bool IsAvailable => _client.IsAvailable;
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CanSetKey))]
     public partial bool IsConnected { get; private set; } = false;
@@ -36,13 +36,13 @@ public partial class StreamDeckViewModel : ObservableObject
 
     public StreamDeckViewModel(StreamDeckClient streamDeckClient)
     {
-        _streamDeckClient = streamDeckClient;
+        _client = streamDeckClient;
 
-        _streamDeckClient.AvailabilityChanged += (s, e) =>
+        _client.AvailabilityChanged += (s, e) =>
         {
-            IsConnected = _streamDeckClient.IsConnected;
+            IsConnected = _client.IsConnected;
 
-            _keyboard = _streamDeckClient.GetKeyboard();
+            _keyboard = _client.GetKeyboard();
             if (IsConnected && _keyboard != null)
             {
                 List<string> ids = [ALL_KEYS];
@@ -60,11 +60,11 @@ public partial class StreamDeckViewModel : ObservableObject
             OnPropertyChanged(nameof(IsAvailable));
         };
 
-        _streamDeckClient.ConnectionChanged += (s, e) =>
+        _client.ConnectionChanged += (s, e) =>
         {
             IsConnected = e;
         };
-        _streamDeckClient.KeyStateChanged += (s, e) =>
+        _client.KeyStateChanged += (s, e) =>
         {
             int keyboardCols = _keyboard?.Columns ?? KEYBOARD_UI_COLUMNS;
             int keyboardRows = _keyboard?.Rows ?? KEYBOARD_UI_ROWS;
@@ -89,7 +89,7 @@ public partial class StreamDeckViewModel : ObservableObject
     const int KEYBOARD_UI_ROWS = 2;
     const int KEYBOARD_UI_COLUMNS = 5;
 
-    readonly StreamDeckClient _streamDeckClient;
+    readonly StreamDeckClient _client;
 
     StreamDeck.Keyboard? _keyboard;
 
@@ -104,7 +104,7 @@ public partial class StreamDeckViewModel : ObservableObject
         Data = "Uploading file ...";
         try
         {
-            var result = await _streamDeckClient.UploadFile(Filename);
+            var result = await _client.UploadFile(Filename);
             if (result.Size > 0)
             {
                 Data = "File uploaded successfully.";
@@ -120,7 +120,7 @@ public partial class StreamDeckViewModel : ObservableObject
     private void SetKey()
     {
 
-        _streamDeckClient.SetKey(new StreamDeck.Key()
+        _client.SetKey(new StreamDeck.Key()
         {
             Id = KeyId.Equals(ALL_KEYS) ? -1 : int.Parse(KeyId),
             FileNameOrColor = KeyFileNameOrColor
@@ -129,7 +129,7 @@ public partial class StreamDeckViewModel : ObservableObject
 
     partial void OnBrightnessChanged(int value)
     {
-        _streamDeckClient.SetBrightness(value);
+        _client.SetBrightness(value);
     }
 
     #endregion

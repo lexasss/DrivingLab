@@ -6,6 +6,7 @@ namespace Server.Pointing;
 abstract class Controller : IDisposable
 {
     public abstract DeviceType Type { get; }
+    public abstract string Name { get; }
     public abstract bool IsCreated { get; }
 
     public event EventHandler<Proto.Data>? Data;

@@ -12,7 +12,7 @@ public class LeapMotionClient : Client
     public event EventHandler<LeapMotion.Sample>? HandLocationChanged;
 
     public bool IsConnected => _isConnected;
-    public bool IsReading => _isReading;
+    public bool IsStreamingData => _isStreamingData;
     public bool IsLogging => _isLogging;
 
     public LeapMotionClient(IOptions<AppSettings> appSettings)
@@ -34,7 +34,7 @@ public class LeapMotionClient : Client
         if (!_isAvailable)
             return;
 
-        _isReading = true;
+        _isStreamingData = true;
         _ = _client.Start(new Empty());
     }
 
@@ -43,7 +43,7 @@ public class LeapMotionClient : Client
         if (!_isAvailable)
             return;
 
-        _isReading = false;
+        _isStreamingData = false;
         _ = _client.Stop(new Empty());
     }
 
@@ -71,7 +71,7 @@ public class LeapMotionClient : Client
     readonly LeapMotion.Dispatcher.DispatcherClient _client;
 
     bool _isConnected = false;
-    bool _isReading = false;
+    bool _isStreamingData = false;
     bool _isLogging = false;
 
     AsyncServerStreamingCall<LeapMotion.Sample>? _dataCall;
@@ -83,6 +83,9 @@ public class LeapMotionClient : Client
         if (_isAvailable)
         {
             _isConnected = _client.IsConnected(new Empty()).Value;
+            _isStreamingData = _client.IsStreamingData(new Empty()).Value;
+            _isLogging = _client.IsLogging(new Empty()).Value;
+
             _ = ReadData();
             _ = ReadEvents();
         }

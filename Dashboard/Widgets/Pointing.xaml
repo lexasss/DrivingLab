@@ -61,16 +61,14 @@
                                    Text="Connected"
                                    HorizontalAlignment="Center"/>
                 <Separator/>
-                <WrapPanel>
+                <WrapPanel IsEnabled="{Binding IsConnected}">
                     <ToggleButton Style="{StaticResource Switch}"
-                                  IsEnabled="{Binding IsConnected}"
                                   IsChecked="{Binding IsStreaming}"/>
                     <Label Style="{StaticResource RowHeader}"
                            Content="Stream data"/>
                 </WrapPanel>
-                <WrapPanel>
+                <WrapPanel IsEnabled="{Binding IsConnected}">
                     <ToggleButton Style="{StaticResource Switch}"
-                                  IsEnabled="{Binding IsConnected}"
                                   IsChecked="{Binding IsLogging}"/>
                     <Label Style="{StaticResource RowHeader}"
                            Content="Log data"/>

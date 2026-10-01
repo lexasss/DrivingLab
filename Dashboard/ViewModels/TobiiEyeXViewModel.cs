@@ -30,7 +30,10 @@ public partial class TobiiEyeXViewModel : ObservableObject
             IsCalibrating = _client.IsCalibrating;
             IsCalibrated = _client.IsCalibrated;
             IsTracking = _client.IsTracking;
-            IsStreaming = _client.IsReading;
+
+            IsStreaming = _client.IsStreamingData;
+            IsLogging = _client.IsLogging;
+
             OnPropertyChanged(nameof(IsAvailable));
         };
 
@@ -50,9 +53,9 @@ public partial class TobiiEyeXViewModel : ObservableObject
 
     readonly TobiiEyeXClient _client;
 
-    partial void OnIsStreamingChanged(bool value)
+    partial void OnIsStreamingChanging(bool oldValue, bool newValue)
     {
-        if (_client.IsReading)
+        if (oldValue)
         {
             _client.Stop();
             Data = string.Empty;

@@ -6,7 +6,9 @@ using Proto = global::Pointing;
 
 namespace Server.Pointing;
 
-internal class PointingService : Proto.Dispatcher.DispatcherBase, ITelemetryService
+internal class PointingService : 
+    Proto.Dispatcher.DispatcherBase, 
+    ITelemetryService
 {
     public bool IsAvailable() => true;
 
@@ -48,6 +50,20 @@ internal class PointingService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
         return Common.Awaitable.From(IsAvailable());
     }
 
+    public override Task<Common.Bool> IsStreamingData(
+        Empty request,
+        ServerCallContext context)
+    {
+        return Common.Awaitable.From(_baseService?.IsSending == true);
+    }
+
+    public override Task<Common.Bool> IsLogging(
+        Empty request,
+        ServerCallContext context)
+    {
+        return Common.Awaitable.From(_baseService?.IsLogging == true);
+    }
+
     public override Task<Proto.Devices> GetDevices(
         Proto.DeviceRequest request,
         ServerCallContext context)
@@ -79,6 +95,12 @@ internal class PointingService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
 
         if (result)
         {
+            _logger.LogInformation("Connected to {device}", 
+                string.IsNullOrEmpty(request.Name)
+                    ? request.Type.ToString()
+                    : request.Name
+                );
+
             _controller?.Dispose();
             _controller = request.Type switch
             {
@@ -92,6 +114,30 @@ internal class PointingService : Proto.Dispatcher.DispatcherBase, ITelemetryServ
         }
 
         return Common.Awaitable.From(result);
+    }
+
+    public override Task<Proto.Device> GetCurrentDevice(
+        Empty request,
+        ServerCallContext context)
+    {
+        if (_controller == null)
+            return Task.FromResult(new Proto.Device()
+            {
+                Type = Proto.DeviceType.None,
+                Name = string.Empty
+            });
+
+        return Task.FromResult(new Proto.Device()
+        {
+            Type = _controller.Type switch
+            {
+                DeviceType.Mouse => Proto.DeviceType.Mouse,
+                DeviceType.Joystick => Proto.DeviceType.Joystick,
+                DeviceType.Gamepad => Proto.DeviceType.Gamepad,
+                _ => throw new NotImplementedException()
+            },
+            Name = _controller.Name
+        });
     }
 
     public override Task<Empty> Start(

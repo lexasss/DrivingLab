@@ -10,6 +10,7 @@ public class SmartEyeClient : Client
     public event EventHandler<SmartEye.Intersection>? IntersectionChanged;
 
     public bool IsConnected => _isConnected;
+    public bool IsStreamingData => _isStreamingData;
     public bool IsLogging => _isLogging;
 
     public SmartEyeClient(IOptions<AppSettings> appSettings)
@@ -73,6 +74,7 @@ public class SmartEyeClient : Client
     readonly SmartEye.Dispatcher.DispatcherClient _client;
 
     bool _isConnected = false;
+    bool _isStreamingData = false;
     bool _isLogging = false;
 
     AsyncServerStreamingCall<SmartEye.Event>? _eventsCall;
@@ -83,6 +85,9 @@ public class SmartEyeClient : Client
         if (_isAvailable)
         {
             _isConnected = _client.IsConnected(new Empty()).Value;
+            _isStreamingData = _client.IsStreamingData(new Empty()).Value;
+            _isLogging = _client.IsLogging(new Empty()).Value;
+
             _ = ReadEvents();
         }
     }

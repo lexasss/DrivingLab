@@ -73,16 +73,14 @@
                                        Text="Act. pedals"/>
                 </UniformGrid>
                 <Separator/>
-                <WrapPanel>
+                <WrapPanel IsEnabled="{Binding IsAvailable}">
                     <ToggleButton Style="{StaticResource Switch}"
-                                  IsEnabled="{Binding IsAvailable}"
                                   IsChecked="{Binding IsStreaming}"/>
                     <Label Style="{StaticResource RowHeader}"
                            Content="Stream data"/>
                 </WrapPanel>
-                <WrapPanel>
+                <WrapPanel IsEnabled="{Binding IsAvailable}">
                     <ToggleButton Style="{StaticResource Switch}"
-                                  IsEnabled="{Binding IsAvailable}"
                                   IsChecked="{Binding IsLogging}"/>
                     <Label Style="{StaticResource RowHeader}"
                            Content="Log data"/>

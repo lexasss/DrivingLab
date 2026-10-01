@@ -7,9 +7,12 @@ import "google/protobuf/empty.proto";
 
 service Dispatcher {
 	rpc IsAvailable (google.protobuf.Empty) returns (Common.Bool) {}
+	rpc IsStreamingData (google.protobuf.Empty) returns (Common.Bool) {}
+	rpc IsLogging (google.protobuf.Empty) returns (Common.Bool) {}
 
 	rpc GetDevices (DeviceRequest) returns (Devices) {}
 	rpc SetPointingDevice (Device) returns (Common.Bool) {}
+	rpc GetCurrentDevice (google.protobuf.Empty) returns (Device) {}
 
 	rpc SetLogFileName (Common.String) returns (Common.Bool) {}
 
@@ -25,9 +28,10 @@ service Dispatcher {
 }
 
 enum DeviceType {
-	Mouse = 0;
-	Joystick = 1;
-	Gamepad = 2;
+	None = 0;
+	Mouse = 1;
+	Joystick = 2;
+	Gamepad = 3;
 }
 
 message DeviceRequest {

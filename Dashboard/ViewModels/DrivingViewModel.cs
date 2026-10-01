@@ -7,7 +7,7 @@ namespace Dashboard;
 
 public partial class DrivingViewModel : ObservableObject
 {
-    public bool IsAvailable => _drivingClient.IsAvailable;
+    public bool IsAvailable => _client.IsAvailable;
     
     [ObservableProperty]
     public partial bool IsBaseConnected { get; set; } = false;
@@ -51,67 +51,70 @@ public partial class DrivingViewModel : ObservableObject
 
     public DrivingViewModel(DrivingClient drivingClient)
     {
-        _drivingClient = drivingClient;
-        _drivingClient.AvailabilityChanged += (s, e) =>
+        _client = drivingClient;
+        _client.AvailabilityChanged += (s, e) =>
         {
-            IsBaseConnected = _drivingClient.IsBaseConnected;
-            IsWheelConnected = _drivingClient.IsWheelConnected;
-            ArePedalsConnected = _drivingClient.ArePedalsConnected;
-            IsActivePedalsHubConnected = _drivingClient.IsActivePedalsHubConnected;
-            IsActiveBrakeConnected = _drivingClient.IsActiveBrakePedalConnected;
-            IsActiveThrottleConnected = _drivingClient.IsActiveThrottlePedalConnected;
+            IsBaseConnected = _client.IsBaseConnected;
+            IsWheelConnected = _client.IsWheelConnected;
+            ArePedalsConnected = _client.ArePedalsConnected;
+            IsActivePedalsHubConnected = _client.IsActivePedalsHubConnected;
+            IsActiveBrakeConnected = _client.IsActiveBrakePedalConnected;
+            IsActiveThrottleConnected = _client.IsActiveThrottlePedalConnected;
+
+            IsStreaming = _client.IsStreamingData;
+            IsLogging = _client.IsLogging;
 
             OnPropertyChanged(nameof(IsAvailable));
         };
-        _drivingClient.BaseConnectionChanged += (s, e) =>
+        _client.BaseConnectionChanged += (s, e) =>
         {
             IsBaseConnected = e;
         };
-        _drivingClient.WheelConnectionChanged += (s, e) =>
+        _client.WheelConnectionChanged += (s, e) =>
         {
             IsWheelConnected = e;
         };
-        _drivingClient.PedalsConnectionChanged += (s, e) =>
+        _client.PedalsConnectionChanged += (s, e) =>
         {
             ArePedalsConnected = e;
         };
-        _drivingClient.ActivePedalsHubConnectionChanged += (s, e) =>
+        _client.ActivePedalsHubConnectionChanged += (s, e) =>
         {
             IsActivePedalsHubConnected = e;
         };
-        _drivingClient.ActiveBrakeConnectionChanged += (s, e) =>
+        _client.ActiveBrakeConnectionChanged += (s, e) =>
         {
             IsActiveBrakeConnected = e;
         };
-        _drivingClient.ActiveThrottleConnectionChanged += (s, e) =>
+        _client.ActiveThrottleConnectionChanged += (s, e) =>
         {
             IsActiveThrottleConnected = e;
         };
-        _drivingClient.EffectFinished += (s, e) =>
+        _client.EffectFinished += (s, e) =>
         {
             IsPlayingEffect = false;
         };
-        _drivingClient.PeriodicEffectParametersRetrieved += (s, e) =>
+        _client.PeriodicEffectParametersRetrieved += (s, e) =>
         {
             PeriodicEffectType = e.Type;
             PeriodicEffectFrequency = e.Frequency;
         };
-        _drivingClient.DataUpdated += (s, e) =>
+        _client.DataUpdated += (s, e) =>
         {
-            if (_drivingClient.IsReading)
+            if (_client.IsStreamingData)
                 SetData(e);
         };
     }
 
     #region Internal
 
-    readonly DrivingClient _drivingClient;
+    readonly DrivingClient _client;
 
     [RelayCommand]
     private void PlayBrakeEffect()
     {
         IsPlayingEffect = true;
-        _drivingClient.PlayPedalEffect(new()
+        _client.PlayPedalEffect(new()
         {
             Pedal = Driving.SimucubeDevice.BrakePedal,
             Type = EffectType,
@@ -125,7 +128,7 @@ public partial class DrivingViewModel : ObservableObject
     private void PlayThrottleEffect()
     {
         IsPlayingEffect = true;
-        _drivingClient.PlayPedalEffect(new()
+        _client.PlayPedalEffect(new()
         {
             Pedal = Driving.SimucubeDevice.ThrottlePedal,
             Type = EffectType,
@@ -135,28 +138,27 @@ public partial class DrivingViewModel : ObservableObject
         });
     }
 
-    partial void OnIsStreamingChanged(bool value)
+    partial void OnIsStreamingChanging(bool oldValue, bool newValue)
     {
-        if (_drivingClient.IsReading)
+        if (oldValue)
         {
-            _drivingClient.Stop();
+            _client.Stop();
         }
         else
         {
-            _drivingClient.Start();
-            IsStreaming = _drivingClient.IsReading;
+            _client.Start();
         }
     }
 
     partial void OnIsLoggingChanged(bool value)
     {
-        _drivingClient.SetLoggingEnabled(value);
-        IsLogging = _drivingClient.IsLogging;
+        _client.SetLoggingEnabled(value);
+        IsLogging = _client.IsLogging;
     }
 
     partial void OnPeriodicEffectTypeChanged(Driving.PeriodicEffectType value)
     {
-        _drivingClient.SetPeriodicEffectParameters(new()
+        _client.SetPeriodicEffectParameters(new()
         {
             Type = value,
             Frequency = PeriodicEffectFrequency
@@ -165,7 +167,7 @@ public partial class DrivingViewModel : ObservableObject
 
     partial void OnPeriodicEffectFrequencyChanged(float value)
     {
-        _drivingClient.SetPeriodicEffectParameters(new()
+        _client.SetPeriodicEffectParameters(new()
         {
             Type = PeriodicEffectType,
             Frequency = value

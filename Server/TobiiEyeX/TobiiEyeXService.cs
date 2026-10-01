@@ -64,6 +64,20 @@ internal class TobiiEyeXService :
         return Common.Awaitable.From(IsAvailable());
     }
 
+    public override Task<Common.Bool> IsStreamingData(
+        Empty request,
+        ServerCallContext context)
+    {
+        return Common.Awaitable.From(_baseService?.IsSending == true);
+    }
+
+    public override Task<Common.Bool> IsLogging(
+        Empty request,
+        ServerCallContext context)
+    {
+        return Common.Awaitable.From(_baseService?.IsLogging == true);
+    }
+
     public override Task<Common.Bool> IsConnected(
         Empty request,
         ServerCallContext context)

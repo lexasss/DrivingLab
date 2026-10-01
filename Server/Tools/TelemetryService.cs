@@ -10,6 +10,7 @@ internal class TelemetryService<T, U> : Service<U>
     where T : Common.ILoggable
 {
     public bool IsSending { get; private set; } = false;
+    public bool IsLogging => _fileLogger.IsLogging;
 
     public TelemetryService(ILogger logger) : base(logger) { }
 
