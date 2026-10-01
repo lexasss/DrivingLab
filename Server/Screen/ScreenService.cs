@@ -105,14 +105,7 @@ public class ScreenService :
 
             id = mediaWindow.Id;
 
-            mediaWindow.Show(
-                filePath,
-                new Common.Point {
-                    X = screen.Origin.X + request.Location.X,
-                    Y = screen.Origin.Y + request.Location.Y
-                },
-                request.Size,
-                request.Duration);
+            mediaWindow.Show(filePath, request);
         }
         catch (Exception ex)
         {
@@ -123,7 +116,9 @@ public class ScreenService :
         return Common.Awaitable.From(id);
     }
 
-    public override Task<Empty> Close(Common.String request, ServerCallContext context)
+    public override Task<Empty> Close(
+        Common.String request,
+        ServerCallContext context)
     {
         if (_media.TryGetValue(request.Value, out var mediaWindow))
         {
@@ -135,6 +130,23 @@ public class ScreenService :
         return Common.Awaitable.Empty;
     }
 
+    public override async Task<Proto.Medias> GetVisibleMedias(
+        Empty request,
+        ServerCallContext context)
+    {
+        var result = new Proto.Medias();
+
+        foreach (var mediaWindow in _media.Values)
+        {
+            if (mediaWindow.Media != null)
+            {
+                result.Items.Add(mediaWindow.Media);
+            }
+        }
+
+        return result;
+    }
+
     public override async Task<Common.UploadResult> UploadFile(
         IAsyncStreamReader<Common.UploadRequest> requestStream,
         ServerCallContext context)
@@ -144,6 +156,15 @@ public class ScreenService :
             context,
             StorageFolder,
             _logger);
+    }
+
+    public override async Task<Common.Strings> GetFileList(
+        Empty request,
+        ServerCallContext context)
+    {
+        return await Tools.FileHelper.GetFileList(
+            StorageFolder,
+            _supportedMediaFormats);
     }
 
     #region Internal

@@ -41,7 +41,14 @@ public class TensionRClient : Client
         if (!_isAvailable)
             return;
 
-        _isLogging = _client.SetLogFileName(new Common.String() { Value = enabled ? "belt.tsv" : string.Empty }).Value;
+        if (_isLogging != enabled)
+        {
+            _isLogging = _client.SetLogFileName(new Common.String() {
+                Value = enabled
+                    ? "belt.tsv"
+                    : string.Empty
+            }).Value;
+        }
     }
 
     public void Start()
@@ -98,6 +105,7 @@ public class TensionRClient : Client
             _isConnected = _client.IsConnected(new Empty()).Value;
             _isCalibrated = _client.IsCalibrated(new Empty()).Value;
             _isEnabled = _client.IsEnabled(new Empty()).Value;
+            _isLogging = _client.IsLogging(new Empty()).Value;
 
             _ = ReadEvents();
         }

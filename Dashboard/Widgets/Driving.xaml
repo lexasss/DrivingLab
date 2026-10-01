@@ -73,13 +73,13 @@
                                        Text="Act. pedals"/>
                 </UniformGrid>
                 <Separator/>
-                <WrapPanel IsEnabled="{Binding IsAvailable}">
+                <WrapPanel IsEnabled="{Binding IsAnyDeviceConnected}">
                     <ToggleButton Style="{StaticResource Switch}"
                                   IsChecked="{Binding IsStreaming}"/>
                     <Label Style="{StaticResource RowHeader}"
                            Content="Stream data"/>
                 </WrapPanel>
-                <WrapPanel IsEnabled="{Binding IsAvailable}">
+                <WrapPanel IsEnabled="{Binding IsAnyDeviceConnected}">
                     <ToggleButton Style="{StaticResource Switch}"
                                   IsChecked="{Binding IsLogging}"/>
                     <Label Style="{StaticResource RowHeader}"
@@ -265,8 +265,10 @@
                         </Style>
                     </StackPanel.Resources>
                     <UniformGrid Columns="2">
-                        <Label Content="Passive"/>
-                        <Label Content="Active"/>
+                        <Label Content="Passive"
+                               IsEnabled="{Binding ArePedalsConnected}"/>
+                        <Label Content="Active"
+                               IsEnabled="{Binding IsActivePedalsHubConnected}"/>
                     </UniformGrid>
                     <UniformGrid Columns="4">
                         <UniformGrid.Resources>
@@ -280,24 +282,21 @@
                                 <Setter Property="HorizontalAlignment" Value="Center"/>
                             </Style>
                         </UniformGrid.Resources>
-                        <StackPanel>
+                        <StackPanel IsEnabled="{Binding ArePedalsConnected}">
                             <Label Content="Brake"/>
                             <Slider Value="{Binding Sliders[3].Value}"
-                                    IsEnabled="{Binding ArePedalsConnected}"
                                     Minimum="-0.98"
                                     Maximum="-0.60"/>
                         </StackPanel>
-                        <StackPanel>
+                        <StackPanel IsEnabled="{Binding ArePedalsConnected}">
                             <Label Content="Throttle"/>
                             <Slider Value="{Binding Sliders[4].Value}"
-                                    IsEnabled="{Binding ArePedalsConnected}"
                                     Minimum="-0.90"
                                     Maximum="-0.75"/>
                         </StackPanel>
-                        <StackPanel>
+                        <StackPanel IsEnabled="{Binding IsActiveBrakeConnected}">
                             <Label Content="Brake"/>
                             <Slider Value="{Binding Sliders[5].Value}"
-                                    IsEnabled="{Binding IsActiveBrakeConnected}"
                                     Minimum="-1"
                                     Maximum="1"/>
                             <Button Margin="0,8,0,2"
@@ -326,10 +325,9 @@
                                            ToolTip="Play the effect"/>
                             </Button>
                         </StackPanel>
-                        <StackPanel>
+                        <StackPanel IsEnabled="{Binding IsActiveThrottleConnected}">
                             <Label Content="Throttle"/>
                             <Slider Value="{Binding Sliders[6].Value}"
-                                    IsEnabled="{Binding IsActiveThrottleConnected}"
                                     Minimum="-1"
                                     Maximum="1"/>
                             <Button Margin="0,8,0,2"

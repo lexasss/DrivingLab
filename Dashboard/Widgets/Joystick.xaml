@@ -4,15 +4,24 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Dashboard.Widgets"
+             xmlns:conv="clr-namespace:MaterialDesignThemes.Wpf.Converters;assembly=MaterialDesignThemes.Wpf"
              mc:Ignorable="d" 
              d:DesignHeight="80"
              d:DesignWidth="80"
              x:Name="root">
-    
     <Grid>
         <Rectangle Fill="#E0EFFF"
                    Stroke="#404040"
-                   StrokeThickness="1"/>
+                   StrokeThickness="1"
+                   Visibility="{Binding IsEnabled, 
+                                        ElementName=root, 
+                                        Converter={x:Static conv:BooleanToVisibilityConverter.CollapsedInstance}}"/>
+        <Rectangle Fill="#E0E0E0"
+                   Stroke="DarkGray"
+                   StrokeThickness="1"
+                   Visibility="{Binding IsEnabled, 
+                                        ElementName=root, 
+                                        Converter={x:Static conv:BooleanToVisibilityConverter.NotCollapsedInstance}}"/>
 
         <Canvas x:Name="canvas"
                 Margin="2">
@@ -20,7 +29,10 @@
                      Width="4"
                      Height="4"
                      Canvas.Top="{Binding PointY, ElementName=root}"
-                     Canvas.Left="{Binding PointX, ElementName=root}"/>
+                     Canvas.Left="{Binding PointX, ElementName=root}"
+                     Visibility="{Binding IsEnabled, 
+                                          ElementName=root, 
+                                          Converter={x:Static conv:BooleanToVisibilityConverter.CollapsedInstance}}"/>
         </Canvas>
     </Grid>
 </UserControl>

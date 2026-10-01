@@ -66,6 +66,15 @@ internal class StreamDeckService : Proto.Dispatcher.DispatcherBase, IFileService
             _logger);
     }
 
+    public override async Task<Common.Strings> GetFileList(
+        Empty request,
+        ServerCallContext context)
+    {
+        return await Tools.FileHelper.GetFileList(
+            StorageFolder,
+            _supportedImageFormats);
+    }
+
     public override Task<Proto.Keyboard> GetKeyboard(
         Empty request,
         ServerCallContext context)
@@ -187,6 +196,8 @@ internal class StreamDeckService : Proto.Dispatcher.DispatcherBase, IFileService
     }
 
     #region Internal
+
+    static string[] _supportedImageFormats = [".png", ".jpg", ".jpeg"];
 
     readonly ILogger _logger;
     readonly Tools.Service<Proto.Event>? _baseService;

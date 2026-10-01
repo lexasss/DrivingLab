@@ -16,6 +16,7 @@ service Dispatcher {
 	rpc Stop (google.protobuf.Empty) returns (google.protobuf.Empty) {}
 
 	rpc UploadFile(stream Common.UploadRequest) returns (Common.UploadResult);
+	rpc GetFileList(google.protobuf.Empty) returns (Common.Strings);
 }
 
 message Device {

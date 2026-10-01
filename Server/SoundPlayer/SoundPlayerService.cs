@@ -137,6 +137,15 @@ public class SoundPlayerService :
             _logger);
     }
 
+    public override async Task<Common.Strings> GetFileList(
+        Empty request,
+        ServerCallContext context)
+    {
+        return await Tools.FileHelper.GetFileList(
+            StorageFolder,
+            _supportedAudioFormats);
+    }
+
     #region Internal
 
     class SoundDevice(string id, string name)

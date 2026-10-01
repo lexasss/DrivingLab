@@ -6,6 +6,7 @@ using System.Windows.Controls;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using Proto = global::Screen;
 
 namespace Server.Screen;
 
@@ -19,6 +20,7 @@ internal sealed class MediaWindow
     public string FileName { get; private set; } = string.Empty;
     public string Id { get; }
     public nint Handle { get; private set; }
+    public Proto.Media? Media { get; private set; }
 
     public event EventHandler<bool>? Shown;
     public event EventHandler<string>? Hidden;
@@ -28,11 +30,7 @@ internal sealed class MediaWindow
         Id = Guid.NewGuid().ToString();
     }
 
-    public void Show(
-        string? filename,
-        Common.Point location,
-        Common.Size? size,
-        int? duration)
+    public void Show(string? filename, Proto.Media media)
     {
         if (_thread != null)
             return;
@@ -41,10 +39,12 @@ internal sealed class MediaWindow
             ? Path.GetFileNameWithoutExtension(filename)
             : string.Empty;
 
+        Media = media;
+
         _thread = new Thread(() =>
         {
-            double width = size?.Width ?? 0;
-            double height = size?.Height ?? 0;
+            double width = Media.Size?.Width ?? 0;
+            double height = Media.Size?.Height ?? 0;
             
             var content = filename != null
                 ? CreateMedia(filename, ref width, ref height)
@@ -56,15 +56,15 @@ internal sealed class MediaWindow
                 return;
             }
 
-            _window = CreateWindow(content, location, width, height);
-            if (duration > 0)
+            _window = CreateWindow(content, Media.Location, width, height);
+            if (Media.Duration > 0)
             {
                 _cancellationTokenSource = new CancellationTokenSource();
                 Task.Run(async () =>
                 {
                     try
                     {
-                        await Task.Delay(duration ?? 0, _cancellationTokenSource.Token);
+                        await Task.Delay(Media.Duration, _cancellationTokenSource.Token);
                         Close(true);
                     }
                     finally

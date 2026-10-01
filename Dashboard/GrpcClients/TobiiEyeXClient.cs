@@ -56,11 +56,15 @@ public class TobiiEyeXClient : Client
         if (!_isAvailable)
             return;
 
-        _isLogging = _client.SetLogFileName(new Common.String(
-            enabled 
-                ? "leap.tsv"
-                : string.Empty
-        )).Value;
+        if (_isLogging != enabled)
+        {
+            _isLogging = _client.SetLogFileName(new Common.String()
+            {
+                Value = enabled
+                    ? "eyex.tsv"
+                    : string.Empty
+            }).Value;
+        }
     }
 
     #region Internal

@@ -58,6 +58,13 @@ internal class TensionRService :
         return Common.Awaitable.From(_isCalibrated);
     }
 
+    public override Task<Common.Bool> IsLogging(
+        Empty request,
+        ServerCallContext context)
+    {
+        return Common.Awaitable.From(_fileLogger.IsLogging);
+    }
+
     public override Task<Common.Bool> Connect(
         Common.String request,
         ServerCallContext context)

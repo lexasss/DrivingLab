@@ -10,6 +10,7 @@ service Dispatcher {
 	rpc IsConnected (google.protobuf.Empty) returns (Common.Bool) {}
 
 	rpc UploadFile(stream Common.UploadRequest) returns (Common.UploadResult);
+	rpc GetFileList(google.protobuf.Empty) returns (Common.Strings);
 
 	rpc GetKeyboard (google.protobuf.Empty) returns (Keyboard) {}
 	// 0-100

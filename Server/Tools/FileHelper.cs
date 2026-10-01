@@ -84,6 +84,22 @@ internal class FileHelper
         }
     }
 
+    public static async Task<Common.Strings> GetFileList(
+        string folder,
+        string[] extensions)
+    {
+        var files = new Common.Strings();
+        foreach (var ext in extensions)
+        {
+            foreach (var file in Directory.EnumerateFiles(folder, $"*{ext}"))
+            {
+                files.Items.Add(Path.GetFileName(file));
+            }
+        }
+
+        return files;
+    }
+
     #region Internal
 
     const int MAX_FILES_TO_LIST = 7;

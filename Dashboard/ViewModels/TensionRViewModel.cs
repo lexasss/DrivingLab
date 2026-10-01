@@ -36,12 +36,13 @@ public partial class TensionRViewModel : ObservableObject
     {
         _client = tensionRClient;
 
-        IsConnected = _client.IsConnected;
-        IsCalibrated = _client.IsCalibrated;
-        IsEnabled = _client.IsEnabled;
-
         _client.AvailabilityChanged += (s, e) =>
         {
+            IsConnected = _client.IsConnected;
+            IsCalibrated = _client.IsCalibrated;
+            IsEnabled = _client.IsEnabled;
+            IsLogging = _client.IsLogging;
+
             OnPropertyChanged(nameof(IsAvailable));
         };
 

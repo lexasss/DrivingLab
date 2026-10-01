@@ -10,6 +10,7 @@ service Dispatcher {
 	rpc IsConnected (google.protobuf.Empty) returns (Common.Bool) {}
 	rpc IsEnabled (google.protobuf.Empty) returns (Common.Bool) {}
 	rpc IsCalibrated (google.protobuf.Empty) returns (Common.Bool) {}
+	rpc IsLogging (google.protobuf.Empty) returns (Common.Bool) {}
 
 	rpc Connect (Common.String) returns (Common.Bool) {}
 	rpc SetLogFileName (Common.String) returns (Common.Bool) {}

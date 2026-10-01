@@ -10,17 +10,28 @@ public partial class DrivingViewModel : ObservableObject
     public bool IsAvailable => _client.IsAvailable;
     
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsAnyDeviceConnected))]
     public partial bool IsBaseConnected { get; set; } = false;
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsAnyDeviceConnected))]
     public partial bool IsWheelConnected { get; set; } = false;
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsAnyDeviceConnected))]
     public partial bool ArePedalsConnected { get; set; } = false;
     [ObservableProperty]
     public partial bool IsActivePedalsHubConnected { get; set; } = false;
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsAnyDeviceConnected))]
     public partial bool IsActiveBrakeConnected { get; set; } = false;
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsAnyDeviceConnected))]
     public partial bool IsActiveThrottleConnected { get; set; } = false;
+    public bool IsAnyDeviceConnected => 
+        IsBaseConnected || 
+        IsWheelConnected || 
+        ArePedalsConnected || 
+        IsActiveBrakeConnected || 
+        IsActiveThrottleConnected;
     [ObservableProperty]
     public partial bool IsPlayingEffect { get; set; } = false;
     [ObservableProperty]

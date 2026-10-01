@@ -9,16 +9,21 @@
              d:DesignHeight="80"
              d:DesignWidth="80"
              x:Name="root">
-    
-    <UserControl.Resources>
-        <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibility"/>
-    </UserControl.Resources>
-    
     <Grid>
         <!-- Inner face -->
         <Ellipse Fill="#E0EFFF"
                  Stroke="#404040"
-                 StrokeThickness="1"/>
+                 StrokeThickness="1"
+                 Visibility="{Binding IsEnabled, 
+                                      ElementName=root, 
+                                      Converter={x:Static conv:BooleanToVisibilityConverter.CollapsedInstance}}"/>
+        <Ellipse Fill="#E0E0E0"
+                 Stroke="DarkGray"
+                 StrokeThickness="1"
+                 Visibility="{Binding IsEnabled, 
+                                      ElementName=root, 
+                                      Converter={x:Static conv:BooleanToVisibilityConverter.NotCollapsedInstance}}"/>
+
 
         <!-- Needle -->
         <Grid RenderTransformOrigin="0.5,0.5">
@@ -33,7 +38,9 @@
                      Fill="Red"
                      Width="3"
                      Stretch="Fill"
-                     Visibility="{Binding HasValue, ElementName=root, Converter={StaticResource BooleanToVisibility}}"/>
+                     Visibility="{Binding HasValue, 
+                                          ElementName=root,
+                                          Converter={x:Static conv:BooleanToVisibilityConverter.CollapsedInstance}}"/>
         </Grid>
     </Grid>
 </UserControl>

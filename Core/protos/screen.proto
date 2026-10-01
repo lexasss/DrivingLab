@@ -14,8 +14,10 @@ service Dispatcher {
 
 	rpc Show (Media) returns (Common.String) {}
 	rpc Close (Common.String) returns (google.protobuf.Empty) {}
+	rpc GetVisibleMedias (google.protobuf.Empty) returns (Medias) {}
 
 	rpc UploadFile(stream Common.UploadRequest) returns (Common.UploadResult);
+	rpc GetFileList(google.protobuf.Empty) returns (Common.Strings);
 }
 
 message Screen {
@@ -41,4 +43,8 @@ message Media {
 	Common.Point location = 3;
 	optional Common.Size size = 4;
 	optional int32 duration = 5;
+}
+
+message Medias {
+	repeated Media items = 1;
 }

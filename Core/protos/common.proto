@@ -58,3 +58,8 @@ message UploadResult {
 	string errorMessage = 2;
 	int64 size = 3;
 }
+
+message Strings {
+	repeated string items = 1;
+}
+
