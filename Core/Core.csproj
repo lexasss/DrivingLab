@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <AssemblyName>DrivingLab.$(MSBuildProjectName)</AssemblyName>
     <Platforms>AnyCPU;x64;x86</Platforms>
   </PropertyGroup>
 

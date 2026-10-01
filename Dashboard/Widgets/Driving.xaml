@@ -7,7 +7,7 @@
              xmlns:local="clr-namespace:Dashboard"
              xmlns:widgets="clr-namespace:Dashboard.Widgets"
              xmlns:conv="clr-namespace:MaterialDesignThemes.Wpf.Converters;assembly=MaterialDesignThemes.Wpf"
-             xmlns:core="clr-namespace:Driving;assembly=Core"
+             xmlns:core="clr-namespace:Driving;assembly=DrivingLab.Core"
              mc:Ignorable="d" 
              d:DesignHeight="750"
              d:DesignWidth="200">
