@@ -96,18 +96,12 @@
     </None>
     
     <!-- Prefer the compiled version when it exists -->
-    <None
-      Visible="false"
-      Include="$(ScApiEffectsDllCompiled)"
-      Condition="Exists('$(ScApiEffectsDllCompiled)')">
+    <None Visible="false" Include="$(ScApiEffectsDllCompiled)" Condition="Exists('$(ScApiEffectsDllCompiled)')">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
 
     <!-- Otherwise use the distro version -->
-    <None
-      Visible="false"
-      Include="$(ScApiEffectsDllDistro)"
-      Condition="!Exists('$(ScApiEffectsDllCompiled)') AND Exists('$(ScApiEffectsDllDistro)')">
+    <None Visible="false" Include="$(ScApiEffectsDllDistro)" Condition="!Exists('$(ScApiEffectsDllCompiled)') AND Exists('$(ScApiEffectsDllDistro)')">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

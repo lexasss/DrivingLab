@@ -22,6 +22,7 @@ service Dispatcher {
 message Device {
 	string id = 1;
 	string name = 2;
+	int32 channelCount = 3;
 }
 
 message Devices {
@@ -50,6 +51,7 @@ message ToneDescription {
 	double gain = 5;
 	int32 pulseDuration = 6;
 	int32 totalDuration = 7;
+	repeated bool enabledChannels = 8;
 }
 
 message SoundDescription {

@@ -3,6 +3,7 @@ using Grpc.Core;
 using Microsoft.Extensions.Logging;
 using NAudio.CoreAudioApi;
 using NAudio.Wave;
+using System.Reflection.Metadata;
 using Proto = global::SoundPlayer;
 
 namespace Server.SoundPlayer;
@@ -58,10 +59,7 @@ public class SoundPlayerService :
         var devices = await GetSoundDevices();
         foreach (var device in devices)
         {
-            result.Items.Add(new Proto.Device {
-                Id = device.Id,
-                Name = device.Name
-            });
+            result.Items.Add(device);
         }
         return result;
     }
@@ -148,13 +146,6 @@ public class SoundPlayerService :
 
     #region Internal
 
-    class SoundDevice(string id, string name)
-    {
-        public string Id => id;
-        public string Name => name;
-        public override string ToString() => name;
-    }
-
     static readonly string[] _supportedAudioFormats = [".wav"];
 
     readonly ILogger _logger;
@@ -164,7 +155,7 @@ public class SoundPlayerService :
     TonePlayer? _tonePlayer;
     AudioFileReader? _audioFile;
 
-    private static async Task<SoundDevice[]> GetSoundDevices()
+    private static async Task<Proto.Device[]> GetSoundDevices()
     {
         var devices = await Task.Run(() => {
             var enumerator = new MMDeviceEnumerator();
@@ -174,7 +165,15 @@ public class SoundPlayerService :
         });
 
         return devices
-            .Select(device => new SoundDevice(device.ID, device.FriendlyName))
+            .Select(device => {
+                using var client = device.CreateAudioClient();
+                return new Proto.Device()
+                {
+                    Id = device.ID,
+                    Name = device.FriendlyName,
+                    ChannelCount = client.MixFormat.Channels
+                };
+            })
             .ToArray();
     }
 
@@ -194,7 +193,6 @@ public class SoundPlayerService :
             .WithDevice(device)
             .WithEventSync()
             .WithLatency(50)
-            .WithLowLatency()
             .WithCategory(AudioStreamCategory.Media)
             .WithRawMode()
             .Build();
@@ -219,7 +217,8 @@ public class SoundPlayerService :
             tone.ToneType,
             tone.Frequency,
             tone.Gain,
-            tone.PulseDuration
+            tone.PulseDuration,
+            tone.EnabledChannels.ToArray()
         );
 
         tonePlayer.Start();

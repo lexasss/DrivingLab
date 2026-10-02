@@ -1,5 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
 
 namespace Dashboard;
 
@@ -7,6 +9,34 @@ public enum PlaybackType
 {
     File,
     Tone
+}
+
+public class ChannelViewModel : INotifyPropertyChanged
+{
+    public int ChannelIndex { get; }
+
+    public bool IsChecked
+    {
+        get => field;
+        set
+        {
+            if (field == value)
+                return;
+
+            field = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsChecked)));
+            IsCheckedChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    public event EventHandler? IsCheckedChanged;
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    public ChannelViewModel(int channelIndex, bool isChecked)
+    {
+        ChannelIndex = channelIndex;
+        IsChecked = isChecked;
+    }
 }
 
 public partial class SoundPlayerViewModel : ObservableObject
@@ -36,12 +66,15 @@ public partial class SoundPlayerViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(CanTogglePlayback))]
     public partial bool IsPlaying { get; set; } = false;
     public bool CanTogglePlayback => IsAvailable && 
-        (IsPlaying || PlaybackType == PlaybackType.Tone || Filename.Length > 0);
+        (IsPlaying || PlaybackType == PlaybackType.Tone || Filename.Length > 0) && 
+        Channels.Any(c => c.IsChecked);
     public bool CanUploadFile => IsAvailable && Filename.Length > 0;
     [ObservableProperty]
     public partial string PlayerButtonText { get; set; } = "Play";
     [ObservableProperty]
     public partial string Data { get; set; } = string.Empty;
+    
+    public ObservableCollection<ChannelViewModel> Channels { get; } = [];
 
     public SoundPlayerViewModel(SoundPlayerClient soundPlayerClient)
     {
@@ -79,13 +112,18 @@ public partial class SoundPlayerViewModel : ObservableObject
             else
             {
                 IsPlaying = true;
-                await _client.PlayTone(new SoundPlayer.ToneDescription {
+                var tone = new SoundPlayer.ToneDescription {
                     ToneType = ToneType,
                     Frequency = ToneFrequency,
                     PulseDuration = 0,
                     Gain = ToneGain,
-                    TotalDuration = ToneDuration
-                });
+                    TotalDuration = ToneDuration,
+                };
+
+                foreach (var channel in Channels)
+                    tone.EnabledChannels.Add(channel.IsChecked);
+
+                await _client.PlayTone(tone);
             }
 
             if (IsPlaying)
@@ -120,6 +158,28 @@ public partial class SoundPlayerViewModel : ObservableObject
         catch
         {
             Data = "Failed to upload the file.";
+        }
+    }
+
+    partial void OnDeviceChanged(SoundPlayer.Device? value)
+    {
+        System.Diagnostics.Debug.WriteLine(value?.Name);
+
+        Channels.Clear();
+
+        if (value != null)
+        {
+            for (int i = 0; i < value.ChannelCount; i++)
+            {
+                var channel = new ChannelViewModel(i, i < 2);
+                channel.IsCheckedChanged += (s, e) =>
+                {
+                    OnPropertyChanged(nameof(CanTogglePlayback));
+                };
+                Channels.Add(channel);
+            }
+
+            OnPropertyChanged(nameof(CanTogglePlayback));
         }
     }
 

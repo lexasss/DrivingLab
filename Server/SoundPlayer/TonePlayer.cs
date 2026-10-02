@@ -13,9 +13,11 @@ public class TonePlayer : IDisposable
         Proto.ToneType toneType,
         double frequency,
         double gain,
-        int duration)
+        int duration,
+        bool[] enabledChannels)
     {
-        _signalGenerator = new SignalGenerator()
+        _signalGenerator = new SignalGenerator(48000,
+            enabledChannels.Length > 0 ? 1 : 2) // mono if we are routing channels, otherwise stereo
         {
             Gain = gain,
             Frequency = frequency,
@@ -36,11 +38,24 @@ public class TonePlayer : IDisposable
             _signalGenerator = _signalGenerator.Take(TimeSpan.FromMilliseconds(duration));
 
         _player = player;
+
+        if (enabledChannels.Length == _player.OutputWaveFormat.Channels)
+        {
+            _channelRouter = new ChannelRouter(_signalGenerator, enabledChannels);
+        }
     }
 
     public void Start()
     {
-        _player.Init(_signalGenerator);
+        if (_channelRouter != null)
+        {
+            _player.Init(_channelRouter);
+        }
+        else
+        {
+            _player.Init(_signalGenerator);
+        }
+
         _player.Play();
     }
 
@@ -62,6 +77,7 @@ public class TonePlayer : IDisposable
 
     readonly WasapiPlayer _player;
     readonly ISampleProvider _signalGenerator;
+    readonly ChannelRouter? _channelRouter;
 
     #endregion
 }
