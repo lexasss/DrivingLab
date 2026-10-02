@@ -41,7 +41,10 @@ public class TonePlayer : IDisposable
 
         if (enabledChannels.Length == _player.OutputWaveFormat.Channels)
         {
-            _channelRouter = new ChannelRouter(_signalGenerator, enabledChannels);
+            _channelRouter = new ChannelRouter(
+                _signalGenerator,
+                enabledChannels,
+                player.DeviceMixFormat);
         }
     }
 

@@ -39,20 +39,21 @@
             Grid.Column="1"
             DataContext="{Binding SmartEye}" />
 
-        <widgets:SoundPlayer
+        <widgets:Screen
             Grid.Row="0"
             Grid.Column="2"
-            DataContext="{Binding SoundPlayer}" />
+            DataContext="{Binding Screen}" />
 
         <widgets:Camera
             Grid.Row="0"
             Grid.Column="3"
             DataContext="{Binding Camera}" />
 
-        <widgets:Screen
+        <widgets:SoundPlayer
             Grid.Row="0"
+            Grid.RowSpan="2"
             Grid.Column="4"
-            DataContext="{Binding Screen}" />
+            DataContext="{Binding SoundPlayer}" />
 
         <widgets:Driving
             Grid.Row="0"

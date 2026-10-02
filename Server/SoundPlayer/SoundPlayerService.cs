@@ -194,7 +194,6 @@ public class SoundPlayerService :
             .WithEventSync()
             .WithLatency(50)
             .WithCategory(AudioStreamCategory.Media)
-            .WithRawMode()
             .Build();
 
         soundPlayer.PlaybackStopped += (sender, e) =>
