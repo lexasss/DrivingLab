@@ -24,7 +24,8 @@ public class ChannelViewModel : INotifyPropertyChanged
                 return;
 
             field = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsChecked)));
+            PropertyChanged?.Invoke(this, 
+                new PropertyChangedEventArgs(nameof(IsChecked)));
             IsCheckedChanged?.Invoke(this, EventArgs.Empty);
         }
     }
@@ -55,7 +56,8 @@ public partial class SoundPlayerViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(CanUploadFile))]
     public partial string Filename { get; set; } = string.Empty;
     [ObservableProperty]
-    public partial SoundPlayer.ToneType ToneType { get; set; } = SoundPlayer.ToneType.Sine;
+    public partial SoundPlayer.ToneType ToneType { get; set; } = 
+        SoundPlayer.ToneType.Sine;
     [ObservableProperty]
     public partial double ToneFrequency { get; set; } = 440;
     [ObservableProperty]
@@ -76,7 +78,8 @@ public partial class SoundPlayerViewModel : ObservableObject
     
     public ObservableCollection<ChannelViewModel> Channels { get; } = [];
 
-    public SoundPlayerViewModel(SoundPlayerClient soundPlayerClient)
+    public SoundPlayerViewModel(
+        GrpcClients.SoundPlayerClient soundPlayerClient)
     {
         _client = soundPlayerClient;
         _client.AvailabilityChanged += (s, e) =>
@@ -92,7 +95,7 @@ public partial class SoundPlayerViewModel : ObservableObject
 
     #region Internal
 
-    readonly SoundPlayerClient _client;
+    readonly GrpcClients.SoundPlayerClient _client;
 
     [RelayCommand]
     private async Task Play()
@@ -183,7 +186,8 @@ public partial class SoundPlayerViewModel : ObservableObject
         }
     }
 
-    private void SoundPlayerClient_PlaybackFinished(object? sender, EventArgs e)
+    private void SoundPlayerClient_PlaybackFinished(
+        object? sender, EventArgs e)
     {
         IsPlaying = false;
         PlayerButtonText = "Play";

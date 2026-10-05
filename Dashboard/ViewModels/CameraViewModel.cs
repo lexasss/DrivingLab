@@ -34,7 +34,7 @@ public partial class CameraViewModel : ObservableObject
     public Camera.Camera[] Cameras => _client.GetCameras();
     public CameraStream[] Streams { get; private set; } = [];
 
-    public CameraViewModel(CameraClient client)
+    public CameraViewModel(GrpcClients.CameraClient client)
     {
         _client = client;
         _client.AvailabilityChanged += (s, e) =>
@@ -74,7 +74,7 @@ public partial class CameraViewModel : ObservableObject
 
     #region Internal
 
-    readonly CameraClient _client;
+    readonly GrpcClients.CameraClient _client;
 
     bool _isVideoFileNameSet = false;
     bool _isCameraStreamReady = false;
@@ -129,7 +129,9 @@ public partial class CameraViewModel : ObservableObject
 
     partial void OnExposureChanged(double value)
     {
-        _cameraProperties?.SetControlValue(CameraProperties.CameraControlProperty.Exposure, (int)value);
+        _cameraProperties?.SetControlValue(
+            CameraProperties.CameraControlProperty.Exposure,
+            (int)value);
     }
 
     [RelayCommand]

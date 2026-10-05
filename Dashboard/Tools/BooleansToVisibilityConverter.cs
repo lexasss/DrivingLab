@@ -8,11 +8,8 @@ public class BooleansToVisibilityConverter : IMultiValueConverter
 {
     public Visibility InvisibilityValue { get; init; } = Visibility.Collapsed;
 
-    public object Convert(
-        object[] values,
-        Type targetType,
-        object parameter,
-        CultureInfo culture)
+    public object Convert(object[] values, Type targetType,
+                          object parameter, CultureInfo culture)
     {
         var condition = parameter is bool ? (bool)parameter : true;
         return values.All(v => v.Equals(condition))
@@ -20,11 +17,8 @@ public class BooleansToVisibilityConverter : IMultiValueConverter
             : InvisibilityValue;
     }
 
-    public object[] ConvertBack(
-        object value,
-        Type[] targetTypes,
-        object parameter,
-        CultureInfo culture)
+    public object[] ConvertBack(object value, Type[] targetTypes,
+                                object parameter, CultureInfo culture)
     {
         throw new NotImplementedException();
     }

@@ -2,9 +2,10 @@
 using Grpc.Core;
 using Microsoft.Extensions.Options;
 
-namespace Dashboard;
+namespace Dashboard.GrpcClients;
 
-public class LeapMotionClient : Client
+public sealed class LeapMotionClient 
+    : Client<LeapMotion.Dispatcher.DispatcherClient, LeapMotion.Event>
 {
     public event EventHandler<bool>? ConnectionChanged;
     public event EventHandler<bool>? HandVisibilityChanged;
@@ -75,14 +76,7 @@ public class LeapMotionClient : Client
 
     #region Internal
 
-    readonly LeapMotion.Dispatcher.DispatcherClient _client;
-
-    bool _isConnected = false;
-    bool _isStreamingData = false;
-    bool _isLogging = false;
-
     AsyncServerStreamingCall<LeapMotion.Sample>? _dataCall;
-    AsyncServerStreamingCall<LeapMotion.Event>? _eventsCall;
 
     protected override void Initialize()
     {
@@ -122,50 +116,36 @@ public class LeapMotionClient : Client
         }
     }
 
-    private async Task ReadEvents()
+    protected override IAsyncStreamReader<LeapMotion.Event> GetEventStream()
     {
-        try
+        _eventsCall = _client.ReadEvents(new Empty());
+        return _eventsCall.ResponseStream;
+    }
+
+    protected override bool HandleEvent(LeapMotion.Event evt)
+    {
+        switch (evt.ValueCase)
         {
-            _eventsCall = _client.ReadEvents(new Empty());
-            var responseStream = _eventsCall.ResponseStream;
-
-            while (await responseStream.MoveNext(_eventsCts.Token))
-            {
-                if (_eventsCts.IsCancellationRequested)
-                    break;
-
-                var evt = responseStream.Current;
-                switch (evt.ValueCase)
+            case LeapMotion.Event.ValueOneofCase.IsConnected:
+                _isConnected = evt.IsConnected;
+                ConnectionChanged?.Invoke(this, _isConnected);
+                if (!_isConnected)
                 {
-                    case LeapMotion.Event.ValueOneofCase.IsConnected:
-                        _isConnected = evt.IsConnected;
-                        ConnectionChanged?.Invoke(this, _isConnected);
-                        if (!_isConnected)
-                        {
-                            HandVisibilityChanged?.Invoke(this, false);
-                            HandProximityChanged?.Invoke(this, false);
-                        }
-                        break;
-                    case LeapMotion.Event.ValueOneofCase.IsHandVisible:
-                        HandVisibilityChanged?.Invoke(this, evt.IsHandVisible);
-                        break;
-                    case LeapMotion.Event.ValueOneofCase.IsHandClose:
-                        HandProximityChanged?.Invoke(this, evt.IsHandClose);
-                        break;
-                    default:
-                        System.Diagnostics.Debug.WriteLine($"LeapMotion event '{evt.ValueCase}' is not supported");
-                        break;
+                    HandVisibilityChanged?.Invoke(this, false);
+                    HandProximityChanged?.Invoke(this, false);
                 }
-            }
+                break;
+            case LeapMotion.Event.ValueOneofCase.IsHandVisible:
+                HandVisibilityChanged?.Invoke(this, evt.IsHandVisible);
+                break;
+            case LeapMotion.Event.ValueOneofCase.IsHandClose:
+                HandProximityChanged?.Invoke(this, evt.IsHandClose);
+                break;
+            default:
+                return false;
         }
-        catch (RpcException ex)
-        {
-            LogException(ex);
-        }
-        finally
-        {
-            _eventsCall = null;
-        }
+
+        return true;
     }
 
     #endregion

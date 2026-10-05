@@ -1,9 +1,11 @@
 ﻿using Grpc.Core;
 using Microsoft.Extensions.Options;
 
-namespace Dashboard;
+namespace Dashboard.GrpcClients;
 
-public abstract class Client : IDisposable
+public abstract class Client<T, U> : IDisposable
+    where T : ClientBase<T>
+    where U : Google.Protobuf.IMessage<U>
 {
     public bool IsAvailable => _isAvailable;
 
@@ -11,7 +13,10 @@ public abstract class Client : IDisposable
 
     public Client(IOptions<AppSettings> appSettings, int port)
     {
-        _channel = new Channel(appSettings.Value.ServerIp, port, ChannelCredentials.Insecure);
+        _channel = new Channel(
+            appSettings.Value.ServerIp,
+            port,
+            ChannelCredentials.Insecure);
 
         Task.Run(async () =>
         {
@@ -41,6 +46,8 @@ public abstract class Client : IDisposable
         GC.SuppressFinalize(this);
     }
 
+    #region Internal
+
     protected readonly Channel _channel;
     protected readonly CancellationTokenSource _dataCts = new();
     protected readonly CancellationTokenSource _eventsCts = new();
@@ -48,10 +55,48 @@ public abstract class Client : IDisposable
     protected bool _isAvailable = false;
 
 
+    protected T _client = null!; // will be initialized in the derived class constructor
+    protected AsyncServerStreamingCall<U>? _eventsCall;
+
+    // Next variables may be used in derived classes to track the state of the client/device
+    protected bool _isConnected = false;
+    protected bool _isStreamingData = false;
+    protected bool _isLogging = false;
+
     protected abstract void Initialize();
+    protected abstract IAsyncStreamReader<U> GetEventStream();
+    protected abstract bool HandleEvent(U evt);
 
     protected static void LogException(Exception ex)
     {
         System.Diagnostics.Debug.WriteLine(ex.Message);
     }
+
+    protected async Task ReadEvents()
+    {
+        try
+        {
+            var responseStream = GetEventStream();
+
+            while (await responseStream.MoveNext(_eventsCts.Token))
+            {
+                if (_eventsCts.IsCancellationRequested)
+                    break;
+
+                var evt = responseStream.Current;
+                if (!HandleEvent(evt))
+                    System.Diagnostics.Debug.WriteLine($"Event '{evt}' is not supported");
+            }
+        }
+        catch (RpcException ex)
+        {
+            LogException(ex);
+        }
+        finally
+        {
+            _eventsCall = null;
+        }
+    }
+
+    #endregion
 }

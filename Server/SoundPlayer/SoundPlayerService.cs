@@ -3,12 +3,10 @@ using Grpc.Core;
 using Microsoft.Extensions.Logging;
 using NAudio.CoreAudioApi;
 using NAudio.Wave;
-using System.Reflection.Metadata;
 using Proto = global::SoundPlayer;
 
 namespace Server.SoundPlayer;
 
-[System.Diagnostics.CodeAnalysis.SuppressMessage("Interoperability", "CA1416:Validate platform compatibility")]
 public class SoundPlayerService :
     Proto.Dispatcher.DispatcherBase,
     IFileService

@@ -7,7 +7,7 @@ namespace Dashboard;
 /// <summary>
 /// COM port utils: list of available ports, and firing events when this list changes.
 /// </summary>
-public class COMUtils : IDisposable
+public partial class COMUtils : IDisposable
 {
     /// <summary>
     /// Port descriptor
@@ -63,9 +63,13 @@ public class COMUtils : IDisposable
         Removed
     }
 
-    readonly List<Port> _cachedPorts = new();
+    readonly List<Port> _cachedPorts = [];
 
-    readonly List<ManagementEventWatcher> _watchers = new();
+    readonly List<ManagementEventWatcher> _watchers = [];
+
+
+    [GeneratedRegex(@".*\(COM(\d+)\).*")]
+    private static partial Regex ComRegex();
 
     private void Listen(string source, string target, ActionType actionType)
     {
@@ -156,7 +160,7 @@ public class COMUtils : IDisposable
             }
         }
 
-        return ports?.ToArray() ?? Array.Empty<Port>();
+        return ports?.ToArray() ?? [];
     }
 
     private static Port? CreateCOMPort(PropertyDataCollection props, string? deviceName = null)
@@ -191,7 +195,7 @@ public class COMUtils : IDisposable
                     var name = (string?)rec.Properties["Name"]?.Value;
                     if (name?.Contains("(COM") ?? false)
                     {
-                        var re = new Regex(@".*\(COM(\d+)\).*");
+                        var re = ComRegex();
                         var match = re.Match(name);
                         if (match.Groups.Count > 1)
                         {

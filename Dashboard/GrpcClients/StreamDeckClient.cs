@@ -2,9 +2,10 @@
 using Grpc.Core;
 using Microsoft.Extensions.Options;
 
-namespace Dashboard;
+namespace Dashboard.GrpcClients;
 
-public class StreamDeckClient : Client
+public sealed class StreamDeckClient
+    : Client<StreamDeck.Dispatcher.DispatcherClient, StreamDeck.Event>
 {
     public event EventHandler<bool>? ConnectionChanged;
     public event EventHandler<StreamDeck.KeyState>? KeyStateChanged;
@@ -27,7 +28,9 @@ public class StreamDeckClient : Client
     public async Task<Common.UploadResult> UploadFile(string filename)
     {
         if (!_isAvailable)
-            return new Common.UploadResult() { ErrorMessage = "Service unavailable" };
+            return new Common.UploadResult() {
+                ErrorMessage = "Service unavailable"
+            };
 
         using var call = _client.UploadFile();
         return await FileService.UploadFile(call, filename, "image");
@@ -46,7 +49,9 @@ public class StreamDeckClient : Client
         if (!_isAvailable)
             return;
 
-        _client.SetBrightness(new Common.Int() { Value = value });
+        _client.SetBrightness(new Common.Int() {
+            Value = value
+        });
     }
 
     public bool SetKey(StreamDeck.Key key)
@@ -59,12 +64,6 @@ public class StreamDeckClient : Client
 
     #region Internal
 
-    readonly StreamDeck.Dispatcher.DispatcherClient _client;
-
-    bool _isConnected = false;
-
-    AsyncServerStreamingCall<StreamDeck.Event>? _eventsCall;
-
     protected override void Initialize()
     {
         _isAvailable = _client.IsAvailable(new Empty()).Value;
@@ -75,42 +74,28 @@ public class StreamDeckClient : Client
         }
     }
 
-    private async Task ReadEvents()
+    protected override IAsyncStreamReader<StreamDeck.Event> GetEventStream()
     {
-        try
-        {
-            _eventsCall = _client.ReadEvents(new Empty());
-            var responseStream = _eventsCall.ResponseStream;
+        _eventsCall = _client.ReadEvents(new Empty());
+        return _eventsCall.ResponseStream;
+    }
 
-            while (await responseStream.MoveNext(_eventsCts.Token))
-            {
-                if (_eventsCts.IsCancellationRequested)
-                    break;
+    protected override bool HandleEvent(StreamDeck.Event evt)
+    {
+        switch (evt.ValueCase)
+        {
+            case StreamDeck.Event.ValueOneofCase.IsConnected:
+                _isConnected = evt.IsConnected;
+                ConnectionChanged?.Invoke(this, _isConnected);
+                break;
+            case StreamDeck.Event.ValueOneofCase.Key:
+                KeyStateChanged?.Invoke(this, evt.Key);
+                break;
+            default:
+                return false;
+        }
 
-                var evt = responseStream.Current;
-                switch (evt.ValueCase)
-                {
-                    case StreamDeck.Event.ValueOneofCase.IsConnected:
-                        _isConnected = evt.IsConnected;
-                        ConnectionChanged?.Invoke(this, _isConnected);
-                        break;
-                    case StreamDeck.Event.ValueOneofCase.Key:
-                        KeyStateChanged?.Invoke(this, evt.Key);
-                        break;
-                    default:
-                        System.Diagnostics.Debug.WriteLine($"StreamDeck event '{evt.ValueCase}' is not supported");
-                        break;
-                }
-            }
-        }
-        catch (RpcException ex)
-        {
-            LogException(ex);
-        }
-        finally
-        {
-            _eventsCall = null;
-        }
+        return true;
     }
 
     #endregion

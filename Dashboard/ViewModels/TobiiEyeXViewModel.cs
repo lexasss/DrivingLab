@@ -21,7 +21,7 @@ public partial class TobiiEyeXViewModel : ObservableObject
     [ObservableProperty]
     public partial string Data { get; set; } = string.Empty;
 
-    public TobiiEyeXViewModel(TobiiEyeXClient client)
+    public TobiiEyeXViewModel(GrpcClients.TobiiEyeXClient client)
     {
         _client = client;
         _client.AvailabilityChanged += (s, e) =>
@@ -37,25 +37,27 @@ public partial class TobiiEyeXViewModel : ObservableObject
             OnPropertyChanged(nameof(IsAvailable));
         };
 
-        _client.ConnectionStatusChanged += (s, e) => Application.Current.Dispatcher.Invoke(() => IsConnected = e);
-        _client.CalibrationStageChanged += (s, e) => Application.Current.Dispatcher.Invoke(() => IsCalibrating = e);
-        _client.CalibrationStatusChanged += (s, e) => Application.Current.Dispatcher.Invoke(() => IsCalibrated = e);
-        _client.TrackingStatusChanged += (s, e) => Application.Current.Dispatcher.Invoke(() => IsTracking = e);
+        _client.ConnectionStatusChanged += (s, e) => 
+            Application.Current.Dispatcher.Invoke(() => IsConnected = e);
+        _client.CalibrationStageChanged += (s, e) => 
+            Application.Current.Dispatcher.Invoke(() => IsCalibrating = e);
+        _client.CalibrationStatusChanged += (s, e) => 
+            Application.Current.Dispatcher.Invoke(() => IsCalibrated = e);
+        _client.TrackingStatusChanged += (s, e) => 
+            Application.Current.Dispatcher.Invoke(() => IsTracking = e);
         _client.Sample += (s, e) =>
-        {
             Data = $"X={e.EyeX:F1} Y={e.EyeY:F1}";
-        };
     }
 
     #region Internal
 
     const string WAITING_GAZE = "waiting for gaze data...";
 
-    readonly TobiiEyeXClient _client;
+    readonly GrpcClients.TobiiEyeXClient _client;
 
     partial void OnIsStreamingChanging(bool oldValue, bool newValue)
     {
-        if (oldValue)
+        if (oldValue == true)
         {
             _client.Stop();
             Data = string.Empty;

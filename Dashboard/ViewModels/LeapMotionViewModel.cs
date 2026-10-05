@@ -18,9 +18,10 @@ public partial class LeapMotionViewModel : ObservableObject
     [ObservableProperty]
     public partial bool IsLogging { get; set; } = false;
     [ObservableProperty]
-    public partial LeapMotion.ConfigType Config { get; set; } = LeapMotion.ConfigType.Default;
+    public partial LeapMotion.ConfigType Config { get; set; } 
+        = LeapMotion.ConfigType.Default;
 
-    public LeapMotionViewModel(LeapMotionClient leapMotionClient)
+    public LeapMotionViewModel(GrpcClients.LeapMotionClient leapMotionClient)
     {
         _client = leapMotionClient;
         _client.AvailabilityChanged += (s, e) =>
@@ -51,7 +52,7 @@ public partial class LeapMotionViewModel : ObservableObject
 
     const string WAITING_HAND = "waiting a hand to appear...";
 
-    readonly LeapMotionClient _client;
+    readonly GrpcClients.LeapMotionClient _client;
 
     partial void OnIsStreamingChanging(bool oldValue, bool newValue)
     {

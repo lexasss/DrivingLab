@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Windows;
+using Dashboard.GrpcClients;
 
 namespace Dashboard;
 
@@ -36,7 +37,9 @@ public partial class App : Application
         base.OnExit(e);
     }
 
-    private static void ConfigureServices(IServiceCollection services, ConfigurationManager config)
+    private static void ConfigureServices(
+        IServiceCollection services,
+        ConfigurationManager config)
     {
         services.Configure<AppSettings>(config);
 

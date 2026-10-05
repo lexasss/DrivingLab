@@ -2,9 +2,10 @@
 using Grpc.Core;
 using Microsoft.Extensions.Options;
 
-namespace Dashboard;
+namespace Dashboard.GrpcClients;
 
-public class DrivingClient : Client
+public sealed class DrivingClient 
+    : Client<Driving.Dispatcher.DispatcherClient, Driving.Event>
 {
     public event EventHandler<bool>? BaseConnectionChanged;
     public event EventHandler<bool>? WheelConnectionChanged;
@@ -22,6 +23,7 @@ public class DrivingClient : Client
     public bool IsActivePedalsHubConnected => _connectionStatus.IsActivePedalsHubConnected;
     public bool IsActiveBrakePedalConnected => _connectionStatus.IsActiveBrakePedalConnected;
     public bool IsActiveThrottlePedalConnected => _connectionStatus.IsActiveThrottlePedalConnected;
+
     public bool IsStreamingData => _isStreamingData;
     public bool IsLogging => _isLogging;
 
@@ -101,8 +103,6 @@ public class DrivingClient : Client
 
     #region Internal
 
-    readonly Driving.Dispatcher.DispatcherClient _client;
-    
     Driving.ConnectionStatus _connectionStatus = new()
     {
         IsBaseConnected = false,
@@ -113,13 +113,9 @@ public class DrivingClient : Client
         IsActiveThrottlePedalConnected = false
     };
 
-    bool _isStreamingData = false;
-    bool _isLogging = false;
-
     Driving.PeriodicEffectParameters _periodicEffectParams = new();
 
     AsyncServerStreamingCall<Driving.Data>? _dataCall;
-    AsyncServerStreamingCall<Driving.Event>? _eventsCall;
 
     protected override void Initialize()
     {
@@ -161,71 +157,57 @@ public class DrivingClient : Client
         }
     }
 
-    private async Task ReadEvents()
+    protected override IAsyncStreamReader<Driving.Event> GetEventStream()
     {
-        try
+        _eventsCall = _client.ReadEvents(new Empty());
+        return _eventsCall.ResponseStream;
+    }
+
+    protected override bool HandleEvent(Driving.Event evt)
+    {
+        switch (evt.ValueCase)
         {
-            _eventsCall = _client.ReadEvents(new Empty());
-            var responseStream = _eventsCall.ResponseStream;
-
-            while (await responseStream.MoveNext(_eventsCts.Token))
-            {
-                if (_eventsCts.IsCancellationRequested)
-                    break;
-
-                var evt = responseStream.Current;
-                switch (evt.ValueCase)
+            case Driving.Event.ValueOneofCase.ConnectionStatus:
+                var status = evt.ConnectionStatus;
+                if (status.IsBaseConnected != _connectionStatus.IsBaseConnected)
                 {
-                    case Driving.Event.ValueOneofCase.ConnectionStatus:
-                        var status = evt.ConnectionStatus;
-                        if (status.IsBaseConnected != _connectionStatus.IsBaseConnected)
-                        {
-                            _connectionStatus.IsBaseConnected = status.IsBaseConnected;
-                            BaseConnectionChanged?.Invoke(this, _connectionStatus.IsBaseConnected);
-                        }
-                        if (status.IsWheelConnected != _connectionStatus.IsWheelConnected)
-                        {
-                            _connectionStatus.IsWheelConnected = status.IsWheelConnected;
-                            WheelConnectionChanged?.Invoke(this, _connectionStatus.IsWheelConnected);
-                        }
-                        if (status.ArePedalsConnected != _connectionStatus.ArePedalsConnected)
-                        {
-                            _connectionStatus.ArePedalsConnected = status.ArePedalsConnected;
-                            PedalsConnectionChanged?.Invoke(this, _connectionStatus.ArePedalsConnected);
-                        }
-                        if (status.IsActivePedalsHubConnected != _connectionStatus.IsActivePedalsHubConnected)
-                        {
-                            _connectionStatus.IsActivePedalsHubConnected = status.IsActivePedalsHubConnected;
-                            ActivePedalsHubConnectionChanged?.Invoke(this, _connectionStatus.IsActivePedalsHubConnected);
-                        }
-                        if (status.IsActiveBrakePedalConnected != _connectionStatus.IsActivePedalsHubConnected)
-                        {
-                            _connectionStatus.IsActivePedalsHubConnected = status.IsActivePedalsHubConnected;
-                            ActiveBrakeConnectionChanged?.Invoke(this, _connectionStatus.IsActivePedalsHubConnected);
-                        }
-                        if (status.IsActiveThrottlePedalConnected != _connectionStatus.IsActiveThrottlePedalConnected)
-                        {
-                            _connectionStatus.IsActiveThrottlePedalConnected = status.IsActiveThrottlePedalConnected;
-                            ActiveThrottleConnectionChanged?.Invoke(this, _connectionStatus.IsActiveThrottlePedalConnected);
-                        }
-                        break;
-                    case Driving.Event.ValueOneofCase.EffectFinished:
-                        EffectFinished?.Invoke(this, EventArgs.Empty);
-                        break;
-                    default:
-                        System.Diagnostics.Debug.WriteLine($"Driving event '{evt.ValueCase}' is not supported");
-                        break;
+                    _connectionStatus.IsBaseConnected = status.IsBaseConnected;
+                    BaseConnectionChanged?.Invoke(this, _connectionStatus.IsBaseConnected);
                 }
-            }
+                if (status.IsWheelConnected != _connectionStatus.IsWheelConnected)
+                {
+                    _connectionStatus.IsWheelConnected = status.IsWheelConnected;
+                    WheelConnectionChanged?.Invoke(this, _connectionStatus.IsWheelConnected);
+                }
+                if (status.ArePedalsConnected != _connectionStatus.ArePedalsConnected)
+                {
+                    _connectionStatus.ArePedalsConnected = status.ArePedalsConnected;
+                    PedalsConnectionChanged?.Invoke(this, _connectionStatus.ArePedalsConnected);
+                }
+                if (status.IsActivePedalsHubConnected != _connectionStatus.IsActivePedalsHubConnected)
+                {
+                    _connectionStatus.IsActivePedalsHubConnected = status.IsActivePedalsHubConnected;
+                    ActivePedalsHubConnectionChanged?.Invoke(this, _connectionStatus.IsActivePedalsHubConnected);
+                }
+                if (status.IsActiveBrakePedalConnected != _connectionStatus.IsActivePedalsHubConnected)
+                {
+                    _connectionStatus.IsActivePedalsHubConnected = status.IsActivePedalsHubConnected;
+                    ActiveBrakeConnectionChanged?.Invoke(this, _connectionStatus.IsActivePedalsHubConnected);
+                }
+                if (status.IsActiveThrottlePedalConnected != _connectionStatus.IsActiveThrottlePedalConnected)
+                {
+                    _connectionStatus.IsActiveThrottlePedalConnected = status.IsActiveThrottlePedalConnected;
+                    ActiveThrottleConnectionChanged?.Invoke(this, _connectionStatus.IsActiveThrottlePedalConnected);
+                }
+                break;
+            case Driving.Event.ValueOneofCase.EffectFinished:
+                EffectFinished?.Invoke(this, EventArgs.Empty);
+                break;
+            default:
+                return false;
         }
-        catch (RpcException ex)
-        {
-            LogException(ex);
-        }
-        finally
-        {
-            _eventsCall = null;
-        }
+
+        return true;
     }
 
     #endregion

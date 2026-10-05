@@ -9,8 +9,7 @@ internal class DoubleRangeValidationRule : ValidationRule
     public double Maximum { get; set; } = double.MaxValue;
 
     public override ValidationResult Validate(
-        object value,
-        CultureInfo cultureInfo)
+        object value, CultureInfo cultureInfo)
     {
         if (value is string text &&
             double.TryParse(text, NumberStyles.Float, cultureInfo, out double number))

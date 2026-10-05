@@ -25,14 +25,17 @@ public partial class TensionRViewModel : ObservableObject
     [ObservableProperty]
     public partial int Tension { get; set; } = 0;
     [ObservableProperty]
-    public partial TensionR.Side Side { get; set; } = TensionR.Side.Both;
+    public partial TensionR.Side Side { get; set; } = 
+        TensionR.Side.Both;
     [ObservableProperty]
     public partial COMUtils.Port? ComPort { get; set; } = null;
 
-    public string CalibrateButtonText => IsCalibrating ? "Calibrating" : "Calibrate";
+    public string CalibrateButtonText => IsCalibrating 
+        ? "Calibrating" 
+        : "Calibrate";
     public ObservableCollection<COMUtils.Port> ComPorts { get; } = [];
 
-    public TensionRViewModel(TensionRClient tensionRClient)
+    public TensionRViewModel(GrpcClients.TensionRClient tensionRClient)
     {
         _client = tensionRClient;
 
@@ -99,7 +102,7 @@ public partial class TensionRViewModel : ObservableObject
 
     const string TENSIONR_PORT_DESCRIPTION = "Silicon Labs CP210x USB to UART Bridge";
 
-    readonly TensionRClient _client;
+    readonly GrpcClients.TensionRClient _client;
     readonly COMUtils _comUtils = new();
 
     [RelayCommand]
@@ -150,7 +153,8 @@ public partial class TensionRViewModel : ObservableObject
 
     private void SetDefaulPort()
     {
-        ComPort = ComPorts.FirstOrDefault(port => port.Description?.Contains(TENSIONR_PORT_DESCRIPTION) ?? false);
+        ComPort = ComPorts.FirstOrDefault(port => 
+            port.Description?.Contains(TENSIONR_PORT_DESCRIPTION) ?? false);
     }
 
     #endregion

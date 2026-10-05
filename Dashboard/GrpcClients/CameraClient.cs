@@ -3,9 +3,10 @@ using Grpc.Core;
 using Microsoft.Extensions.Options;
 using Dashboard.Tools;
 
-namespace Dashboard;
+namespace Dashboard.GrpcClients;
 
-public class CameraClient : Client
+public sealed class CameraClient 
+    : Client<Camera.Dispatcher.DispatcherClient, Camera.Event>
 {
     public event EventHandler<bool>? RecordingChanged;
 
@@ -100,7 +101,10 @@ public class CameraClient : Client
             filename = $"{DateTime.Now:u}.mp4".ToPath();
         }
 
-        var isSuccess = _client.SetVideoFileName(new Common.String() { Value = filename }).Value;
+        var isSuccess = _client.SetVideoFileName(new Common.String() {
+            Value = filename
+        }).Value;
+
         if (isSuccess)
         {
             _videoFileName = filename;
@@ -111,15 +115,11 @@ public class CameraClient : Client
 
     #region Internal
 
-    readonly Camera.Dispatcher.DispatcherClient _client;
-
     bool _isCameraStreamReady = false;
     string _videoFileName = string.Empty;
     bool _isRecording = false;
     Camera.Camera? _camera = null;
     Camera.Stream? _stream = null;
-
-    AsyncServerStreamingCall<Camera.Event>? _eventsCall;
 
     protected override void Initialize()
     {
@@ -141,38 +141,24 @@ public class CameraClient : Client
         }
     }
 
-    private async Task ReadEvents()
+    protected override IAsyncStreamReader<Camera.Event> GetEventStream()
     {
-        try
-        {
-            _eventsCall = _client.ReadEvents(new Empty());
-            var responseStream = _eventsCall.ResponseStream;
+        _eventsCall = _client.ReadEvents(new Empty());
+        return _eventsCall.ResponseStream;
+    }
 
-            while (await responseStream.MoveNext(_eventsCts.Token))
-            {
-                if (_eventsCts.IsCancellationRequested)
-                    break;
+    protected override bool HandleEvent(Camera.Event evt)
+    {
+        switch (evt.ValueCase)
+        {
+            case global::Camera.Event.ValueOneofCase.IsRecording:
+                RecordingChanged?.Invoke(this, evt.IsRecording);
+                break;
+            default:
+                return false;
+        }
 
-                var evt = responseStream.Current;
-                switch (evt.ValueCase)
-                {
-                    case global::Camera.Event.ValueOneofCase.IsRecording:
-                        RecordingChanged?.Invoke(this, evt.IsRecording);
-                        break;
-                    default:
-                        System.Diagnostics.Debug.WriteLine($"Camera event '{evt.ValueCase}' is not supported");
-                        break;
-                }
-            }
-        }
-        catch (RpcException ex)
-        {
-            LogException(ex);
-        }
-        finally
-        {
-            _eventsCall = null;
-        }
+        return true;
     }
 
     #endregion

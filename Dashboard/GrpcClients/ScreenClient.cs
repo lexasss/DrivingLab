@@ -1,11 +1,11 @@
 ﻿using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Microsoft.Extensions.Options;
-using System.IO;
 
-namespace Dashboard;
+namespace Dashboard.GrpcClients;
 
-public class ScreenClient : Client
+public sealed class ScreenClient 
+    : Client<Screen.Dispatcher.DispatcherClient, Screen.Event>
 {
     public event EventHandler<string>? MediaHidden;
 
@@ -24,7 +24,9 @@ public class ScreenClient : Client
 
     public Screen.Screens GetScreens()
     {
-        return _isAvailable ? _client.GetScreens(new Empty()) : new Screen.Screens();
+        return _isAvailable 
+            ? _client.GetScreens(new Empty())
+            : new Screen.Screens();
     }
 
     public async Task<string?> Show(
@@ -45,7 +47,10 @@ public class ScreenClient : Client
             Size = size,
             Duration = duration ?? 0
         });
-        return string.IsNullOrEmpty(response?.Value) ? null : response.Value;
+
+        return string.IsNullOrEmpty(response?.Value)
+            ? null
+            : response.Value;
     }
 
     public void Hide(string id)
@@ -59,17 +64,15 @@ public class ScreenClient : Client
     public async Task<Common.UploadResult> UploadFile(string filename)
     {
         if (!_isAvailable)
-            return new Common.UploadResult() { ErrorMessage = "Service unavailable" };
+            return new Common.UploadResult() { 
+                ErrorMessage = "Service unavailable"
+            };
 
         using var call = _client.UploadFile();
         return await FileService.UploadFile(call, filename, "image");
     }
 
     #region Internal
-
-    readonly Screen.Dispatcher.DispatcherClient _client;
-    
-    AsyncServerStreamingCall<Screen.Event>? _eventsCall;
 
     protected override void Initialize()
     {
@@ -80,38 +83,24 @@ public class ScreenClient : Client
         }
     }
 
-    private async Task ReadEvents()
+    protected override IAsyncStreamReader<Screen.Event> GetEventStream()
     {
-        try
-        {
-            _eventsCall = _client.ReadEvents(new Empty());
-            var responseStream = _eventsCall.ResponseStream;
+        _eventsCall = _client.ReadEvents(new Empty());
+        return _eventsCall.ResponseStream;
+    }
 
-            while (await responseStream.MoveNext(_eventsCts.Token))
-            {
-                if (_eventsCts.IsCancellationRequested)
-                    break;
+    protected override bool HandleEvent(Screen.Event evt)
+    {
+        switch (evt.ValueCase)
+        {
+            case Screen.Event.ValueOneofCase.HiddenMediaId:
+                MediaHidden?.Invoke(this, evt.HiddenMediaId);
+                break;
+            default:
+                return false;
+        }
 
-                var evt = responseStream.Current;
-                switch (evt.ValueCase)
-                {
-                    case Screen.Event.ValueOneofCase.HiddenMediaId:
-                        MediaHidden?.Invoke(this, evt.HiddenMediaId);
-                        break;
-                    default:
-                        System.Diagnostics.Debug.WriteLine($"Screen event '{evt.ValueCase}' is not supported");
-                        break;
-                }
-            }
-        }
-        catch (RpcException ex)
-        {
-            LogException(ex);
-        }
-        finally
-        {
-            _eventsCall = null;
-        }
+        return true;
     }
 
     #endregion

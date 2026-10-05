@@ -41,14 +41,16 @@ public partial class DrivingViewModel : ObservableObject
     [ObservableProperty]
     public partial Driving.EffectType EffectType { get; set; } = Driving.EffectType.Periodic;
     [ObservableProperty]
-    public partial Driving.EffectVariable EffectVariable { get; set; } = Driving.EffectVariable.ForceN;
+    public partial Driving.EffectVariable EffectVariable { get; set; } =
+        Driving.EffectVariable.ForceN;
     [ObservableProperty]
     public partial float EffectAmplitude { get; set; } = 1;
     [ObservableProperty]
     public partial int EffectDuration { get; set; } = 1000; // ms
 
     [ObservableProperty]
-    public partial Driving.PeriodicEffectType PeriodicEffectType { get ; set; } = Driving.PeriodicEffectType.Sine;
+    public partial Driving.PeriodicEffectType PeriodicEffectType { get ; set; } = 
+        Driving.PeriodicEffectType.Sine;
     [ObservableProperty]
     public partial float PeriodicEffectFrequency { get; set; } = 20;
 
@@ -60,7 +62,7 @@ public partial class DrivingViewModel : ObservableObject
     [ObservableProperty]
     public partial double PointOfView { get; set; } = double.NaN;
 
-    public DrivingViewModel(DrivingClient drivingClient)
+    public DrivingViewModel(GrpcClients.DrivingClient drivingClient)
     {
         _client = drivingClient;
         _client.AvailabilityChanged += (s, e) =>
@@ -119,7 +121,7 @@ public partial class DrivingViewModel : ObservableObject
 
     #region Internal
 
-    readonly DrivingClient _client;
+    readonly GrpcClients.DrivingClient _client;
 
     [RelayCommand]
     private void PlayBrakeEffect()
@@ -210,7 +212,9 @@ public partial class DrivingViewModel : ObservableObject
         Sliders[5].Value = data.ActiveBrakePedal;
         Sliders[6].Value = data.ActiveThrottlePedal;
 
-        PointOfView = data.RotaryTiltButton.IsTilted ? data.RotaryTiltButton.Degrees : double.NaN;
+        PointOfView = data.RotaryTiltButton.IsTilted
+            ? data.RotaryTiltButton.Degrees
+            : double.NaN;
     }
 
     #endregion

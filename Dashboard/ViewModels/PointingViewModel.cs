@@ -39,9 +39,10 @@ public partial class PointingViewModel : ObservableObject
     [ObservableProperty]
     public partial double PointOfView { get; set; } = double.NaN;
     [ObservableProperty]
-    public partial System.Windows.Point Point { get; set; } = new System.Windows.Point(0, 0);
+    public partial System.Windows.Point Point { get; set; } = 
+        new System.Windows.Point(0, 0);
 
-    public PointingViewModel(PointingClient pointingClient)
+    public PointingViewModel(GrpcClients.PointingClient pointingClient)
     {
         _client = pointingClient;
         _client.AvailabilityChanged += (s, e) =>
@@ -55,18 +56,7 @@ public partial class PointingViewModel : ObservableObject
             if (IsAvailable)
             {
                 UpdateDeviceList();
-
-                System.Windows.Application.Current.Dispatcher.Invoke(() =>
-                {
-                    var device = _client.GetCurrentDevice();
-                    if (device != null)
-                        for (int i = 0; i < Devices.Count; i++)
-                            if (device.Name == Devices[i].Name && device.Type == Devices[i].Type)
-                            {
-                                Device = Devices[i];
-                                break;
-                            }
-                });
+                SetInitialDevice();
             }
         };
         _client.ConnectionChanged += (s, e) =>
@@ -92,7 +82,7 @@ public partial class PointingViewModel : ObservableObject
 
     #region Internal
 
-    readonly PointingClient _client;
+    readonly GrpcClients.PointingClient _client;
 
     [RelayCommand]
     private void UpdateDeviceList()
@@ -130,6 +120,22 @@ public partial class PointingViewModel : ObservableObject
         IsLogging = _client.IsLogging;
     }
 
+    private void SetInitialDevice()
+    {
+        System.Windows.Application.Current.Dispatcher.Invoke(() =>
+        {
+            var device = _client.GetCurrentDevice();
+            if (device != null)
+                for (int i = 0; i < Devices.Count; i++)
+                    if (device.Name == Devices[i].Name && 
+                        device.Type == Devices[i].Type)
+                    {
+                        Device = Devices[i];
+                        break;
+                    }
+        });
+    }
+
     private void SetData(Pointing.Data data)
     {
         Data = $"Z = {data.Point.Z:F3} | {data.Rotation.Z:F3}";
@@ -144,7 +150,9 @@ public partial class PointingViewModel : ObservableObject
                 Sliders[slider.Id].Value = slider.Value;
         foreach (var pointOfView in data.PointOfViews)
             if (pointOfView.Id == 0)
-                PointOfView = pointOfView.IsPressed ? pointOfView.Degrees : double.NaN;
+                PointOfView = pointOfView.IsPressed 
+                    ? pointOfView.Degrees 
+                    : double.NaN;
     }
 
     #endregion

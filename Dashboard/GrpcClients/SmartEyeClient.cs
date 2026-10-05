@@ -2,9 +2,10 @@
 using Grpc.Core;
 using Microsoft.Extensions.Options;
 
-namespace Dashboard;
+namespace Dashboard.GrpcClients;
 
-public class SmartEyeClient : Client
+public sealed class SmartEyeClient 
+    : Client<SmartEye.Dispatcher.DispatcherClient, SmartEye.Event>
 {
     public event EventHandler<bool>? ConnectionChanged;
     public event EventHandler<SmartEye.Intersection>? IntersectionChanged;
@@ -78,14 +79,6 @@ public class SmartEyeClient : Client
 
     #region Internal
 
-    readonly SmartEye.Dispatcher.DispatcherClient _client;
-
-    bool _isConnected = false;
-    bool _isStreamingData = false;
-    bool _isLogging = false;
-
-    AsyncServerStreamingCall<SmartEye.Event>? _eventsCall;
-
     protected override void Initialize()
     {
         _isAvailable = _client.IsAvailable(new Empty()).Value;
@@ -99,49 +92,35 @@ public class SmartEyeClient : Client
         }
     }
 
-    private async Task ReadEvents()
+    protected override IAsyncStreamReader<SmartEye.Event> GetEventStream()
     {
-        try
+        _eventsCall = _client.ReadEvents(new Empty());
+        return _eventsCall.ResponseStream;
+    }
+
+    protected override bool HandleEvent(SmartEye.Event evt)
+    {
+        switch (evt.ValueCase)
         {
-            _eventsCall = _client.ReadEvents(new Empty());
-            var responseStream = _eventsCall.ResponseStream;
-
-            while (await responseStream.MoveNext(_eventsCts.Token))
-            {
-                if (_eventsCts.IsCancellationRequested)
-                    break;
-
-                var evt = responseStream.Current;
-                switch (evt.ValueCase)
+            case SmartEye.Event.ValueOneofCase.IsConnected:
+                _isConnected = evt.IsConnected;
+                ConnectionChanged?.Invoke(this, _isConnected);
+                if (!_isConnected)
                 {
-                    case SmartEye.Event.ValueOneofCase.IsConnected:
-                        _isConnected = evt.IsConnected;
-                        ConnectionChanged?.Invoke(this, _isConnected);
-                        if (!_isConnected)
-                        {
-                            // 
-                        }
-                        break;
-                    case SmartEye.Event.ValueOneofCase.Intersection:
-                        IntersectionChanged?.Invoke(this, evt.Intersection);
-                        break;
-                    case SmartEye.Event.ValueOneofCase.Intersections:
-                        // it was not configured for this event to receive
-                        break;
-                    default:
-                        System.Diagnostics.Debug.WriteLine($"SmartEye event '{evt.ValueCase}' is not supported");
-                        break;
+                    // 
                 }
-            }
+                break;
+            case SmartEye.Event.ValueOneofCase.Intersection:
+                IntersectionChanged?.Invoke(this, evt.Intersection);
+                break;
+            case SmartEye.Event.ValueOneofCase.Intersections:
+                // it was not configured for this event to receive
+                break;
+            default:
+                return false;
         }
-        catch (RpcException ex)
-        {
-            LogException(ex);
-        }
-        finally
-        {
-            _eventsCall = null;
-        }
+
+        return true;
     }
 
     #endregion

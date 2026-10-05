@@ -2,17 +2,19 @@
 using Grpc.Core;
 using Microsoft.Extensions.Options;
 
-namespace Dashboard;
+namespace Dashboard.GrpcClients;
 
-public class TensionRClient : Client
+public sealed class TensionRClient 
+    : Client<TensionR.Dispatcher.DispatcherClient, TensionR.Event>
 {
     public event EventHandler<bool>? ConnectionChanged;
     public event EventHandler<bool>? CalibrationChanged;
     public event EventHandler<bool>? EnabledChanged;
 
-    public bool IsConnected => _isConnected;
     public bool IsCalibrated => _isCalibrated;
     public bool IsEnabled => _isEnabled;
+
+    public bool IsConnected => _isConnected;
     public bool IsLogging => _isLogging;
 
     public TensionRClient(IOptions<AppSettings> appSettings)
@@ -33,7 +35,9 @@ public class TensionRClient : Client
         if (!_isAvailable)
             return;
 
-        _ = _client.Connect(new Common.String() { Value = port });
+        _ = _client.Connect(new Common.String() {
+            Value = port
+        });
     }
 
     public void SetLoggingEnabled(bool enabled)
@@ -88,14 +92,8 @@ public class TensionRClient : Client
 
     #region Internal
 
-    readonly TensionR.Dispatcher.DispatcherClient _client;
-
-    bool _isConnected = false;
     bool _isCalibrated = false;
     bool _isEnabled = false;
-    bool _isLogging = false;
-
-    AsyncServerStreamingCall<TensionR.Event>? _eventsCall;
 
     protected override void Initialize()
     {
@@ -111,47 +109,33 @@ public class TensionRClient : Client
         }
     }
 
-    private async Task ReadEvents()
+    protected override IAsyncStreamReader<TensionR.Event> GetEventStream()
     {
-        try
-        {
-            _eventsCall = _client.ReadEvents(new Empty());
-            var responseStream = _eventsCall.ResponseStream;
+        _eventsCall = _client.ReadEvents(new Empty());
+        return _eventsCall.ResponseStream;
+    }
 
-            while (await responseStream.MoveNext(_eventsCts.Token))
-            {
-                if (_eventsCts.IsCancellationRequested)
-                    break;
+    protected override bool HandleEvent(TensionR.Event evt)
+    {
+        switch (evt.ValueCase)
+        {
+            case TensionR.Event.ValueOneofCase.IsConnected:
+                _isConnected = evt.IsConnected;
+                ConnectionChanged?.Invoke(this, _isConnected);
+                break;
+            case TensionR.Event.ValueOneofCase.IsCalibrated:
+                _isCalibrated = evt.IsCalibrated;
+                CalibrationChanged?.Invoke(this, _isCalibrated);
+                break;
+            case TensionR.Event.ValueOneofCase.IsEnabled:
+                _isEnabled = evt.IsEnabled;
+                EnabledChanged?.Invoke(this, _isEnabled);
+                break;
+            default:
+                return false;
+        }
 
-                var evt = responseStream.Current;
-                switch (evt.ValueCase)
-                {
-                    case TensionR.Event.ValueOneofCase.IsConnected:
-                        _isConnected = evt.IsConnected;
-                        ConnectionChanged?.Invoke(this, _isConnected);
-                        break;
-                    case TensionR.Event.ValueOneofCase.IsCalibrated:
-                        _isCalibrated = evt.IsCalibrated;
-                        CalibrationChanged?.Invoke(this, _isCalibrated);
-                        break;
-                    case TensionR.Event.ValueOneofCase.IsEnabled:
-                        _isEnabled = evt.IsEnabled;
-                        EnabledChanged?.Invoke(this, _isEnabled);
-                        break;
-                    default:
-                        System.Diagnostics.Debug.WriteLine($"TensionR event '{evt.ValueCase}' is not supported");
-                        break;
-                }
-            }
-        }
-        catch (RpcException ex)
-        {
-            LogException(ex);
-        }
-        finally
-        {
-            _eventsCall = null;
-        }
+        return true;
     }
 
     #endregion

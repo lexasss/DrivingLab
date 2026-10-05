@@ -13,7 +13,8 @@ public partial class StreamDeckViewModel : ObservableObject
     [ObservableProperty]
     public partial string Data { get; set; } = string.Empty;
     [ObservableProperty]
-    public partial string KeyboardSize { get; private set; } = string.Empty;
+    public partial string KeyboardSize { get; private set; } = 
+        string.Empty;
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CanUploadFile))]
     public partial string Filename { get; set; } = string.Empty;
@@ -26,15 +27,20 @@ public partial class StreamDeckViewModel : ObservableObject
     public partial string KeyId { get; set; } = "0";
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(SetKeyButtonText))]
-    public partial string KeyFileNameOrColor { get; set; } = string.Empty;
+    public partial string KeyFileNameOrColor { get; set; } = 
+        string.Empty;
 
     public bool CanSetKey => IsConnected;
-    public string SetKeyButtonText => string.IsNullOrEmpty(KeyFileNameOrColor) ? "Clear" : "Set";
+    public string SetKeyButtonText => string.IsNullOrEmpty(KeyFileNameOrColor)
+        ? "Clear" 
+        : "Set";
     public ObservableCollection<ButtonState> Keys { get; } = 
-        new(Enumerable.Range(0, KEYBOARD_UI_ROWS * KEYBOARD_UI_COLUMNS)
+        new(Enumerable
+            .Range(0, KEYBOARD_UI_ROWS * KEYBOARD_UI_COLUMNS)
             .Select(i => new ButtonState()));
 
-    public StreamDeckViewModel(StreamDeckClient streamDeckClient)
+    public StreamDeckViewModel(
+        GrpcClients.StreamDeckClient streamDeckClient)
     {
         _client = streamDeckClient;
 
@@ -55,7 +61,9 @@ public partial class StreamDeckViewModel : ObservableObject
                 KeyIds = [];
             }
 
-            KeyboardSize = _keyboard?.Size > 0 ? $"{_keyboard.Rows}x{_keyboard.Columns}" : string.Empty;
+            KeyboardSize = _keyboard?.Size > 0 
+                ? $"{_keyboard.Rows}x{_keyboard.Columns}" 
+                : string.Empty;
 
             OnPropertyChanged(nameof(IsAvailable));
         };
@@ -70,13 +78,15 @@ public partial class StreamDeckViewModel : ObservableObject
             int keyboardRows = _keyboard?.Rows ?? KEYBOARD_UI_ROWS;
 
             // UI represents buttons from the left-top StreamDeck corner
-            if (e.Id < KEYBOARD_UI_COLUMNS)       // first row, left KEYBOARD_UI_COLUMNS buttons
+            if (e.Id < KEYBOARD_UI_COLUMNS)
             {
+                // first row, left KEYBOARD_UI_COLUMNS buttons
                 Keys[e.Id].IsPressed = e.IsPressed;
             }
-            else if (e.Id >= keyboardCols 
-                  && e.Id < (keyboardCols + KEYBOARD_UI_COLUMNS))  // second row, left KEYBOARD_UI_COLUMNS buttons
+            else if (e.Id >= keyboardCols &&
+                     e.Id < (keyboardCols + KEYBOARD_UI_COLUMNS)) 
             {
+                // second row, left KEYBOARD_UI_COLUMNS buttons
                 Keys[e.Id - (keyboardCols - KEYBOARD_UI_COLUMNS)].IsPressed = e.IsPressed;
             }
         };
@@ -89,7 +99,7 @@ public partial class StreamDeckViewModel : ObservableObject
     const int KEYBOARD_UI_ROWS = 2;
     const int KEYBOARD_UI_COLUMNS = 5;
 
-    readonly StreamDeckClient _client;
+    readonly GrpcClients.StreamDeckClient _client;
 
     StreamDeck.Keyboard? _keyboard;
 

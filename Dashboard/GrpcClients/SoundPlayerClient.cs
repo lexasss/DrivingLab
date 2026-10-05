@@ -2,9 +2,10 @@
 using Grpc.Core;
 using Microsoft.Extensions.Options;
 
-namespace Dashboard;
+namespace Dashboard.GrpcClients;
 
-public class SoundPlayerClient : Client
+public sealed class SoundPlayerClient 
+    : Client<SoundPlayer.Dispatcher.DispatcherClient, SoundPlayer.Event>
 {
     public string DeviceId { get; set; } = string.Empty;
 
@@ -25,7 +26,9 @@ public class SoundPlayerClient : Client
 
     public SoundPlayer.Devices GetDevices()
     {
-        return _isAvailable ? _client.GetDevices(new Empty()) : new SoundPlayer.Devices();
+        return _isAvailable
+            ? _client.GetDevices(new Empty())
+            : new SoundPlayer.Devices();
     }
 
     public async Task<bool> PlayFile(string filename)
@@ -64,17 +67,15 @@ public class SoundPlayerClient : Client
     public async Task<Common.UploadResult> UploadFile(string filename)
     {
         if (!_isAvailable)
-            return new Common.UploadResult() { ErrorMessage = "Service unavailable" };
+            return new Common.UploadResult() {
+                ErrorMessage = "Service unavailable"
+            };
 
         using var call = _client.UploadFile();
         return await FileService.UploadFile(call, filename, "audio");
     }
 
     #region Internal
-
-    readonly SoundPlayer.Dispatcher.DispatcherClient _client;
-
-    AsyncServerStreamingCall<SoundPlayer.Event>? _eventsCall;
 
     protected override void Initialize()
     {
@@ -85,38 +86,24 @@ public class SoundPlayerClient : Client
         }
     }
 
-    private async Task ReadEvents()
+    protected override IAsyncStreamReader<SoundPlayer.Event> GetEventStream()
     {
-        try
-        {
-            _eventsCall = _client.ReadEvents(new Empty());
-            var responseStream = _eventsCall.ResponseStream;
+        _eventsCall = _client.ReadEvents(new Empty());
+        return _eventsCall.ResponseStream;
+    }
 
-            while (await responseStream.MoveNext(_eventsCts.Token))
-            {
-                if (_eventsCts.IsCancellationRequested)
-                    break;
+    protected override bool HandleEvent(SoundPlayer.Event evt)
+    {
+        switch (evt.ValueCase)
+        {
+            case SoundPlayer.Event.ValueOneofCase.IsPlaybackFinished:
+                PlaybackFinished?.Invoke(this, EventArgs.Empty);
+                break;
+            default:
+                return false;
+        }
 
-                var evt = responseStream.Current;
-                switch (evt.ValueCase)
-                {
-                    case SoundPlayer.Event.ValueOneofCase.IsPlaybackFinished:
-                        PlaybackFinished?.Invoke(this, EventArgs.Empty);
-                        break;
-                    default:
-                        System.Diagnostics.Debug.WriteLine($"SoundPlayer event '{evt.ValueCase}' is not supported");
-                        break;
-                }
-            }
-        }
-        catch (RpcException ex)
-        {
-            LogException(ex);
-        }
-        finally
-        {
-            _eventsCall = null;
-        }
+        return true;
     }
 
     #endregion

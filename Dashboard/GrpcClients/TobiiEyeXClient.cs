@@ -2,9 +2,10 @@
 using Grpc.Core;
 using Microsoft.Extensions.Options;
 
-namespace Dashboard;
+namespace Dashboard.GrpcClients;
 
-public class TobiiEyeXClient : Client
+public sealed class TobiiEyeXClient
+    : Client<Gaze.Dispatcher.DispatcherClient, Gaze.Event>
 {
     public event EventHandler<bool>? ConnectionStatusChanged;
     public event EventHandler<bool>? CalibrationStageChanged;
@@ -12,10 +13,11 @@ public class TobiiEyeXClient : Client
     public event EventHandler<bool>? TrackingStatusChanged;
     public event EventHandler<Gaze.Sample>? Sample;
 
-    public bool IsConnected => _isConnected;
     public bool IsCalibrating => _isCalibrating;
     public bool IsCalibrated => _isCalibrated;
     public bool IsTracking => _isTracking;
+
+    public bool IsConnected => _isConnected;
     public bool IsStreamingData => _isStreamingData;
     public bool IsLogging => _isLogging;
 
@@ -58,8 +60,7 @@ public class TobiiEyeXClient : Client
 
         if (_isLogging != enabled)
         {
-            _isLogging = _client.SetLogFileName(new Common.String()
-            {
+            _isLogging = _client.SetLogFileName(new Common.String() {
                 Value = enabled
                     ? "eyex.tsv"
                     : string.Empty
@@ -69,17 +70,11 @@ public class TobiiEyeXClient : Client
 
     #region Internal
 
-    readonly Gaze.Dispatcher.DispatcherClient _client;
-
-    bool _isConnected = false;
     bool _isCalibrating = false;
     bool _isCalibrated = false;
     bool _isTracking = false;
-    bool _isStreamingData = false;
-    bool _isLogging = false;
 
     AsyncServerStreamingCall<Gaze.Sample>? _dataCall;
-    AsyncServerStreamingCall<Gaze.Event>? _eventsCall;
         
     protected override void Initialize()
     {
@@ -122,57 +117,43 @@ public class TobiiEyeXClient : Client
         }
     }
 
-    private async Task ReadEvents()
+    protected override IAsyncStreamReader<Gaze.Event> GetEventStream()
     {
-        try
+        _eventsCall = _client.ReadEvents(new Empty());
+        return _eventsCall.ResponseStream;
+    }
+
+    protected override bool HandleEvent(Gaze.Event evt)
+    {
+        switch (evt.ValueCase)
         {
-            _eventsCall = _client.ReadEvents(new Empty());
-            var responseStream = _eventsCall.ResponseStream;
-
-            while (await responseStream.MoveNext(_eventsCts.Token))
-            {
-                if (_eventsCts.IsCancellationRequested)
-                    break;
-
-                var evt = responseStream.Current;
-                switch (evt.ValueCase)
+            case Gaze.Event.ValueOneofCase.Status:
+                if (_isConnected != evt.Status.IsConnected)
                 {
-                    case Gaze.Event.ValueOneofCase.Status:
-                        if (_isConnected != evt.Status.IsConnected)
-                        {
-                            _isConnected = evt.Status.IsConnected;
-                            ConnectionStatusChanged?.Invoke(this, _isConnected);
-                        }
-                        if (_isCalibrating != evt.Status.IsCalibrating)
-                        {
-                            _isCalibrating = evt.Status.IsCalibrating;
-                            CalibrationStageChanged?.Invoke(this, _isCalibrating);
-                        }
-                        if (_isCalibrated != evt.Status.IsCalibrated)
-                        {
-                            _isCalibrated = evt.Status.IsCalibrated;
-                            CalibrationStatusChanged?.Invoke(this, _isCalibrated);
-                        }
-                        if (_isTracking != evt.Status.IsTracking)
-                        {
-                            _isTracking = evt.Status.IsTracking;
-                            TrackingStatusChanged?.Invoke(this, _isTracking);
-                        }
-                        break;
-                    default:
-                        System.Diagnostics.Debug.WriteLine($"LeapMotion event '{evt.ValueCase}' is not supported");
-                        break;
+                    _isConnected = evt.Status.IsConnected;
+                    ConnectionStatusChanged?.Invoke(this, _isConnected);
                 }
-            }
+                if (_isCalibrating != evt.Status.IsCalibrating)
+                {
+                    _isCalibrating = evt.Status.IsCalibrating;
+                    CalibrationStageChanged?.Invoke(this, _isCalibrating);
+                }
+                if (_isCalibrated != evt.Status.IsCalibrated)
+                {
+                    _isCalibrated = evt.Status.IsCalibrated;
+                    CalibrationStatusChanged?.Invoke(this, _isCalibrated);
+                }
+                if (_isTracking != evt.Status.IsTracking)
+                {
+                    _isTracking = evt.Status.IsTracking;
+                    TrackingStatusChanged?.Invoke(this, _isTracking);
+                }
+                break;
+            default:
+                return false;
         }
-        catch (RpcException ex)
-        {
-            LogException(ex);
-        }
-        finally
-        {
-            _eventsCall = null;
-        }
+
+        return true;
     }
 
     #endregion

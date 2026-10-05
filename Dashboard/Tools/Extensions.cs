@@ -19,7 +19,7 @@ internal static class StringExt
     }
 }
 
-internal static class NumExt
+internal static class NumberExt
 {
     public static T Wrap<T>(this T value, T min, T max)
         where T :INumber<T>

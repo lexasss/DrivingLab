@@ -24,14 +24,15 @@ public partial class ScreenViewModel : ObservableObject
     public partial int Height { get; set; } = 0;
     [ObservableProperty]
     public partial int Duration { get; set; } = 0;
-    public bool CanToggleMedia => IsAvailable && (_mediaId != null || Filename.Length > 0);
+    public bool CanToggleMedia => IsAvailable && 
+        (_mediaId != null || Filename.Length > 0);
     public bool CanUploadFile => IsAvailable && Filename.Length > 0;
     [ObservableProperty]
     public partial string ShowButtonText { get; set; } = "Show";
     [ObservableProperty]
     public partial string Data { get; set; } = string.Empty;
 
-    public ScreenViewModel(ScreenClient screenClient)
+    public ScreenViewModel(GrpcClients.ScreenClient screenClient)
     {
         _client = screenClient;
         _client.AvailabilityChanged += (s, e) =>
@@ -47,7 +48,7 @@ public partial class ScreenViewModel : ObservableObject
 
     #region Internal
 
-    readonly ScreenClient _client;
+    readonly GrpcClients.ScreenClient _client;
 
     string? _mediaId = null;
 
@@ -71,7 +72,9 @@ public partial class ScreenViewModel : ObservableObject
                 Duration * 1000
             );
 
-            message = _mediaId == null ? "media is not available" : "media is visible ...";
+            message = _mediaId == null 
+                ? "media is not available" 
+                : "media is visible ...";
         }
 
         UpdateUI(message);

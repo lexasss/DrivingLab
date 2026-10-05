@@ -2,9 +2,10 @@
 using Grpc.Core;
 using Microsoft.Extensions.Options;
 
-namespace Dashboard;
+namespace Dashboard.GrpcClients;
 
-public class PointingClient : Client
+public sealed class PointingClient 
+    : Client<Pointing.Dispatcher.DispatcherClient, Pointing.Event>
 {
     public event EventHandler<bool>? ConnectionChanged;
     public event EventHandler<Pointing.Data>? DataUpdated;
@@ -65,9 +66,7 @@ public class PointingClient : Client
 
         if (device?.Description != _currentDevice?.Description)
         {
-            _isConnected = device != null
-                ? _client.SetPointingDevice(device).Value
-                : false;
+            _isConnected = device != null && _client.SetPointingDevice(device).Value;
         }
         else
         {
@@ -112,15 +111,9 @@ public class PointingClient : Client
 
     #region Internal
 
-    readonly Pointing.Dispatcher.DispatcherClient _client;
-
-    bool _isConnected = false;
-    bool _isStreamingData = false;
-    bool _isLogging = false;
     Pointing.Device? _currentDevice = null;
 
     AsyncServerStreamingCall<Pointing.Data>? _dataCall;
-    AsyncServerStreamingCall<Pointing.Event>? _eventsCall;
 
     protected override void Initialize()
     {
@@ -155,39 +148,25 @@ public class PointingClient : Client
         }
     }
 
-    private async Task ReadEvents()
+    protected override IAsyncStreamReader<Pointing.Event> GetEventStream()
     {
-        try
-        {
-            _eventsCall = _client.ReadEvents(new Empty());
-            var responseStream = _eventsCall.ResponseStream;
+        _eventsCall = _client.ReadEvents(new Empty());
+        return _eventsCall.ResponseStream;
+    }
 
-            while (await responseStream.MoveNext(_eventsCts.Token))
-            {
-                if (_eventsCts.IsCancellationRequested)
-                    break;
+    protected override bool HandleEvent(Pointing.Event evt)
+    {
+        switch (evt.ValueCase)
+        {
+            case Pointing.Event.ValueOneofCase.IsConnected:
+                _isConnected = evt.IsConnected;
+                ConnectionChanged?.Invoke(this, _isConnected);
+                break;
+            default:
+                return false;
+        }
 
-                var evt = responseStream.Current;
-                switch (evt.ValueCase)
-                {
-                    case Pointing.Event.ValueOneofCase.IsConnected:
-                        _isConnected = evt.IsConnected;
-                        ConnectionChanged?.Invoke(this, _isConnected);
-                        break;
-                    default:
-                        System.Diagnostics.Debug.WriteLine($"Pointing event '{evt.ValueCase}' is not supported");
-                        break;
-                }
-            }
-        }
-        catch (RpcException ex)
-        {
-            LogException(ex);
-        }
-        finally
-        {
-            _eventsCall = null;
-        }
+        return true;
     }
 
     #endregion

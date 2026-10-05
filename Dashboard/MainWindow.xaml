@@ -12,8 +12,7 @@
         Height="916"
         Width="1224"
         MinHeight="458"
-        MinWidth="204"
-        Icon="/Assets/Images/icon.png">
+        MinWidth="204">
 
     <Grid>
         <Grid.RowDefinitions>
