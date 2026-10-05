@@ -5,11 +5,8 @@
     <UseWPF>true</UseWPF>
     <Platforms>AnyCPU;x64;x86</Platforms>
     <AssemblyName>DrivingLab.$(MSBuildProjectName)</AssemblyName>
+    <ApplicationIcon>Assets\Images\icon.ico</ApplicationIcon>
   </PropertyGroup>
-
-  <ItemGroup>
-    <None Remove="appSettings.json" />
-  </ItemGroup>
 
   <ItemGroup>
     <Content Include="appSettings.json">
