@@ -108,8 +108,6 @@ public partial class ScreenViewModel : ObservableObject
         _mediaId = null;
 
         UpdateUI(string.Empty);
-
-        System.Diagnostics.Debug.WriteLine($"Media {id} is hidden");
     }
 
     private void UpdateUI(string message)

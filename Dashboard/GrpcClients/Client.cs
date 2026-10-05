@@ -67,8 +67,9 @@ public abstract class Client<T, U> : IDisposable
     protected abstract IAsyncStreamReader<U> GetEventStream();
     protected abstract bool HandleEvent(U evt);
 
-    protected static void LogException(Exception ex)
+    protected void LogException(Exception ex)
     {
+        System.Diagnostics.Debug.WriteLine($"[{GetType().Name}] Exception occurred:");
         System.Diagnostics.Debug.WriteLine(ex.Message);
     }
 
@@ -85,7 +86,8 @@ public abstract class Client<T, U> : IDisposable
 
                 var evt = responseStream.Current;
                 if (!HandleEvent(evt))
-                    System.Diagnostics.Debug.WriteLine($"Event '{evt}' is not supported");
+                    System.Diagnostics.Debug.WriteLine(
+                        $"[{GetType().Name}] Event '{evt}' was not handled");
             }
         }
         catch (RpcException ex)

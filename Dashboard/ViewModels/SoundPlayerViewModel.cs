@@ -166,8 +166,6 @@ public partial class SoundPlayerViewModel : ObservableObject
 
     partial void OnDeviceChanged(SoundPlayer.Device? value)
     {
-        System.Diagnostics.Debug.WriteLine(value?.Name);
-
         Channels.Clear();
 
         if (value != null)
@@ -192,8 +190,6 @@ public partial class SoundPlayerViewModel : ObservableObject
         IsPlaying = false;
         PlayerButtonText = "Play";
         Data = string.Empty;
-
-        System.Diagnostics.Debug.WriteLine("Playback finished");
     }
 
     #endregion
