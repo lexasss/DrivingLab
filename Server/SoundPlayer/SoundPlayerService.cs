@@ -106,6 +106,18 @@ public class SoundPlayerService :
         Empty request,
         ServerCallContext context)
     {
+        _logger.LogInformation("Stopping playback");
+
+        try
+        {
+            _toneCancellationSource?.Cancel();
+        }
+        finally
+        {
+            _toneCancellationSource?.Dispose();
+            _toneCancellationSource = null;
+        }
+
         _tonePlayer?.Stop();
         _tonePlayer?.Dispose();
         _tonePlayer = null;
@@ -116,8 +128,6 @@ public class SoundPlayerService :
         _soundPlayer?.Stop();
         _soundPlayer?.Dispose();
         _soundPlayer = null;
-
-        _logger.LogInformation("Stopping playback");
 
         return Common.Awaitable.Empty;
     }
@@ -152,6 +162,7 @@ public class SoundPlayerService :
     WasapiPlayer? _soundPlayer;
     TonePlayer? _tonePlayer;
     AudioFileReader? _audioFile;
+    CancellationTokenSource? _toneCancellationSource;
 
     private static async Task<Proto.Device[]> GetSoundDevices()
     {
@@ -218,13 +229,15 @@ public class SoundPlayerService :
             tone.EnabledChannels.ToArray()
         );
 
+        _toneCancellationSource = new CancellationTokenSource();
+
         tonePlayer.Start();
         
         if (tone.TotalDuration > 0)
         {
             Task.Run(async () =>
             {
-                await Task.Delay(tone.TotalDuration);
+                await Task.Delay(tone.TotalDuration, _toneCancellationSource.Token);
 
                 tonePlayer.Stop();
 
@@ -232,7 +245,11 @@ public class SoundPlayerService :
                 _baseService.Publish(new Proto.Event {
                     IsPlaybackFinished = true
                 });
-            });
+
+                _toneCancellationSource?.Dispose();
+                _toneCancellationSource = null;
+
+            }, _toneCancellationSource.Token);
         }
 
         _logger.LogInformation("Playing tone {tone}", tone.ToneType);
