@@ -30,31 +30,31 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Update="Widgets\Driving.xaml.cs">
+    <Compile Update="Views\Driving.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Update="Widgets\Camera.xaml.cs">
+    <Compile Update="Views\Camera.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Update="Widgets\TobiiEyeX.xaml.cs">
+    <Compile Update="Views\TobiiEyeX.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Update="Widgets\Pointing.xaml.cs">
+    <Compile Update="Views\Pointing.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Update="Widgets\Joystick.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Update="Widgets\StreamDeck.xaml.cs">
+    <Compile Update="Views\StreamDeck.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Update="Widgets\Screen.xaml.cs">
+    <Compile Update="Views\Screen.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Update="Widgets\TensionR.xaml.cs">
+    <Compile Update="Views\TensionR.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Update="Widgets\SoundPlayer.xaml.cs">
+    <Compile Update="Views\SoundPlayer.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>

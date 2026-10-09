@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using DirectN;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 
@@ -50,6 +51,7 @@ public partial class SoundPlayerViewModel : ObservableObject
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CanTogglePlayback))]
     [NotifyPropertyChangedFor(nameof(CanUploadFile))]
+    [NotifyPropertyChangedFor(nameof(CanToggleTonePlayback))]
     public partial PlaybackType PlaybackType { get; set; }
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CanTogglePlayback))]
@@ -66,13 +68,23 @@ public partial class SoundPlayerViewModel : ObservableObject
     public partial double ToneGain { get; set; } = 1;
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CanTogglePlayback))]
+    [NotifyPropertyChangedFor(nameof(CanToggleTonePlayback))]
     public partial bool IsPlaying { get; set; } = false;
-    public bool CanTogglePlayback => IsAvailable && 
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanTogglePlayback))]
+    [NotifyPropertyChangedFor(nameof(CanToggleTonePlayback))]
+    public partial bool IsPlayingEachChannel { get; set; } = false;
+    public bool CanTogglePlayback => IsAvailable && !IsPlayingEachChannel &&
         (IsPlaying || PlaybackType == PlaybackType.Tone || Filename.Length > 0) && 
+        Channels.Any(c => c.IsChecked);
+    public bool CanToggleTonePlayback => IsAvailable && !IsPlaying &&
+        (IsPlayingEachChannel || PlaybackType == PlaybackType.Tone) &&
         Channels.Any(c => c.IsChecked);
     public bool CanUploadFile => IsAvailable && Filename.Length > 0;
     [ObservableProperty]
-    public partial string PlayerButtonText { get; set; } = "Play";
+    public partial string PlayButtonText { get; set; } = PLAY_ALL_CHANNELS;
+    [ObservableProperty]
+    public partial string PlayEachChannelButtonText { get; set; } = PLAY_EACH_CHANNEL;
     [ObservableProperty]
     public partial string Data { get; set; } = string.Empty;
     
@@ -95,50 +107,121 @@ public partial class SoundPlayerViewModel : ObservableObject
 
     #region Internal
 
+    const string PLAY_ALL_CHANNELS = "Play all channels";
+    const string PLAY_EACH_CHANNEL = "Play each channel";
+    const string STOP_PLAYBACK = "Stop";
+
     readonly GrpcClients.SoundPlayerClient _client;
+
+    CancellationTokenSource? _playbackCts;
 
     [RelayCommand]
     private async Task Play()
     {
+        if (IsPlayingEachChannel)
+            return;
+
         if (IsPlaying)
         {
             _client.Stop();
+            return;
+        }
+
+        _client.DeviceId = Device?.Id ?? string.Empty;
+
+        if (PlaybackType == PlaybackType.File)
+        {
+            IsPlaying = await _client.PlayFile(Filename);
         }
         else
         {
-            _client.DeviceId = Device?.Id ?? string.Empty;
+            IsPlaying = true;
+            var tone = new SoundPlayer.ToneDescription {
+                ToneType = ToneType,
+                Frequency = ToneFrequency,
+                PulseDuration = 0,
+                Gain = ToneGain,
+                TotalDuration = ToneDuration,
+            };
 
-            if (PlaybackType == PlaybackType.File)
-            {
-                IsPlaying = await _client.PlayFile(Filename);
-            }
-            else
-            {
-                IsPlaying = true;
-                var tone = new SoundPlayer.ToneDescription {
-                    ToneType = ToneType,
-                    Frequency = ToneFrequency,
-                    PulseDuration = 0,
-                    Gain = ToneGain,
-                    TotalDuration = ToneDuration,
-                };
+            foreach (var channel in Channels)
+                tone.EnabledChannels.Add(channel.IsChecked);
 
-                foreach (var channel in Channels)
-                    tone.EnabledChannels.Add(channel.IsChecked);
-
-                await _client.PlayTone(tone);
-            }
-
-            if (IsPlaying)
-            {
-                PlayerButtonText = "Stop";
-                Data = "playing";
-            }
-            else
-            {
-                Data = "failed to play the file";
-            }
+            await _client.PlayTone(tone);
         }
+
+        if (IsPlaying)
+        {
+            PlayButtonText = STOP_PLAYBACK;
+            Data = "playing";
+        }
+        else
+        {
+            Data = "failed to start the playback";
+        }
+    }
+
+
+    [RelayCommand]
+    private void PlayEachChannel()
+    {
+        if (IsPlaying)
+            return;
+
+        if (IsPlayingEachChannel)
+        {
+            _client.Stop();
+
+            _playbackCts?.Cancel();
+            _playbackCts = null;
+
+            return;
+        }
+
+        _client.DeviceId = Device?.Id ?? string.Empty;
+
+        var tone = new SoundPlayer.ToneDescription
+        {
+            ToneType = ToneType,
+            Frequency = ToneFrequency,
+            PulseDuration = 0,
+            Gain = ToneGain,
+            TotalDuration = ToneDuration,
+        };
+        
+        _playbackCts = new CancellationTokenSource();
+        Task.Run(async () =>
+        {
+            PlayEachChannelButtonText = STOP_PLAYBACK;
+            IsPlayingEachChannel = true;
+
+            try
+            {
+                for (int i = 0; i < Device?.ChannelCount; i++)
+                {
+                    tone.EnabledChannels.Clear();
+                    for (int j = 0; j < Device?.ChannelCount; j++)
+                    {
+                        tone.EnabledChannels.Add(i == j && Channels[j].IsChecked);
+                    }
+
+                    if (!tone.EnabledChannels.Any(c => c))
+                        continue;
+
+                    await _client.PlayTone(tone);
+                    await Task.Delay(ToneDuration + 500, _playbackCts.Token);
+                }
+            }
+            finally
+            {
+                Data = string.Empty;
+                PlayEachChannelButtonText = PLAY_EACH_CHANNEL;
+                IsPlayingEachChannel = false;
+            }
+
+        }, _playbackCts.Token);
+
+        Data = "playing each channel";
     }
 
     [RelayCommand]
@@ -188,8 +271,10 @@ public partial class SoundPlayerViewModel : ObservableObject
         object? sender, EventArgs e)
     {
         IsPlaying = false;
-        PlayerButtonText = "Play";
-        Data = string.Empty;
+        PlayButtonText = PLAY_ALL_CHANNELS;
+
+        if (!IsPlayingEachChannel)
+            Data = string.Empty;
     }
 
     #endregion

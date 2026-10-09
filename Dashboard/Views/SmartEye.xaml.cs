@@ -1,6 +1,6 @@
 ﻿using System.Windows.Controls;
 
-namespace Dashboard.Widgets;
+namespace Dashboard.Views;
 
 public partial class SmartEye : UserControl
 {

@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:conv="clr-namespace:MaterialDesignThemes.Wpf.Converters;assembly=MaterialDesignThemes.Wpf"
-        xmlns:widgets="clr-namespace:Dashboard.Widgets"
+        xmlns:views="clr-namespace:Dashboard.Views"
         mc:Ignorable="d"
         Style="{StaticResource MaterialDesignWindow}"
         Title="Driving Lab Client Example"
@@ -29,54 +29,54 @@
             <ColumnDefinition />
         </Grid.ColumnDefinitions>
 
-        <widgets:LeapMotion
+        <views:LeapMotion
             Grid.Row="0"
             Grid.Column="0"
             DataContext="{Binding LeapMotion}" />
 
-        <widgets:SmartEye
+        <views:SmartEye
             Grid.Row="0"
             Grid.Column="1"
             DataContext="{Binding SmartEye}" />
 
-        <widgets:Screen
+        <views:Screen
             Grid.Row="0"
             Grid.Column="2"
             DataContext="{Binding Screen}" />
 
-        <widgets:Camera
+        <views:Camera
             Grid.Row="0"
             Grid.Column="3"
             DataContext="{Binding Camera}" />
 
-        <widgets:SoundPlayer
+        <views:SoundPlayer
             Grid.Row="0"
             Grid.RowSpan="2"
             Grid.Column="4"
             DataContext="{Binding SoundPlayer}" />
 
-        <widgets:Driving
+        <views:Driving
             Grid.Row="0"
             Grid.RowSpan="2"
             Grid.Column="5"
             DataContext="{Binding Driving}" />
 
-        <widgets:Pointing
+        <views:Pointing
             Grid.Row="1"
             Grid.Column="0"
             DataContext="{Binding Pointing}" />
 
-        <widgets:TensionR
+        <views:TensionR
             Grid.Row="1"
             Grid.Column="1"
             DataContext="{Binding TensionR}" />
 
-        <widgets:StreamDeck
+        <views:StreamDeck
             Grid.Row="1"
             Grid.Column="2"
             DataContext="{Binding StreamDeck}" />
 
-        <widgets:TobiiEyeX
+        <views:TobiiEyeX
             Grid.Row="1"
             Grid.Column="3"
             DataContext="{Binding TobiiEyeX}" />
