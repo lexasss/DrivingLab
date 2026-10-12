@@ -52,6 +52,8 @@ public partial class SoundPlayerViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(CanTogglePlayback))]
     [NotifyPropertyChangedFor(nameof(CanUploadFile))]
     [NotifyPropertyChangedFor(nameof(CanToggleTonePlayback))]
+    [NotifyPropertyChangedFor(nameof(PlayButtonText))]
+    [NotifyPropertyChangedFor(nameof(PlayEachChannelButtonText))]
     public partial PlaybackType PlaybackType { get; set; }
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CanTogglePlayback))]
@@ -69,10 +71,12 @@ public partial class SoundPlayerViewModel : ObservableObject
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CanTogglePlayback))]
     [NotifyPropertyChangedFor(nameof(CanToggleTonePlayback))]
+    [NotifyPropertyChangedFor(nameof(PlayButtonText))]
     public partial bool IsPlaying { get; set; } = false;
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CanTogglePlayback))]
     [NotifyPropertyChangedFor(nameof(CanToggleTonePlayback))]
+    [NotifyPropertyChangedFor(nameof(PlayEachChannelButtonText))]
     public partial bool IsPlayingEachChannel { get; set; } = false;
     public bool CanTogglePlayback => IsAvailable && !IsPlayingEachChannel &&
         (IsPlaying || PlaybackType == PlaybackType.Tone || Filename.Length > 0) && 
@@ -81,10 +85,14 @@ public partial class SoundPlayerViewModel : ObservableObject
         (IsPlayingEachChannel || PlaybackType == PlaybackType.Tone) &&
         Channels.Any(c => c.IsChecked);
     public bool CanUploadFile => IsAvailable && Filename.Length > 0;
-    [ObservableProperty]
-    public partial string PlayButtonText { get; set; } = PLAY_ALL_CHANNELS;
-    [ObservableProperty]
-    public partial string PlayEachChannelButtonText { get; set; } = PLAY_EACH_CHANNEL;
+    public string PlayButtonText => IsPlaying
+        ? STOP_PLAYBACK
+            : (PlaybackType == PlaybackType.File
+                ? PLAY
+                : PLAY_ALL_AT_ONCE);
+    public string PlayEachChannelButtonText => IsPlayingEachChannel
+        ? STOP_PLAYBACK
+        : PLAY_EACH_SPERATELY;
     [ObservableProperty]
     public partial string Data { get; set; } = string.Empty;
     
@@ -100,15 +108,23 @@ public partial class SoundPlayerViewModel : ObservableObject
             Device = Devices.FirstOrDefault();
             OnPropertyChanged(nameof(IsAvailable));
             OnPropertyChanged(nameof(CanTogglePlayback));
+            OnPropertyChanged(nameof(CanToggleTonePlayback));
             OnPropertyChanged(nameof(CanUploadFile));
         };
-        _client.PlaybackFinished += SoundPlayerClient_PlaybackFinished;
+        _client.PlaybackFinished += (s, e) =>
+        {
+            IsPlaying = false;
+
+            if (!IsPlayingEachChannel)
+                Data = string.Empty;
+        };
     }
 
     #region Internal
 
-    const string PLAY_ALL_CHANNELS = "Play all channels";
-    const string PLAY_EACH_CHANNEL = "Play each channel";
+    const string PLAY = "Play";
+    const string PLAY_ALL_AT_ONCE = "Play all at once";
+    const string PLAY_EACH_SPERATELY = "Play each separately";
     const string STOP_PLAYBACK = "Stop";
 
     readonly GrpcClients.SoundPlayerClient _client;
@@ -150,15 +166,7 @@ public partial class SoundPlayerViewModel : ObservableObject
             await _client.PlayTone(tone);
         }
 
-        if (IsPlaying)
-        {
-            PlayButtonText = STOP_PLAYBACK;
-            Data = "playing";
-        }
-        else
-        {
-            Data = "failed to start the playback";
-        }
+        Data = IsPlaying ? "playing" : "failed to start the playback";
     }
 
 
@@ -192,7 +200,6 @@ public partial class SoundPlayerViewModel : ObservableObject
         _playbackCts = new CancellationTokenSource();
         Task.Run(async () =>
         {
-            PlayEachChannelButtonText = STOP_PLAYBACK;
             IsPlayingEachChannel = true;
 
             try
@@ -215,7 +222,6 @@ public partial class SoundPlayerViewModel : ObservableObject
             finally
             {
                 Data = string.Empty;
-                PlayEachChannelButtonText = PLAY_EACH_CHANNEL;
                 IsPlayingEachChannel = false;
             }
 
@@ -238,6 +244,7 @@ public partial class SoundPlayerViewModel : ObservableObject
             var result = await _client.UploadFile(Filename);
             if (result.Size > 0)
             {
+                Filename = result.FileName;
                 Data = "File uploaded successfully.";
             }
         }
@@ -265,16 +272,6 @@ public partial class SoundPlayerViewModel : ObservableObject
 
             OnPropertyChanged(nameof(CanTogglePlayback));
         }
-    }
-
-    private void SoundPlayerClient_PlaybackFinished(
-        object? sender, EventArgs e)
-    {
-        IsPlaying = false;
-        PlayButtonText = PLAY_ALL_CHANNELS;
-
-        if (!IsPlayingEachChannel)
-            Data = string.Empty;
     }
 
     #endregion
