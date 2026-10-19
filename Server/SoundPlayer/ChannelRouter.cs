@@ -111,7 +111,7 @@ public sealed class ChannelRouter : IWaveProvider
                 selectedChannels,
                 soundPlayer.DeviceMixFormat);
 
-            if (!soundPlayer!.IsFormatSupported(router.WaveFormat, out WaveFormatExtensible bmf))
+            if (!soundPlayer.IsFormatSupported(router.WaveFormat, out WaveFormat bmf))
             {
                 var uf = router.WaveFormat;
                 Console.WriteLine($"Unsupported format : channels = {uf.Channels}, encoding = {uf.Encoding}, sample rate = {uf.SampleRate}, block align = {uf.BlockAlign}, bps = {uf.BitsPerSample}");
@@ -136,7 +136,7 @@ public sealed class ChannelRouter : IWaveProvider
             }
 
             await Task.Delay(1000);
-            soundPlayer?.Dispose();
+            soundPlayer.Dispose();
 
             if (i < channelCount - 1)
             {

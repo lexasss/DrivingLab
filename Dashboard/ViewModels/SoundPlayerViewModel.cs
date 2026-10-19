@@ -1,6 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using DirectN;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 
