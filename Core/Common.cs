@@ -15,6 +15,7 @@ public enum Ports
     StreamDeck = 30058,
     Driving = 30059,
     Camera = 30060,
+    Carla = 30061,
 }
 
 public interface ILoggable

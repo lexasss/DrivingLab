@@ -45,6 +45,7 @@ class Program
         serviceCollection.AddTransient<StreamDeck.StreamDeckService>();
         serviceCollection.AddTransient<Driving.DrivingService>();
         serviceCollection.AddTransient<Camera.CameraService>();
+        serviceCollection.AddTransient<Carla.CarlaService>();
 
         var serviceProvider = serviceCollection.BuildServiceProvider();
 
@@ -150,6 +151,15 @@ class Program
                 global::Camera.Dispatcher.Descriptor,
                 service => global::Camera.Dispatcher.BindService(
                     (global::Camera.Dispatcher.DispatcherBase)service
+                )
+            ),
+            Create<Carla.CarlaService>(
+                serviceProvider,
+                "Carla",
+                (int)Common.Ports.Carla,
+                global::Carla.Dispatcher.Descriptor,
+                service => global::Carla.Dispatcher.BindService(
+                    (global::Carla.Dispatcher.DispatcherBase)service
                 )
             ),
         };
