@@ -1,6 +1,7 @@
 ﻿using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Microsoft.Extensions.Logging;
+using Server.Settings;
 using System.Net;
 using System.Net.Sockets;
 using Proto = global::Carla;
@@ -13,7 +14,9 @@ internal class CarlaService :
 {
     public bool IsAvailable() => true;
 
-    public CarlaService(ILoggerFactory loggerFactory) : base()
+    public CarlaService(
+        ILoggerFactory loggerFactory,
+        CarlaSettings carlaSettings) : base()
     {
         _logger = loggerFactory.CreateLogger("CARL");
         _logger.LogInformation("Running");
@@ -22,8 +25,11 @@ internal class CarlaService :
 
         try
         {
-            _udp = new UdpClient(new IPEndPoint(IPAddress.Parse(IpLocal), UdpPort));
-            _logger.LogError("Listening on {ip}:{port}", IpLocal, UdpPort);
+            var ip = IPAddress.Parse(carlaSettings.Ip);
+            _udp = new UdpClient(new IPEndPoint(ip, carlaSettings.Port));
+            _logger.LogError("Listening on {ip}:{port}",
+                carlaSettings.Ip,
+                carlaSettings.Port);
 
             _ = RunListenerLoop(_udp);
         }
@@ -146,9 +152,6 @@ internal class CarlaService :
 
     #region Internal
 
-    const string IpLocal = "127.0.0.1";
-    const int UdpPort = 20777;
-
     readonly ILogger _logger;
     readonly Tools.TelemetryService<Proto.Data, Proto.Event>? _baseService;
     readonly UdpClient? _udp;
@@ -157,14 +160,14 @@ internal class CarlaService :
 
     private async Task RunListenerLoop(UdpClient udp)
     {
-        var ip = IPEndPoint.Parse("127.0.0.1");
+        //var ip = IPEndPoint.Parse("127.0.0.1");
         try
         {
             while (true)
             {
-                //UdpReceiveResult result = await udp.ReceiveAsync();
-                await Task.Delay(20);
-                var result = new UdpReceiveResult(Telemetry.Emulate(), ip);
+                UdpReceiveResult result = await udp.ReceiveAsync();
+                //await Task.Delay(20);
+                //var result = new UdpReceiveResult(Telemetry.Emulate(), ip);
 
                 try
                 {
@@ -173,10 +176,6 @@ internal class CarlaService :
                     var data = new Proto.Data();
                     foreach (var field in _streamingFields)
                         data.Values.Add(field, telemetry[field]);
-
-                    //Console.WriteLine(
-                    //    $"Time: {telemetry[Telemetry.Fields[0]]:F2}, " +
-                    //    $"Speed: {telemetry[Telemetry.Fields[7]]:F2}");
 
                     _baseService?.Publish(data);
                 }

@@ -1,11 +1,13 @@
 using Grpc.Core;
 using Grpc.Reflection;
 using Grpc.Reflection.V1Alpha;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using Serilog.Sinks.SystemConsole.Themes;
 using ServiceDescriptor = Google.Protobuf.Reflection.ServiceDescriptor;
+using Server.Settings;
 
 namespace Server;
 
@@ -26,8 +28,14 @@ class Program
                 outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss} {Level:u3}] {SourceContext} {Message:lj}{NewLine}{Exception}")
             .CreateLogger();
 
+        var configuration = new ConfigurationBuilder()
+            .SetBasePath(AppContext.BaseDirectory)
+            .AddJsonFile("settings.json", optional: true, reloadOnChange: false)
+            .Build();
+
         var serviceCollection = new ServiceCollection();
 
+        serviceCollection.AddAppSettings(configuration);
         serviceCollection.AddLogging(builder =>
         {
             builder.ClearProviders();
