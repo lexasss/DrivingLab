@@ -80,6 +80,11 @@
             Grid.Row="1"
             Grid.Column="3"
             DataContext="{Binding TobiiEyeX}" />
+
+        <views:Carla
+            Grid.Row="1"
+            Grid.Column="4"
+            DataContext="{Binding Carla}" />
     </Grid>
 
 </Window>

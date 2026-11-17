@@ -2,14 +2,10 @@
 
 public partial class Data : Common.ILoggable
 {
-    public string[] ToStringArray() => [
-        Time.ToString(),
-    ];
+    public string[] ToStringArray() => Values.Select(kv => kv.Value.ToString()).ToArray();
     public string[] ToStringArray(int decimals)
     {
         string format = $"F{decimals}";
-        return [
-            Time.ToString(format),
-        ];
+        return Values.Select(kv => kv.Value.ToString(format)).ToArray();
     }
 }

@@ -30,6 +30,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Update="Views\Carla.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Update="Views\Driving.xaml.cs">
       <SubType>Code</SubType>
     </Compile>

@@ -53,6 +53,7 @@ public partial class App : Application
         services.AddSingleton<DrivingClient>();
         services.AddSingleton<TobiiEyeXClient>();
         services.AddSingleton<CameraClient>();
+        services.AddSingleton<CarlaClient>();
 
         services.AddTransient<LeapMotionViewModel>();
         services.AddTransient<SmartEyeViewModel>();
@@ -64,6 +65,7 @@ public partial class App : Application
         services.AddTransient<DrivingViewModel>();
         services.AddTransient<TobiiEyeXViewModel>();
         services.AddTransient<CameraViewModel>();
+        services.AddTransient<CarlaViewModel>();
 
         services.AddTransient<MainViewModel>();
         services.AddTransient<MainWindow>();

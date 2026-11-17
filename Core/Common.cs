@@ -50,6 +50,12 @@ public static class Awaitable
         {
             Value = value
         });
+    public static Task<Strings> From(IEnumerable<string> values)
+    {
+        var result = new Strings();
+        result.Items.AddRange(values);
+        return Task.FromResult(result);
+    }
 }
 
 public partial class Bool

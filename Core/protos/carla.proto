@@ -11,6 +11,11 @@ service Dispatcher {
 	rpc IsLogging (google.protobuf.Empty) returns (Common.Bool) {}
 
 	rpc SetLogFileName (Common.String) returns (Common.Bool) {}
+	rpc GetTelemetryFields (google.protobuf.Empty) returns (Common.Strings) {}
+
+	// Returns false if some names were invalid
+	rpc SetStreamFields (Common.Strings) returns (Common.Bool) {}
+	rpc GetStreamFields (google.protobuf.Empty) returns (Common.Strings) {}
 
 	// Initializes data reading stream, but the data is not polling to clients
 	// until Start is called
@@ -23,7 +28,7 @@ service Dispatcher {
 }
 
 message Data {
-	double time = 1;
+	map<string, float> values = 1;
 }
 
 message Event {

@@ -10,7 +10,8 @@ public partial class MainViewModel(
     StreamDeckViewModel streamDeckVm,
     DrivingViewModel drivingVm,
     TobiiEyeXViewModel tobiiEyeXVm,
-    CameraViewModel cameraVm)
+    CameraViewModel cameraVm,
+    CarlaViewModel carlaVm)
 {
     public LeapMotionViewModel LeapMotion { get; } = leapMotionVm;
     public SmartEyeViewModel SmartEye { get; } = smartEyeVm;
@@ -22,4 +23,5 @@ public partial class MainViewModel(
     public DrivingViewModel Driving { get; } = drivingVm;
     public TobiiEyeXViewModel TobiiEyeX { get; } = tobiiEyeXVm;
     public CameraViewModel Camera { get; } = cameraVm;
+    public CarlaViewModel Carla { get; } = carlaVm;
 }
