@@ -4,6 +4,9 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
+  <Folder Name="/Demos/">
+    <Project Path="BeltsBrakes/BeltsBrakes.csproj" Id="0e0284a1-fda9-44b0-97d1-e2b57d3ad088" />
+  </Folder>
   <Folder Name="/Solution Items/">
     <File Path="Directory.Build.props" />
     <File Path="Directory.Packages.props" />

@@ -80,7 +80,7 @@
   </PropertyGroup>
   
   <ItemGroup>
-    <None Visible="false" Include="settings.json">
+    <None Include="settings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     

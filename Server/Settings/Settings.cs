@@ -8,5 +8,6 @@ internal class Settings
 internal record class CarlaSettings(
     string Ip = "127.0.0.1",
     int Port = 20777,
-    bool IsEmulating = false
+    bool IsEmulating = false,
+    bool IsVerbose = false
 );

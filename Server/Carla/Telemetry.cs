@@ -305,10 +305,18 @@ public record Telemetry
     {
         var ts = (float)_stopwatch.Elapsed.TotalSeconds;
         var dt = ts - _time;
-        var drivingAction = _drivingActions[_currentDrivingActionIndex];
-        _speed = Math.Clamp(_speed + drivingAction.Acceleration * dt, 0, MAX_SPEED);
+        _targetSpeed = _currentDrivingAction.TargetSpeed;
+
+        var ds = (_targetSpeed - _speed) * 0.5f * dt;
+        var newSpeed = Math.Clamp(_speed + ds, 0, MAX_SPEED);
+        ds = newSpeed - _speed;
+        _speed = newSpeed;
+
+        _acceleration = MOTOR_INERTION * _acceleration + (1f - MOTOR_INERTION) * ds / dt;
+
         _distance += _speed * dt;
         _lapDistance += _speed * dt;
+
         if (_lapDistance > LAP_DISTANCE)
         {
             _laps++;
@@ -326,11 +334,11 @@ public record Telemetry
             _speed,
             _speed,
             0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            Math.Max(0, drivingAction.Acceleration / 6),
+            Math.Max(0, Math.Clamp(_acceleration / 6, 0, 1)),
             0,
-            Math.Max(0, drivingAction.Acceleration / -10),
+            Math.Max(0, Math.Clamp(_acceleration / -10, 0, 1)),
             0, 0, 0,
-            drivingAction.Acceleration,
+            _acceleration,
             _laps + 1,
             1000 + _speed * 200,
             0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,
@@ -345,9 +353,10 @@ public record Telemetry
         _lapTime += dt;
         _currentDrivingActionTime += dt;
 
-        if (_currentDrivingActionTime > drivingAction.Duration)
+        if (_currentDrivingActionTime > _currentDrivingAction.Duration)
         {
             _currentDrivingActionIndex = (_currentDrivingActionIndex + 1) % _drivingActions.Length;
+            _currentDrivingAction = _drivingActions[_currentDrivingActionIndex];
             _currentDrivingActionTime = 0;
         }
 
@@ -367,9 +376,9 @@ public record Telemetry
     #region Internal
 
     // Emulator
-    //const float DELTA_T = 0.02f;        // s
     const float LAP_DISTANCE = 2000;    // m
     const float MAX_SPEED = 40;         // m/s
+    const float MOTOR_INERTION = 0.95f;
 
     static float _time = 0;
     static float _speed = 0;
@@ -377,21 +386,22 @@ public record Telemetry
     static float _lapTime = 0;
     static float _lapDistance = 0;
     static int _laps = 0;
-    static int _currentDrivingActionIndex = 0;
+    static int _currentDrivingActionIndex = -1;
     static float _currentDrivingActionTime = 0;
+    static DrivingAction _currentDrivingAction = new(5, 0);
+    
+    static float _targetSpeed = 0;
+    static float _acceleration = 0;
 
     static Stopwatch _stopwatch = new();
 
     record class DrivingAction(
         float Duration,         // s
-        float Acceleration);    // m/s, max 6, min -10
-    static DrivingAction[] _drivingActions = [
-        new DrivingAction(12, 2),
-        new DrivingAction(20, 0),
-        new DrivingAction(7, -1),
-        new DrivingAction(5, 0),
-        new DrivingAction(5, -4),
-        new DrivingAction(2, 0),
+        float TargetSpeed);     // m/s, max 150
+    static readonly DrivingAction[] _drivingActions = [
+        new DrivingAction(30, 20),
+        new DrivingAction(12, 15),
+        new DrivingAction(7, 0),
     ];
 
     static Telemetry()

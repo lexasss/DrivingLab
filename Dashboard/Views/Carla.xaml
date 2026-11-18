@@ -27,7 +27,7 @@
                 </Style>
             </StackPanel.Resources>
             <Label Style="{StaticResource Device}"
-                   Content="Driving"/>
+                   Content="CARLA"/>
             <StackPanel>
                 <widgets:Indicator IsOn="{Binding IsAvailable, Mode=OneWay}"
                                    Margin="8,0"

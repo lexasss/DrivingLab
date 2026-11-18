@@ -23,6 +23,7 @@ internal class CarlaService :
 
         _baseService = new(_logger);
         _isEmulating = carlaSettings.IsEmulating;
+        _isVerbose = carlaSettings.IsVerbose;
 
         try
         {
@@ -160,6 +161,7 @@ internal class CarlaService :
     readonly Tools.TelemetryService<Proto.Data, Proto.Event>? _baseService;
     readonly UdpClient? _udp;
     readonly bool _isEmulating = false;
+    readonly bool _isVerbose = false;
     readonly IPEndPoint _emulatorEndPoint = IPEndPoint.Parse("127.0.0.1");
 
     readonly List<string> _streamingFields = [];
@@ -185,15 +187,12 @@ internal class CarlaService :
                     foreach (var field in _streamingFields)
                         data.Values.Add(field, telemetry[field]);
 
-                    if (_isEmulating)
+                    if (_isVerbose)
                         Console.WriteLine($"Time = {telemetry["total_time"]:F1}"
                             + $", Dist = {telemetry["total_distance"]:F0}"
                             + $", Speed = {telemetry["speed"]:F1}"
                             + $", RPM = {telemetry["engine_rate"]:F0}"
-                            + "    "
-                            + $", Lap = {telemetry["lap"]}"
-                            + $", LapTime = {telemetry["lap_time"]:F1}"
-                            + $", LapDist = {telemetry["lap_distance"]:F0}"
+                            + $", G = {telemetry["gforce_longitudinal"]:F2}"
                         );
 
                     _baseService?.Publish(data);

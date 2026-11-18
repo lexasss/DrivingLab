@@ -73,7 +73,10 @@ public partial class CarlaViewModel : ObservableObject
 
     private void Field_CheckedChanged(object? sender, EventArgs e)
     {
-        var checkedFields = Fields.Where(f => f.IsChecked).Select(f => f.Name).ToArray();
+        var checkedFields = Fields
+            .Where(f => f.IsChecked)
+            .Select(f => f.Name)
+            .ToArray();
         _client.SetStreamingFields(checkedFields);
     }
 
