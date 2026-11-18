@@ -1,4 +1,5 @@
 ﻿using System.Buffers.Binary;
+using System.Diagnostics;
 
 namespace Server.Carla;
 
@@ -227,6 +228,177 @@ public record Telemetry
         };
     }
 
+    public static Telemetry ToRecord(Dictionary<string, float> data)
+    {
+        return new Telemetry
+        {
+            TotalTime = data[Fields[0]],
+            LapTime = data[Fields[1]],
+            LapDistance = data[Fields[2]],
+            TotalDistance = data[Fields[3]],
+            PositionY = data[Fields[4]],
+            PositionZ = data[Fields[5]],
+            PositionX = data[Fields[6]],
+            Speed = data[Fields[7]],
+            VelocityX = data[Fields[8]],
+            VelocityY = data[Fields[9]],
+            VelocityZ = data[Fields[10]],
+            LeftDirX = data[Fields[11]],
+            LeftDirY = data[Fields[12]],
+            LeftDirZ = data[Fields[13]],
+            ForwardDirX = data[Fields[14]],
+            ForwardDirY = data[Fields[15]],
+            ForwardDirZ = data[Fields[16]],
+            SuspensionPositionBl = data[Fields[17]],
+            SuspensionPositionBr = data[Fields[18]],
+            SuspensionPositionFl = data[Fields[19]],
+            SuspensionPositionFr = data[Fields[20]],
+            SuspensionVelocityBl = data[Fields[21]],
+            SuspensionVelocityBr = data[Fields[22]],
+            SuspensionVelocityFl = data[Fields[23]],
+            SuspensionVelocityFr = data[Fields[24]],
+            WheelPatchSpeedBl = data[Fields[25]],
+            WheelPatchSpeedBr = data[Fields[26]],
+            WheelPatchSpeedFl = data[Fields[27]],
+            WheelPatchSpeedFr = data[Fields[28]],
+            ThrottleInput = data[Fields[29]],
+            SteeringInput = data[Fields[30]],
+            BrakeInput = data[Fields[31]],
+            ClutchInput = data[Fields[32]],
+            Gear = data[Fields[33]],
+            GforceLateral = data[Fields[34]],
+            GforceLongitudinal = data[Fields[35]],
+            Lap = data[Fields[36]],
+            EngineRate = data[Fields[37]],
+            NativeSliSupport = data[Fields[38]],
+            RacePosition = data[Fields[39]],
+            KersLevel = data[Fields[40]],
+            KersLevelMax = data[Fields[41]],
+            Drs = data[Fields[42]],
+            TractionControl = data[Fields[43]],
+            Abs = data[Fields[44]],
+            FuelInTank = data[Fields[45]],
+            FuelCapacity = data[Fields[46]],
+            InPits = data[Fields[47]],
+            RaceSector = data[Fields[48]],
+            SectorTime1 = data[Fields[49]],
+            SectorTime2 = data[Fields[50]],
+            BrakeTempBl = data[Fields[51]],
+            BrakeTempBr = data[Fields[52]],
+            BrakeTempFl = data[Fields[53]],
+            BrakeTempFr = data[Fields[54]],
+            TyrePressureBl = data[Fields[55]],
+            TyrePressureBr = data[Fields[56]],
+            TyrePressureFl = data[Fields[57]],
+            TyrePressureFr = data[Fields[58]],
+            LapsCompleted = data[Fields[59]],
+            TotalLaps = data[Fields[60]],
+            TrackLength = data[Fields[61]],
+            LastLapTime = data[Fields[62]],
+            MaxRpm = data[Fields[63]],
+            IdleRpm = data[Fields[64]],
+            MaxGears = data[Fields[65]]
+        };
+    }
+
+    public static byte[] Emulate()
+    {
+        var ts = (float)_stopwatch.Elapsed.TotalSeconds;
+        var dt = ts - _time;
+        var drivingAction = _drivingActions[_currentDrivingActionIndex];
+        _speed = Math.Clamp(_speed + drivingAction.Acceleration * dt, 0, MAX_SPEED);
+        _distance += _speed * dt;
+        _lapDistance += _speed * dt;
+        if (_lapDistance > LAP_DISTANCE)
+        {
+            _laps++;
+            _lapDistance %= LAP_DISTANCE;
+            _lapTime = 0;
+        }
+
+        float[] values = [
+            _time,
+            _lapTime,
+            _lapDistance,
+            _distance,
+            0, 0,
+            _distance,
+            _speed,
+            _speed,
+            0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            Math.Max(0, drivingAction.Acceleration / 6),
+            0,
+            Math.Max(0, drivingAction.Acceleration / -10),
+            0, 0, 0,
+            drivingAction.Acceleration,
+            _laps + 1,
+            1000 + _speed * 200,
+            0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,
+            _laps,
+            int.MaxValue,
+            0, 0,
+            MAX_SPEED * 200,
+            1000, 0
+        ];
+
+        _time = ts;
+        _lapTime += dt;
+        _currentDrivingActionTime += dt;
+
+        if (_currentDrivingActionTime > drivingAction.Duration)
+        {
+            _currentDrivingActionIndex = (_currentDrivingActionIndex + 1) % _drivingActions.Length;
+            _currentDrivingActionTime = 0;
+        }
+
+        int length = Fields.Length * sizeof(float);
+        byte[] b = new byte[length];
+
+        for (int i = 0; i < Fields.Length; i++)
+        {
+            BinaryPrimitives.WriteInt32LittleEndian(
+                b.AsSpan(i * sizeof(float), sizeof(float)),
+                BitConverter.SingleToInt32Bits(values[i]));
+        }
+
+        return b;
+    }
+
+    #region Internal
+
+    // Emulator
+    //const float DELTA_T = 0.02f;        // s
+    const float LAP_DISTANCE = 2000;    // m
+    const float MAX_SPEED = 40;         // m/s
+
+    static float _time = 0;
+    static float _speed = 0;
+    static float _distance = 0;
+    static float _lapTime = 0;
+    static float _lapDistance = 0;
+    static int _laps = 0;
+    static int _currentDrivingActionIndex = 0;
+    static float _currentDrivingActionTime = 0;
+
+    static Stopwatch _stopwatch = new();
+
+    record class DrivingAction(
+        float Duration,         // s
+        float Acceleration);    // m/s, max 6, min -10
+    static DrivingAction[] _drivingActions = [
+        new DrivingAction(12, 2),
+        new DrivingAction(20, 0),
+        new DrivingAction(7, -1),
+        new DrivingAction(5, 0),
+        new DrivingAction(5, -4),
+        new DrivingAction(2, 0),
+    ];
+
+    static Telemetry()
+    {
+        _stopwatch.Start();
+    }
+
     private static void Parse(byte[] data, Action<int, float> cb)
     {
         int expectedLength = Fields.Length * sizeof(float);
@@ -246,28 +418,5 @@ public record Telemetry
         }
     }
 
-    static float _time = 0;
-    static float _v = 0;
-    static float _delta = 0.5f;
-    static Random _rnd = new();
-    public static byte[] Emulate()
-    {
-        int length = Fields.Length * sizeof(float);
-        byte[] b = new byte[length];
-
-        var rv = (_rnd.NextDouble() - 0.5) * 2;
-        rv = Math.Pow(rv, 2) * (rv < 0 ? -1 : 1);
-        _delta += (float)(rv / 2);
-        _v += _delta;
-
-        for (int i = 0; i < Fields.Length; i++)
-        {
-            BinaryPrimitives.WriteInt32LittleEndian(
-                b.AsSpan(i * sizeof(float), sizeof(float)),
-                BitConverter.SingleToInt32Bits(i == 0 ? _time : _v));
-        }
-
-        _time += 0.02f;
-        return b;
-    }
+    #endregion
 }

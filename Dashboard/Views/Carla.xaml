@@ -46,10 +46,10 @@
                            Content="Log data"/>
                 </WrapPanel>
                 <Separator/>
+                <Label>Fields</Label>
                 <ScrollViewer MaxHeight="168"
                               VerticalScrollBarVisibility="Auto">
                     <StackPanel IsEnabled="{Binding IsStreaming, Converter={StaticResource InvertBoolean}}">
-                        <Label>Fields</Label>
                         <ItemsControl ItemsSource="{Binding Fields}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>

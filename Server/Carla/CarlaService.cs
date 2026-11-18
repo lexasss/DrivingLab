@@ -22,14 +22,18 @@ internal class CarlaService :
         _logger.LogInformation("Running");
 
         _baseService = new(_logger);
+        _isEmulating = carlaSettings.IsEmulating;
 
         try
         {
             var ip = IPAddress.Parse(carlaSettings.Ip);
             _udp = new UdpClient(new IPEndPoint(ip, carlaSettings.Port));
-            _logger.LogError("Listening on {ip}:{port}",
-                carlaSettings.Ip,
-                carlaSettings.Port);
+            if (_isEmulating)
+                _logger.LogInformation("Emulating telemetry data");
+            else
+                _logger.LogInformation("Listening on {ip}:{port}",
+                    carlaSettings.Ip,
+                    carlaSettings.Port);
 
             _ = RunListenerLoop(_udp);
         }
@@ -155,19 +159,23 @@ internal class CarlaService :
     readonly ILogger _logger;
     readonly Tools.TelemetryService<Proto.Data, Proto.Event>? _baseService;
     readonly UdpClient? _udp;
+    readonly bool _isEmulating = false;
+    readonly IPEndPoint _emulatorEndPoint = IPEndPoint.Parse("127.0.0.1");
 
     readonly List<string> _streamingFields = [];
 
     private async Task RunListenerLoop(UdpClient udp)
     {
-        //var ip = IPEndPoint.Parse("127.0.0.1");
         try
         {
             while (true)
             {
-                UdpReceiveResult result = await udp.ReceiveAsync();
-                //await Task.Delay(20);
-                //var result = new UdpReceiveResult(Telemetry.Emulate(), ip);
+                UdpReceiveResult result = _isEmulating
+                    ? new UdpReceiveResult(Telemetry.Emulate(), _emulatorEndPoint)
+                    : await udp.ReceiveAsync();
+
+                if (_isEmulating)
+                    await Task.Delay(20);
 
                 try
                 {
@@ -176,6 +184,17 @@ internal class CarlaService :
                     var data = new Proto.Data();
                     foreach (var field in _streamingFields)
                         data.Values.Add(field, telemetry[field]);
+
+                    if (_isEmulating)
+                        Console.WriteLine($"Time = {telemetry["total_time"]:F1}"
+                            + $", Dist = {telemetry["total_distance"]:F0}"
+                            + $", Speed = {telemetry["speed"]:F1}"
+                            + $", RPM = {telemetry["engine_rate"]:F0}"
+                            + "    "
+                            + $", Lap = {telemetry["lap"]}"
+                            + $", LapTime = {telemetry["lap_time"]:F1}"
+                            + $", LapDist = {telemetry["lap_distance"]:F0}"
+                        );
 
                     _baseService?.Publish(data);
                 }
