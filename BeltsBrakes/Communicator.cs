@@ -7,9 +7,11 @@ internal class Communicator
 
     public Communicator(
         CarlaClient carlaClient,
-        TensionRClient tensionRClient)
+        TensionRClient tensionRClient,
+        ScreenClient screenClient)
     {
         _carla = carlaClient;
+        _screen = screenClient;
 
         _tensionR = tensionRClient;
         _tensionR.ConnectionChanged += (s, e) =>
@@ -86,6 +88,7 @@ internal class Communicator
 
     readonly CarlaClient _carla;
     readonly TensionRClient _tensionR;
+    readonly ScreenClient _screen;
 
     readonly COMUtils _comUtils = new();
 

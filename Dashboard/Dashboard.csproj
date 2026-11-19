@@ -4,7 +4,7 @@
     <OutputType>WinExe</OutputType>
     <UseWPF>true</UseWPF>
     <Platforms>AnyCPU;x64;x86</Platforms>
-    <AssemblyName>DrivingLab.$(MSBuildProjectName)</AssemblyName>
+    <AssemblyName>TuniLab.$(MSBuildProjectName)</AssemblyName>
     <ApplicationIcon>Assets\Images\icon.ico</ApplicationIcon>
   </PropertyGroup>
 

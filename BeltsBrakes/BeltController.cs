@@ -4,6 +4,10 @@ namespace BeltsBrakes;
 
 internal class BeltController
 {
+    public float GForceThreshold { get; set; } = -0.2f;
+    public float GForceAbsMaximum { get; set; } = 3f;
+    public int BeltTensionMaximum { get; set; } = 64;
+
     public BeltController(
         CarlaClient carlaClient,
         TensionRClient tensionRClient)
@@ -12,9 +16,11 @@ internal class BeltController
         {
             if (e.Values.TryGetValue("gforce_longitudinal", out float gforce))
             {
-                if (gforce < -0.5)
+                if (gforce < GForceThreshold)
                 {
-                    _beltTension = (int)Math.Clamp((-gforce - 0.5) / 6 * 64, 0, 64);
+                    _beltTension = (int)Math.Clamp(
+                        (-gforce + GForceThreshold) / GForceAbsMaximum * BeltTensionMaximum,
+                        0, BeltTensionMaximum);
                     tensionRClient.SetTension(_beltTension, Side.Both);
                 }
                 else if (_beltTension > 0)

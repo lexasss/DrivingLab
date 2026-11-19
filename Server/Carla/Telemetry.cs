@@ -338,7 +338,7 @@ public record Telemetry
             0,
             Math.Max(0, Math.Clamp(_acceleration / -10, 0, 1)),
             0, 0, 0,
-            _acceleration,
+            _acceleration * 0.5f,
             _laps + 1,
             1000 + _speed * 200,
             0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,
