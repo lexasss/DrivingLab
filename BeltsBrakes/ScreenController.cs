@@ -9,7 +9,7 @@ internal class ScreenController
         _screenClient = screenClient;
 
         var screens = _screenClient.GetScreens().Items.ToArray();
-        _leftMirror = screens.FirstOrDefault(item => item.Name == "Left mirror") ?? screens.FirstOrDefault();
+        _leftMirror = screens.FirstOrDefault(item => item.Name == "Right mirror") ?? screens.FirstOrDefault();
 
         _screenClient.MediaHidden += (s, e) =>
         {
@@ -111,8 +111,9 @@ internal class ScreenController
             _mediaId = await _screenClient.Show(
                 filename,
                 _leftMirror.Id,
-                new Common.Point() { X = 50, Y = 50 },
-                null, 5000);
+                new Common.Point() { X = 1000, Y = 50 },
+                new Common.Size() { Width = 200, Height = 175},
+                5000);
         }
 
         _canShowMedia = true;

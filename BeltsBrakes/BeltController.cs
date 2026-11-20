@@ -6,7 +6,7 @@ internal class BeltController
 {
     public float GForceThreshold { get; set; } = -0.2f;
     public float GForceAbsMaximum { get; set; } = 3f;
-    public int BeltTensionMaximum { get; set; } = 64;
+    public int BeltTensionMaximum { get; set; } = 255;
 
     public BeltController(
         CarlaClient carlaClient,

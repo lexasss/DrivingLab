@@ -34,6 +34,8 @@ public sealed class TensionRClient
     {
         if (!_isAvailable)
             return;
+        if (_isConnected)
+            return;
 
         _ = _client.Connect(new Common.String() {
             Value = port
