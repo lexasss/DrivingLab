@@ -198,6 +198,9 @@ internal class TensionRService :
         _isCalibrating = false;
         _isCalibrated = false;
 
+        if (_belt?.IsConnected == true)
+            _logger.LogInformation("Disconnected from {comPort}", _belt.PortName);
+
         _belt?.Dispose();
         _belt = null;
     }

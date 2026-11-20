@@ -105,7 +105,7 @@ public class ScreenService :
 
             id = mediaWindow.Id;
 
-            mediaWindow.Show(filePath, request);
+            mediaWindow.Show(filePath, request, screen);
         }
         catch (Exception ex)
         {

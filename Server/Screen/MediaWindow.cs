@@ -30,7 +30,7 @@ internal sealed class MediaWindow
         Id = Guid.NewGuid().ToString();
     }
 
-    public void Show(string? filename, Proto.Media media)
+    public void Show(string? filename, Proto.Media media, Proto.Screen screen)
     {
         if (_thread != null)
             return;
@@ -56,7 +56,13 @@ internal sealed class MediaWindow
                 return;
             }
 
-            _window = CreateWindow(content, Media.Location, width, height);
+            var location = new Common.Point
+            {
+                X = Media.Location.X + screen.Origin.X,
+                Y = Media.Location.Y + screen.Origin.Y,
+            };
+
+            _window = CreateWindow(content, location, width, height);
             if (Media.Duration > 0)
             {
                 _cancellationTokenSource = new CancellationTokenSource();

@@ -5,6 +5,7 @@ namespace TensionR.API;
 internal class Belt : IDisposable
 {
     public bool IsConnected { get; private set; } = false;
+    public string? PortName { get; private set; } = null;
 
     public event EventHandler<Exception>? Error;
     public event EventHandler<Communicator.RequestEventArgs>? RequestSent;
@@ -32,6 +33,7 @@ internal class Belt : IDisposable
         {
             _port.Open();
             IsConnected = true;
+            PortName = portName;
         }
         catch (Exception ex)
         {

@@ -6,6 +6,9 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <AssemblyName>TuniLab.$(MSBuildProjectName)</AssemblyName>
     <Platforms>AnyCPU;x64;x86</Platforms>
+    <Product>TuniLab Server</Product>
+    <PackageId>TuniLabServer</PackageId>
+    <Description>TuniLab Server</Description>
   </PropertyGroup>
 
   <ItemGroup>
@@ -113,11 +116,5 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
-
-  <PropertyGroup>
-    <Product>DrivingLab Server</Product>
-    <PackageId>DrivingLabServer</PackageId>
-    <Description>DrivingLab Server</Description>
-  </PropertyGroup>
 
 </Project>
