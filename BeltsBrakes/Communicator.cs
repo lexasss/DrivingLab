@@ -8,10 +8,14 @@ internal class Communicator
     public Communicator(
         CarlaClient carlaClient,
         TensionRClient tensionRClient,
-        ScreenClient screenClient)
+        ScreenClient screenClient,
+        WheelAndPedalsClient drivingClient,
+        SoundPlayerClient soundPlayerClient)
     {
         _carla = carlaClient;
         _screen = screenClient;
+        _driving = drivingClient;
+        _soundPlayer = soundPlayerClient;
 
         _tensionR = tensionRClient;
         _tensionR.ConnectionChanged += (s, e) =>
@@ -74,12 +78,16 @@ internal class Communicator
     {
         _carla.SetStreamingFields(["speed", "gforce_longitudinal"]);
         _carla.Start();
+        _driving.Start();
     }
 
     public void Stop()
     {
         _tensionR.Stop();
         _carla.Stop();
+        _driving.Stop();
+        _screen.Hide();     // hides all visible media
+        _soundPlayer.Stop();
     }
 
     #region Internal
@@ -89,6 +97,8 @@ internal class Communicator
     readonly CarlaClient _carla;
     readonly TensionRClient _tensionR;
     readonly ScreenClient _screen;
+    readonly WheelAndPedalsClient _driving;
+    readonly SoundPlayerClient _soundPlayer;
 
     readonly COMUtils _comUtils = new();
 
@@ -102,7 +112,7 @@ internal class Communicator
         while (!condition())
         {
             if ((DateTime.Now - startTime).TotalMilliseconds > timeoutMs)
-                throw new TimeoutException("Condition not met within the specified timeout.");
+                throw new TimeoutException($"Condition not met within {(double)timeoutMs/1000:F1} seconds.");
             Thread.Sleep(100);
         }
     }

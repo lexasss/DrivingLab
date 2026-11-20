@@ -120,7 +120,16 @@ public class ScreenService :
         Common.String request,
         ServerCallContext context)
     {
-        if (_media.TryGetValue(request.Value, out var mediaWindow))
+        if (string.IsNullOrEmpty(request.Value))
+        {
+            foreach (var media in _media)
+            {
+                _logger.LogInformation("Closing the media {name}", media.Value.FileName);
+                media.Value.Close();
+            }
+            _media.Clear();
+        }
+        else if (_media.TryGetValue(request.Value, out var mediaWindow))
         {
             mediaWindow.Close();
             _media.Remove(request.Value);

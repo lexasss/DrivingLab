@@ -53,12 +53,12 @@ public sealed class ScreenClient
             : response.Value;
     }
 
-    public void Hide(string id)
+    public void Hide(string? id = null)
     {
         if (!_isAvailable)
             return;
 
-        _ = _client.Close(new Common.String { Value = id });
+        _ = _client.Close(new Common.String { Value = id ?? string.Empty });
     }
 
     #region Internal

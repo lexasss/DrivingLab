@@ -1,8 +1,8 @@
 ﻿namespace BeltsBrakes;
 
-internal class ScreenController
+internal class SpeedWarnSignController : IDisposable
 {
-    public ScreenController(
+    public SpeedWarnSignController(
         CarlaClient carlaClient,
         ScreenClient screenClient)
     {
@@ -46,6 +46,13 @@ internal class ScreenController
             }
         };
     }
+
+    public void Dispose()
+    {
+        _screenClient.Hide(null);
+    }
+
+    #region Internal
 
     enum SingState
     {
@@ -118,4 +125,6 @@ internal class ScreenController
 
         _canShowMedia = true;
     }
+
+    #endregion
 }

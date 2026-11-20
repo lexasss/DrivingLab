@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using BeltsBrakes.Controllers;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -54,7 +55,8 @@ internal class Program
         }
 
         var beltController = host.Services.GetRequiredService<BeltController>();
-        var screenController = host.Services.GetRequiredService<ScreenController>();
+        var speedWarnSignController = host.Services.GetRequiredService<SpeedWarnSignController>();
+        var carHornController = host.Services.GetRequiredService<CarHornController>();
 
         communicator.Start();
 
@@ -73,10 +75,14 @@ internal class Program
         services.AddSingleton<TensionRClient>();
         services.AddSingleton<CarlaClient>();
         services.AddSingleton<ScreenClient>();
+        services.AddSingleton<WheelAndPedalsClient>();
+        services.AddSingleton<SoundPlayerClient>();
 
         services.AddSingleton<Communicator>();
+
         services.AddSingleton<BeltController>();
-        services.AddSingleton<ScreenController>();
+        services.AddSingleton<SpeedWarnSignController>();
+        services.AddSingleton<CarHornController>();
     }
 
     private static bool SetBeltComPort(Communicator comm)
